@@ -1,0 +1,38 @@
+<!DOCTYPE html><html><head>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>MemoryWeaver — Match Story</title>
+<style>
+body{font-family:sans-serif;max-width:540px;margin:0 auto;padding:16px;background:#f5f5f5}
+h1{color:#085041;font-size:20px} h2{color:#085041;font-size:16px;margin-top:24px}
+.card{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;
+      box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.story{font-size:15px;line-height:1.7;color:#333;white-space:pre-wrap}
+.stats{font-size:14px;line-height:2;color:#412402;background:#FAEEDA;
+       border-radius:8px;padding:14px}
+.highlight{border-bottom:1px solid #eee;padding:12px 0}
+.highlight:last-child{border-bottom:none}
+.score{display:inline-block;background:#E1F5EE;color:#085041;border-radius:4px;
+       padding:2px 7px;font-size:12px;font-weight:bold}
+.caption{font-size:13px;color:#555;margin-top:4px}
+.moment{font-size:11px;color:#7F77DD;font-weight:bold;text-transform:uppercase}
+</style></head><body>
+<h1>⚽ Paraguay vs Australia — Match Story</h1>
+{% if story %}
+<div class='card'><h2>Match Story</h2><div class='story'>{{ story }}</div></div>
+{% endif %}
+{% if highlights %}
+<div class='card'><h2>Top {{ highlights|length }} Moments</h2>
+{% for h in highlights %}
+<div class='highlight'>
+<span class='moment'>{{ h.moment }}</span>
+<span class='score' style='float:right'>{{ h.score }}/10</span>
+<img src='/uploads/{{ h.filename }}' style='width:100%;border-radius:8px;margin:8px 0;object-fit:cover;max-height:260px'>
+<div class='caption'>{{ h.caption }}</div>
+</div>{% endfor %}</div>
+{% endif %}
+{% if stats %}
+<div class='card'><h2>Fan Stats</h2><div class='stats'>{{ stats }}</div></div>
+{% endif %}
+{% if not story %}<div class='card'><p>Artefacts not yet generated.
+  <a href='/generate'>Generate now</a></p></div>{% endif %}
+</body></html>
