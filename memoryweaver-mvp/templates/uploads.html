@@ -1,29 +1,133 @@
-<!DOCTYPE html><html><head>
-<meta name='viewport' content='width=device-width, initial-scale=1'>
-<title>MemoryWeaver — AUS vs PAR</title>
-<style>
-body{font-family:sans-serif;max-width:480px;margin:0 auto;padding:20px;background:#f5f5f5}
-h1{color:#085041;font-size:22px;margin-bottom:4px}
-p{color:#555;font-size:14px;margin:4px 0 16px}
-.card{background:#fff;border-radius:12px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.1)}
-.btn{background:#1D9E75;color:#fff;border:none;padding:14px 28px;border-radius:8px;
-     font-size:16px;width:100%;cursor:pointer;margin-top:12px}
-.btn:active{background:#085041}
-.count{background:#E1F5EE;color:#085041;border-radius:8px;padding:10px;text-align:center;
-       font-size:13px;margin-top:16px}
-.success{color:#085041;font-weight:bold;margin-top:12px}
-input[type=file]{width:100%;padding:10px 0;font-size:14px}
-</style></head><body>
-<div class='card'>
-<h1>⚽ Paraguay vs Australia</h1>
-<p>Levi's Stadium &bull; June 25, 2026 &bull; Upload your match photos!</p>
-<form action='/upload' method='POST' enctype='multipart/form-data'>
-  <input type='file' name='photos' multiple accept='image/*,video/*'>
-  <button class='btn' type='submit'>📸 Add to MemoryWeaver</button>
-</form>
-{% if success %}<p class='success'>{{ success }}</p>{% endif %}
-<div class='count'>📷 {{ count }} photo(s) in the album so far</div>
-</div>
-<p style='text-align:center;font-size:12px;color:#aaa;margin-top:20px'>
-No login needed &bull; Your photos create our match story</p>
-</body></html>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>MemoryWeaver — Paraguay vs Australia</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1d9e75;
+      --primary-dark: #085041;
+      --primary-light: #e1f5ee;
+      --bg: #f5fcf9;
+      --card-bg: #ffffff;
+      --text: #2d3748;
+      --text-muted: #718096;
+      --border: #e2e8f0;
+      --shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.08), 0 10px 10px -5px rgba(0,0,0,0.04);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+    .container { width: 100%; max-width: 480px; }
+    .share-banner { background: var(--primary-dark); color: #fff; border-radius: 14px; padding: 12px 16px; margin-bottom: 16px; text-align: center; }
+    .share-banner p { color: #a8d5c2; font-size: 11px; margin-bottom: 4px; }
+    .share-banner a { color: #fff; font-size: 13px; font-weight: 700; word-break: break-all; }
+    .card { background: var(--card-bg); border-radius: 24px; padding: 32px; box-shadow: var(--shadow-lg); border: 1px solid rgba(29,158,117,0.1); display: flex; flex-direction: column; gap: 20px; }
+    .header { text-align: center; }
+    .badge { display: inline-block; background: var(--primary-light); color: var(--primary-dark); font-size: 11px; font-weight: 700; padding: 6px 14px; border-radius: 100px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+    h1 { font-size: 24px; font-weight: 700; color: var(--primary-dark); margin-bottom: 8px; }
+    .subtitle { font-size: 14px; color: var(--text-muted); line-height: 1.5; }
+    .file-upload-zone { position: relative; border: 2px dashed var(--primary); border-radius: 16px; padding: 24px 16px; text-align: center; background: var(--primary-light); opacity: 0.95; transition: all 0.2s ease; cursor: pointer; }
+    .file-upload-zone:hover, .file-upload-zone:active { opacity: 1; background: #d4f0e5; }
+    .file-upload-zone input[type=file] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+    .upload-icon { font-size: 32px; margin-bottom: 8px; display: block; }
+    .upload-text { font-size: 14px; font-weight: 600; color: var(--primary-dark); }
+    .upload-subtext { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+    .selected-files-info { font-size: 13px; color: #0b5e47; font-weight: 600; margin-top: 8px; display: none; text-align: center; background: #c6ebd7; padding: 6px; border-radius: 8px; }
+    .btn { background: var(--primary); color: white; border: none; padding: 16px 24px; border-radius: 14px; font-size: 16px; font-weight: 600; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(29,158,117,0.2); touch-action: manipulation; text-decoration: none; }
+    .btn:active { transform: translateY(1px); background: var(--primary-dark); }
+    .btn-secondary { background: #ffffff; color: var(--primary-dark); border: 2px solid var(--primary); box-shadow: none; }
+    .btn-secondary:active { background: var(--primary-light); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .count-badge { background: var(--primary-light); color: var(--primary-dark); border-radius: 12px; padding: 12px; text-align: center; font-size: 14px; font-weight: 600; border: 1px solid rgba(29,158,117,0.15); }
+    .warn { background: #fff3cd; color: #856404; border-radius: 10px; padding: 10px 14px; font-size: 12px; text-align: center; border: 1px solid #ffd969; }
+    .success-alert { background: #e6fffa; border: 1px solid #b2f5ea; color: #234e52; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 600; text-align: center; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+    .footer { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 20px; }
+    .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #fff; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+  <script>
+    function updateFileLabel(input) {
+      const fileInfo = document.getElementById('file-info');
+      const uploadText = document.getElementById('upload-text');
+      if (input.files && input.files.length > 0) {
+        fileInfo.style.display = 'block';
+        fileInfo.textContent = '📸 ' + input.files.length + ' file(s) selected';
+        uploadText.textContent = 'Tap to change photos';
+      } else {
+        fileInfo.style.display = 'none';
+        uploadText.textContent = 'Choose Photos / Videos';
+      }
+    }
+    function handleUploadSubmit(event) {
+      const btn = document.getElementById('upload-btn');
+      const fileInput = document.getElementById('file-input');
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert('Please tap the upload box to select at least one photo first.');
+        event.preventDefault();
+        return false;
+      }
+      btn.disabled = true;
+      btn.style.background = 'var(--primary-dark)';
+      btn.innerHTML = '<span class="spinner"></span> Uploading...';
+      return true;
+    }
+
+  </script>
+</head>
+<body>
+  <div class="container">
+    {% if public_url %}
+    <div class="share-banner">
+      <p>Share this link with your group</p>
+      <a href="{{ public_url }}">{{ public_url }}</a>
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <div class="header">
+        <span class="badge">FIFA World Cup 2026</span>
+        <h1>⚽ Paraguay vs Australia</h1>
+        <p class="subtitle">Levi's Stadium &bull; San Francisco Bay Area &bull; June 25, 2026</p>
+      </div>
+
+      <form action="/upload" method="POST" enctype="multipart/form-data" onsubmit="return handleUploadSubmit(event)">
+        <div class="file-upload-zone">
+          <span class="upload-icon">📸</span>
+          <span class="upload-text" id="upload-text">Choose Photos / Videos</span>
+          <span class="upload-subtext">Tap anywhere in this box</span>
+          <input type="file" id="file-input" name="photos" multiple accept="image/*,video/*" onchange="updateFileLabel(this)">
+          <div class="selected-files-info" id="file-info"></div>
+        </div>
+        <button class="btn" type="submit" id="upload-btn">
+          <span>📤 Add to MemoryWeaver</span>
+        </button>
+      </form>
+
+      {% if success %}
+        <div class="success-alert">{{ success }}</div>
+      {% endif %}
+
+      <div class="count-badge">
+        📷 <strong>{{ count }}</strong> photo(s) in the album so far
+      </div>
+
+      {% if count > 20 %}
+        <div class="warn">⚠️ Over 20 photos may cause the pipeline to fail. Ask contributors to keep their best shots only.</div>
+      {% endif %}
+
+      {% if story_ready %}
+        <a href="/results" class="btn">🎉 Get Highlights &amp; Story</a>
+      {% elif count > 0 %}
+        <button class="btn btn-secondary" disabled style="opacity:0.45;cursor:default;border-color:#aaa;color:#888;">
+          <span>⏳ Match Story &amp; Highlights available after the match</span>
+        </button>
+      {% endif %}
+    </div>
+
+    <p class="footer">No login required &bull; Live crowd experience weaver</p>
+  </div>
+</body>
+</html>
