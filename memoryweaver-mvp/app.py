@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, url_for, send_from_directory
+from flask import Flask, request, render_template, redirect, url_for, send_from_directory, session
 import os, threading, time, json
 from dotenv import load_dotenv
 from PIL import Image
@@ -19,6 +19,7 @@ pipeline_status = {
 PIPELINE_TIMEOUT = 300  # 5 minutes hard timeout
 
 app = Flask(__name__)
+app.secret_key = os.getenv('SECRET_KEY', 'memoryweaver-super-secret-key-12984')
 SESSION_ID = 'FIFA26'
 UPLOAD_DIR = f'uploads/{SESSION_ID}'
 THUMB_DIR  = f'uploads/{SESSION_ID}/thumbs'
@@ -51,29 +52,132 @@ PUBLIC_URL = os.getenv('PUBLIC_URL', '')
 
 @app.route('/')
 def index():
-    count = sum(1 for f in os.listdir(UPLOAD_DIR) if os.path.isfile(os.path.join(UPLOAD_DIR, f)))
+    all_files = [f for f in os.listdir(UPLOAD_DIR) if os.path.isfile(os.path.join(UPLOAD_DIR, f)) and not f.startswith('.')]
+    count = len(all_files)
+    
+    # Filter session uploaded files to ensure they actually exist on disk
+    my_uploads = session.get('my_uploads', [])
+    my_uploads = [f for f in my_uploads if f in all_files]
+    session['my_uploads'] = my_uploads
+    
     story_ready = os.path.exists(f'{OUTPUT_DIR}/story.txt')
-    return render_template('uploads.html', count=count, public_url=PUBLIC_URL, story_ready=story_ready)
+    success = request.args.get('success')
+    return render_template('uploads.html', count=count, public_url=PUBLIC_URL, story_ready=story_ready, success=success, uploaded_files=my_uploads)
+
+
+@app.route('/clear')
+def clear_all():
+    import shutil
+    try:
+        # Clear uploads and thumbs
+        if os.path.exists(UPLOAD_DIR):
+            shutil.rmtree(UPLOAD_DIR)
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+        os.makedirs(THUMB_DIR, exist_ok=True)
+        
+        # Clear outputs
+        if os.path.exists(OUTPUT_DIR):
+            shutil.rmtree(OUTPUT_DIR)
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
+        
+        # Reset current session uploads
+        session['my_uploads'] = []
+        
+        # Reset pipeline status
+        pipeline_status.update({
+            'running': False,
+            'error': None,
+            'stage': 'Starting',
+            'log': [],
+            'started_at': None,
+            'api_calls': []
+        })
+        
+        success_msg = "Successfully cleared all photos and generated stories!"
+    except Exception as e:
+        success_msg = f"Error clearing: {e}"
+        
+    return redirect(url_for('index', success=success_msg))
+
+
+@app.route('/delete/<path:filename>')
+def delete_file(filename):
+    try:
+        # Delete original file
+        orig_path = os.path.join(UPLOAD_DIR, filename)
+        if os.path.exists(orig_path):
+            os.remove(orig_path)
+            
+        # Delete thumbnail
+        thumb_name = os.path.splitext(filename)[0] + '.jpg'
+        thumb_path = os.path.join(THUMB_DIR, thumb_name)
+        if os.path.exists(thumb_path):
+            os.remove(thumb_path)
+            
+        # Remove from current session uploads
+        my_uploads = session.get('my_uploads', [])
+        if filename in my_uploads:
+            my_uploads.remove(filename)
+            session['my_uploads'] = my_uploads
+            
+        # If output files exist, remove them since album has changed
+        for artefact in ('story.txt', 'stats.json', 'highlights.json'):
+            path = os.path.join(OUTPUT_DIR, artefact)
+            if os.path.exists(path):
+                os.remove(path)
+                
+        # Reset pipeline status
+        pipeline_status.update({
+            'running': False,
+            'error': None,
+            'stage': 'Starting',
+            'log': [],
+            'started_at': None,
+            'api_calls': []
+        })
+        success_msg = f"Deleted memory: {filename}"
+    except Exception as e:
+        success_msg = f"Error deleting file: {e}"
+    
+    return redirect(url_for('index', success=success_msg))
 
 
 @app.route('/upload', methods=['POST'])
 def upload():
     files = request.files.getlist('photos')
-    saved = 0
+    saved_files = []
+    import uuid
     for f in files:
         if f.filename:
-            dest = os.path.join(UPLOAD_DIR, f.filename)
+            base, ext = os.path.splitext(f.filename)
+            unique_name = f"{base}_{int(time.time())}_{uuid.uuid4().hex[:6]}{ext.lower()}"
+            dest = os.path.join(UPLOAD_DIR, unique_name)
             f.save(dest)
-            _make_thumbnail(dest, f.filename)
-            saved += 1
-    if saved > 0:
+            _make_thumbnail(dest, unique_name)
+            saved_files.append(unique_name)
+            
+    # Append to current session uploads
+    my_uploads = session.get('my_uploads', [])
+    for sf in saved_files:
+        if sf not in my_uploads:
+            my_uploads.append(sf)
+    session['my_uploads'] = my_uploads
+    
+    if len(saved_files) > 0:
         for artefact in ('story.txt', 'stats.json', 'highlights.json'):
             path = os.path.join(OUTPUT_DIR, artefact)
             if os.path.exists(path):
                 os.remove(path)
-    count = sum(1 for f in os.listdir(UPLOAD_DIR) if os.path.isfile(os.path.join(UPLOAD_DIR, f)))
+                
+    all_files = [f for f in os.listdir(UPLOAD_DIR) if os.path.isfile(os.path.join(UPLOAD_DIR, f)) and not f.startswith('.')]
+    count = len(all_files)
+    
+    # Filter to make sure session files exist
+    session_files = [f for f in my_uploads if f in all_files]
+    session['my_uploads'] = session_files
+    
     story_ready = os.path.exists(f'{OUTPUT_DIR}/story.txt')
-    return render_template('uploads.html', count=count, success=f'Added {saved} photo(s)!', public_url=PUBLIC_URL, story_ready=story_ready)
+    return render_template('uploads.html', count=count, success=f'Added {len(saved_files)} photo(s)!', public_url=PUBLIC_URL, story_ready=story_ready, uploaded_files=session_files)
 
 
 @app.route('/uploads/<filename>')
@@ -103,7 +207,7 @@ def generate():
             return render_template('processing.html')
 
     # Reset state
-    pipeline_status.update({'running': True, 'error': None, 'stage': 'Starting', 'log': [], 'started_at': time.time()})
+    pipeline_status.update({'running': True, 'error': None, 'stage': 'Starting', 'log': [], 'started_at': time.time(), 'api_calls': []})
 
     def run():
         try:
@@ -119,10 +223,13 @@ def generate():
                     pipeline_status['stage'] = 'Generating story & stats'
                 elif 'Done.' in msg:
                     pipeline_status['stage'] = 'Done'
+                
+                pipeline_status['api_calls'] = list(pl.api_calls_log)
 
             pl.run_pipeline(SESSION_ID, log=log_callback)
             pipeline_log('Pipeline complete!')
             pipeline_status['stage'] = 'Done'
+            pipeline_status['api_calls'] = list(pl.api_calls_log)
 
         except Exception as e:
             err = str(e)
@@ -153,6 +260,7 @@ def status():
             'stage': pipeline_status['stage'],
             'log': pipeline_status['log'],
             'elapsed': elapsed,
+            'api_calls': pipeline_status.get('api_calls', []),
         }),
         status=200,
         mimetype='application/json',
@@ -165,21 +273,29 @@ def status():
 
 @app.route('/results')
 def results():
-    story, stats, highlights = '', '', []
+    from flask import make_response
+    story, stats, highlights, cost = '', '', [], None
     for attr, path, loader in [
         ('story',      f'{OUTPUT_DIR}/story.txt',       lambda f: f.read()),
         ('stats',      f'{OUTPUT_DIR}/stats.json',      json.load),
         ('highlights', f'{OUTPUT_DIR}/highlights.json', lambda f: json.load(f).get('photos', [])),
+        ('cost',       f'{OUTPUT_DIR}/cost.json',       json.load),
     ]:
         try:
             with open(path) as f:
                 val = loader(f)
             if attr == 'story': story = val
             elif attr == 'stats': stats = val
+            elif attr == 'cost': cost = val
             else: highlights = val
         except Exception as e:
             print(f'Results load error ({attr}): {e}')
-    return render_template('result.html', story=story, stats=stats, highlights=highlights)
+    
+    response = make_response(render_template('result.html', story=story, stats=stats, highlights=highlights, cost=cost))
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, public, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 
 if __name__ == '__main__':

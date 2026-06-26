@@ -38,10 +38,30 @@ def _image_to_part(image_path):
     return types.Part.from_bytes(data=buf.getvalue(), mime_type="image/jpeg")
 
 
-def _generate_with_retry(contents, max_retries=5):
+api_calls_log = []
+
+def _generate_with_retry(contents, name="API Call", max_retries=5):
     for attempt in range(max_retries):
         try:
             resp = client.models.generate_content(model=MODEL, contents=contents)
+            
+            # Extract token details from response metadata
+            prompt_tokens = resp.usage_metadata.prompt_token_count if resp.usage_metadata else 0
+            candidates_tokens = resp.usage_metadata.candidates_token_count if resp.usage_metadata else 0
+            
+            # Gemini 2.5 Flash June 2026 pricing
+            input_cost = prompt_tokens * (0.075 / 1000000)
+            output_cost = candidates_tokens * (0.30 / 1000000)
+            cost_usd = input_cost + output_cost
+            
+            api_calls_log.append({
+                "name": name,
+                "model": MODEL,
+                "prompt_tokens": prompt_tokens,
+                "candidates_tokens": candidates_tokens,
+                "cost_usd": cost_usd
+            })
+            
             return resp.text
         except Exception as e:
             msg = str(e)
@@ -128,7 +148,7 @@ def score_and_group_photos(session_id, log=print):
     )
 
     log(f'Moderating and scoring {len(valid_files)} photos in 1 API call...')
-    raw = _generate_with_retry(parts).strip().replace('```json', '').replace('```', '')
+    raw = _generate_with_retry(parts, name="Moderation and Scoring").strip().replace('```json', '').replace('```', '')
     all_results = json.loads(raw)
 
     # Attach filenames and filter out unusable photos
@@ -198,7 +218,7 @@ Return JSON only:
 }}'''
 
     log('Generating story + stats in 1 API call...')
-    raw = _generate_with_retry(combined_prompt).strip().replace('```json', '').replace('```', '')
+    raw = _generate_with_retry(combined_prompt, name="Story & Stats Generation").strip().replace('```json', '').replace('```', '')
     data = json.loads(raw)
 
     story = str(data.get('story', ''))
@@ -212,6 +232,9 @@ Return JSON only:
 
 
 def run_pipeline(session_id='FIFA26', log=print):
+    global api_calls_log
+    api_calls_log = []
+    
     log('Starting pipeline...')
     highlights_path = f'outputs/{session_id}/highlights.json'
 
@@ -226,6 +249,16 @@ def run_pipeline(session_id='FIFA26', log=print):
         if cached_fp == current_fp:
             log('Uploads unchanged — using cached photo scores')
             scored = cache.get('photos', [])
+            
+            # If scores are loaded from cache, construct a mock entry for logging
+            # to let the UI know no API calls were spent on scoring
+            api_calls_log.append({
+                "name": "Moderation and Scoring (Loaded from Cache)",
+                "model": MODEL,
+                "prompt_tokens": 0,
+                "candidates_tokens": 0,
+                "cost_usd": 0.0
+            })
         else:
             log('Uploads have changed — re-scoring photos')
 
@@ -237,5 +270,21 @@ def run_pipeline(session_id='FIFA26', log=print):
 
     log(f'{len(scored)} photos passed moderation and scoring')
     generate_artefacts(session_id, scored, log=log)
+    
+    # Save the accumulated cost data
+    total_prompt = sum(x["prompt_tokens"] for x in api_calls_log)
+    total_candidates = sum(x["candidates_tokens"] for x in api_calls_log)
+    total_cost = sum(x["cost_usd"] for x in api_calls_log)
+    
+    cost_data = {
+        "api_calls": api_calls_log,
+        "total_prompt_tokens": total_prompt,
+        "total_candidates_tokens": total_candidates,
+        "total_cost_usd": total_cost
+    }
+    
+    with open(f'outputs/{session_id}/cost.json', 'w') as fh:
+        json.dump(cost_data, fh, indent=2)
+        
     log('Done. Artefacts written to outputs/' + session_id)
     return True

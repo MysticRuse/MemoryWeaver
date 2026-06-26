@@ -4,39 +4,356 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>MemoryWeaver — Generating Match Story</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #1d9e75;
-      --primary-dark: #085041;
-      --primary-light: #e1f5ee;
-      --bg: #f5fcf9;
-      --card-bg: #ffffff;
-      --text: #2d3748;
-      --text-muted: #718096;
-      --shadow-lg: 0 20px 25px -5px rgba(29,158,117,0.08), 0 10px 10px -5px rgba(29,158,117,0.04);
+      --primary: #059669;
+      --primary-dark: #047857;
+      --accent: #1d4ed8;
+      --bg: #f8fafc;
+      --card-bg: rgba(255, 255, 255, 0.75);
+      --card-border: rgba(0, 0, 0, 0.06);
+      --text: #0f172a;
+      --text-muted: #475569;
+      --glow: 0 10px 30px rgba(5, 150, 105, 0.04);
+      --danger: #e11d48;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
-    body { background-color: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
-    .container { width: 100%; max-width: 480px; }
-    .card { background: var(--card-bg); border-radius: 24px; padding: 40px 32px; box-shadow: var(--shadow-lg); border: 1px solid rgba(29,158,117,0.1); text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-    h2 { color: var(--primary-dark); font-size: 22px; font-weight: 700; }
-    .stage { font-size: 13px; color: var(--primary); font-weight: 600; min-height: 18px; }
-    .elapsed { font-size: 12px; color: var(--text-muted); }
-    .spinner { width: 60px; height: 60px; border: 4px solid var(--primary-light); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 8px 0; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .log { background: #f8fafb; border-radius: 10px; padding: 12px; font-size: 12px; font-family: monospace; color: #444; max-height: 180px; overflow-y: auto; line-height: 1.6; text-align: left; width: 100%; border: 1px solid var(--primary-light); }
-    .log-line { border-bottom: 1px solid #eef2f6; padding: 2px 0; }
-    .log-line:last-child { border-bottom: none; }
-    .error-box { background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 12px; padding: 16px; color: #721c24; font-size: 13px; margin-top: 12px; text-align: left; width: 100%; }
-    .error-box strong { display: block; margin-bottom: 6px; }
-    .btn { display: inline-block; margin-top: 10px; background: var(--primary); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; }
-    .btn-grey { background: #888; margin-left: 8px; }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Outfit', sans-serif;
+    }
+    
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(5, 150, 105, 0.03) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(29, 78, 216, 0.03) 0%, transparent 40%),
+        linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      background-attachment: fixed;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      padding: 20px 16px;
+    }
+    
+    .container {
+      width: 100%;
+      max-width: 480px;
+      animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 28px;
+      padding: 40px 32px;
+      border: 1px solid var(--card-border);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.06), var(--glow);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    h2 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.5px;
+    }
+    
+    .stage {
+      font-size: 14.5px;
+      color: var(--primary);
+      font-weight: 700;
+      min-height: 22px;
+      text-shadow: 0 0 8px rgba(5, 150, 105, 0.1);
+    }
+    
+    .elapsed {
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+    
+    /* Concentric Scan Rings Spinner */
+    .spinner-wrap {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      margin: 10px 0;
+    }
+    .scanner-ring {
+      position: absolute;
+      border: 3px solid transparent;
+      border-radius: 50%;
+      animation: scan-rotate 2s linear infinite;
+    }
+    .scanner-ring-outer {
+      top: 0; left: 0; right: 0; bottom: 0;
+      border-top-color: var(--primary);
+      border-bottom-color: var(--primary);
+      filter: drop-shadow(0 0 6px rgba(5, 150, 105, 0.3));
+    }
+    .scanner-ring-inner {
+      top: 12px; left: 12px; right: 12px; bottom: 12px;
+      border-left-color: var(--accent);
+      border-right-color: var(--accent);
+      animation-direction: reverse;
+      animation-duration: 1.4s;
+      filter: drop-shadow(0 0 6px rgba(29, 78, 216, 0.3));
+    }
+    .scanner-core {
+      position: absolute;
+      top: 28px; left: 28px; width: 24px; height: 24px;
+      background: radial-gradient(circle, var(--primary) 0%, transparent 75%);
+      border-radius: 50%;
+      animation: pulse-core 0.8s ease-in-out infinite alternate;
+      box-shadow: 0 0 8px rgba(5, 150, 105, 0.3);
+    }
+    @keyframes scan-rotate {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes pulse-core {
+      0% { transform: scale(0.8); opacity: 0.5; }
+      100% { transform: scale(1.15); opacity: 1; }
+    }
+
+    /* Step Checklist styling */
+    .steps-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      margin: 12px 0;
+      text-align: left;
+    }
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,0.03);
+      background: rgba(0,0,0,0.005);
+      transition: all 0.3s ease;
+      font-size: 13.5px;
+    }
+    .step-pending {
+      color: var(--text-muted);
+      opacity: 0.5;
+    }
+    .step-active {
+      background: rgba(29, 78, 216, 0.05);
+      border-color: rgba(29, 78, 216, 0.18);
+      color: var(--text);
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(29, 78, 216, 0.05);
+    }
+    .step-done {
+      background: rgba(5, 150, 105, 0.05);
+      border-color: rgba(5, 150, 105, 0.15);
+      color: var(--primary);
+    }
+    .step-icon {
+      font-size: 10px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      border: 1.5px solid;
+      flex-shrink: 0;
+    }
+    .step-pending .step-icon {
+      border-color: var(--text-muted);
+    }
+    .step-active .step-icon {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #ffffff;
+      animation: pulse-active 1s infinite alternate;
+    }
+    .step-done .step-icon {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #ffffff;
+    }
+    @keyframes pulse-active {
+      0% { box-shadow: 0 0 4px var(--accent); }
+      100% { box-shadow: 0 0 10px var(--accent); }
+    }
+    
+    /* Light Monospace Logs */
+    .log {
+      background: #f8fafc;
+      border-radius: 16px;
+      padding: 16px;
+      font-size: 11px;
+      font-family: 'Courier New', Courier, monospace;
+      color: #1e3a8a;
+      max-height: 150px;
+      overflow-y: auto;
+      line-height: 1.5;
+      text-align: left;
+      width: 100%;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.03);
+      position: relative;
+    }
+    .log-line {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.02);
+      padding: 4px 0;
+    }
+    .log-line:last-child {
+      border-bottom: none;
+    }
+    
+    .error-box {
+      background: rgba(225, 29, 72, 0.04);
+      border: 1px solid rgba(225, 29, 72, 0.15);
+      border-radius: 18px;
+      padding: 20px;
+      color: var(--danger);
+      font-size: 13.5px;
+      margin-top: 12px;
+      text-align: left;
+      width: 100%;
+    }
+    
+    .error-box strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--danger);
+      font-size: 14.5px;
+    }
+    
+    .btn {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: #ffffff;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 14.5px;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(5, 150, 105, 0.15);
+    }
+    
+    .btn:hover {
+      box-shadow: 0 8px 25px rgba(5, 150, 105, 0.25);
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+    
+    .btn-grey {
+      background: rgba(0, 0, 0, 0.03);
+      color: var(--text);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      box-shadow: none;
+      margin-left: 10px;
+    }
+    
+    .btn-grey:hover {
+      background: rgba(0, 0, 0, 0.06);
+    }
+
+    /* Safari & Chrome Responsive Mobile Optimizations */
+    @media (max-width: 480px) {
+      .card {
+        padding: 32px 20px;
+        border-radius: 20px;
+        gap: 14px;
+      }
+      h2 {
+        font-size: 19px;
+      }
+      .step-item {
+        padding: 8px 12px;
+        font-size: 12.5px;
+      }
+      .log {
+        padding: 12px;
+        font-size: 10.5px;
+      }
+      .btn {
+        padding: 12px 24px;
+        font-size: 13.5px;
+      }
+    }
   </style>
   <script>
     var pollTimer;
+
+    function updateStepVisuals(stageName) {
+      const steps = {
+        verify: document.getElementById('step-verify'),
+        moderation: document.getElementById('step-mod'),
+        synthesis: document.getElementById('step-synth'),
+        compile: document.getElementById('step-compile')
+      };
+      
+      if (!steps.verify || !steps.moderation || !steps.synthesis || !steps.compile) return;
+      
+      // Default reset
+      Object.values(steps).forEach(el => {
+        el.className = 'step-item step-pending';
+        el.querySelector('.step-icon').textContent = '○';
+      });
+      
+      if (!stageName) return;
+      
+      if (stageName === 'Starting') {
+        steps.verify.className = 'step-item step-active';
+        steps.verify.querySelector('.step-icon').textContent = '⚡';
+      } else if (stageName.indexOf('Moderating') > -1 || stageName.indexOf('Scoring') > -1 || stageName.indexOf('cached') > -1) {
+        steps.verify.className = 'step-item step-done';
+        steps.verify.querySelector('.step-icon').textContent = '✓';
+        steps.moderation.className = 'step-item step-active';
+        steps.moderation.querySelector('.step-icon').textContent = '⚡';
+      } else if (stageName.indexOf('story') > -1 || stageName.indexOf('stats') > -1) {
+        steps.verify.className = 'step-item step-done';
+        steps.verify.querySelector('.step-icon').textContent = '✓';
+        steps.moderation.className = 'step-item step-done';
+        steps.moderation.querySelector('.step-icon').textContent = '✓';
+        steps.synthesis.className = 'step-item step-active';
+        steps.synthesis.querySelector('.step-icon').textContent = '⚡';
+      } else if (stageName === 'Done') {
+        steps.verify.className = 'step-item step-done';
+        steps.verify.querySelector('.step-icon').textContent = '✓';
+        steps.moderation.className = 'step-item step-done';
+        steps.moderation.querySelector('.step-icon').textContent = '✓';
+        steps.synthesis.className = 'step-item step-done';
+        steps.synthesis.querySelector('.step-icon').textContent = '✓';
+        steps.compile.className = 'step-item step-done';
+        steps.compile.querySelector('.step-icon').textContent = '✓';
+      }
+    }
+
     function poll() {
-      // Cache-bust to prevent Safari aggressively caching the status response
       fetch('/status?t=' + Date.now())
         .then(function(response) {
           if (!response.ok) throw new Error('Network response error');
@@ -44,23 +361,49 @@
         })
         .then(function(d) {
           document.getElementById('elapsed').textContent = d.elapsed + 's elapsed';
-          if (d.stage) document.getElementById('stage').textContent = d.stage;
-
+          if (d.stage) {
+            document.getElementById('stage').textContent = d.stage;
+            updateStepVisuals(d.stage);
+          }
+ 
           var logEl = document.getElementById('log');
           logEl.innerHTML = (d.log || []).map(function(l) {
             return "<div class='log-line'>" + l + "</div>";
           }).join('');
           logEl.scrollTop = logEl.scrollHeight;
-
+ 
+          // Render API calls and costs in real-time
+          var costInfoEl = document.getElementById('cost-info');
+          if (d.api_calls && d.api_calls.length > 0) {
+            var costHtml = '<div style="margin-top:16px; border-top:1px solid rgba(0, 0, 0, 0.08); padding-top:12px; text-align:left; width:100%;">';
+            costHtml += '<h3 style="font-size:13px; color:var(--primary); margin-bottom:8px; display:flex; align-items:center; gap:6px;">💳 Gemini API Usage Cost</h3>';
+            var totalCost = 0;
+            d.api_calls.forEach(function(call) {
+              costHtml += '<div style="font-size:11.5px; display:flex; justify-content:space-between; margin-bottom:4px; color:var(--text-muted);">';
+              costHtml += '<span>' + call.name + '</span>';
+              costHtml += '<span style="font-weight:600; color:var(--text);">' + (call.cost_usd > 0 ? '$' + call.cost_usd.toFixed(6) : 'Cached') + '</span>';
+              costHtml += '</div>';
+              totalCost += call.cost_usd;
+            });
+            costHtml += '<div style="font-size:12.5px; font-weight:800; display:flex; justify-content:space-between; margin-top:8px; border-top:1px dashed rgba(0, 0, 0, 0.08); padding-top:6px; color:var(--primary);">';
+            costHtml += '<span>Total Cost (USD)</span>';
+            costHtml += '<span>$' + totalCost.toFixed(6) + '</span>';
+            costHtml += '</div></div>';
+            costInfoEl.innerHTML = costHtml;
+            costInfoEl.style.display = 'block';
+          } else {
+            costInfoEl.style.display = 'none';
+          }
+  
           if (d.error) {
             clearTimeout(pollTimer);
-            document.getElementById('spinner').style.display = 'none';
+            document.getElementById('spinner-container').style.display = 'none';
             document.getElementById('stage').textContent = 'Failed';
             document.getElementById('error-box').style.display = 'block';
             document.getElementById('error-msg').textContent = d.error;
           } else if (d.done && !d.running) {
             clearTimeout(pollTimer);
-            window.location = '/results';
+            window.location.replace('/results?t=' + Date.now());
           } else {
             pollTimer = setTimeout(poll, 3000);
           }
@@ -73,20 +416,50 @@
     window.onload = function() { pollTimer = setTimeout(poll, 1000); };
   </script>
 </head>
-<body>
+<body ontouchstart="">
   <div class="container">
     <div class="card">
-      <div class="spinner" id="spinner"></div>
-      <h2>⚽ Creating your Match Story</h2>
-      <div class="stage" id="stage">Starting...</div>
+      
+      <!-- Concentric Rings Spinner -->
+      <div id="spinner-container" class="spinner-wrap">
+        <div class="scanner-ring scanner-ring-outer"></div>
+        <div class="scanner-ring scanner-ring-inner"></div>
+        <div class="scanner-core"></div>
+      </div>
+      
+      <h2>⚽ Weaving Match Story</h2>
+      <div class="stage" id="stage">Initializing Pipeline...</div>
       <div class="elapsed" id="elapsed">0s elapsed</div>
-      <div class="log" id="log"><div class="log-line" style="color:#aaa">Waiting for pipeline to start...</div></div>
+      
+      <!-- Pipeline Steps Tracker -->
+      <div class="steps-list">
+        <div class="step-item step-pending" id="step-verify">
+          <span class="step-icon">○</span>
+          <span>1. Verify Uploaded Photos</span>
+        </div>
+        <div class="step-item step-pending" id="step-mod">
+          <span class="step-icon">○</span>
+          <span>2. AI Moderation &amp; Quality Filter</span>
+        </div>
+        <div class="step-item step-pending" id="step-synth">
+          <span class="step-icon">○</span>
+          <span>3. Story Narrative Synthesis</span>
+        </div>
+        <div class="step-item step-pending" id="step-compile">
+          <span class="step-icon">○</span>
+          <span>4. Highlights Compilation &amp; Roster Map</span>
+        </div>
+      </div>
+
+      <div class="log" id="log"><div class="log-line" style="color:rgba(0,0,0,0.3)">Awaiting engine start...</div></div>
+      <div id="cost-info" style="display:none; width:100%;"></div>
+      
       <div class="error-box" id="error-box" style="display:none">
-        <strong>Pipeline failed</strong>
+        <strong>Pipeline synthesis failed</strong>
         <span id="error-msg"></span>
-        <div style="margin-top:12px">
+        <div style="margin-top:16px">
           <a href="/generate" class="btn">Retry</a>
-          <a href="/" class="btn btn-grey">Back to Upload</a>
+          <a href="/" class="btn btn-grey">Back to Uploads</a>
         </div>
       </div>
     </div>
