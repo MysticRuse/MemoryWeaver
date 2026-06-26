@@ -21,6 +21,10 @@
       --gold: #d97706;
     }
     
+    .print-cover {
+      display: none;
+    }
+    
     * {
       box-sizing: border-box;
       margin: 0;
@@ -288,6 +292,39 @@
       border-left-color: var(--gold);
     }
     
+    /* Chapter Headers in Screen mode */
+    .section-chapter-header {
+      text-align: center;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      padding-bottom: 20px;
+      margin-bottom: 24px;
+      width: 100%;
+    }
+    .chapter-number {
+      font-size: 10.5px;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: 2px;
+      background: rgba(5, 150, 105, 0.08);
+      padding: 4px 14px;
+      border-radius: 100px;
+      text-transform: uppercase;
+      display: inline-block;
+    }
+    .section-chapter-header h2 {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text);
+      margin-top: 12px;
+      margin-bottom: 6px;
+      border-bottom: none !important;
+    }
+    .chapter-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    
     /* Receipt Invoice API cost layout */
     .receipt-box {
       background: #f8fafc;
@@ -540,32 +577,277 @@
     }
 
     @media print {
-      body { background: white; padding: 0; display: block; color: #000; }
-      .container { max-width: 100%; }
+      body { background: white; padding: 0; display: block; color: #000; font-family: 'Outfit', sans-serif; }
+      .container { max-width: 100%; width: 100%; }
       .no-print { display: none !important; }
-      .card { box-shadow: none; border: 1px solid #ddd; border-radius: 8px; page-break-inside: avoid; margin-bottom: 16px; background: white !important; color: #000 !important; }
-      .highlight { page-break-inside: avoid; border-bottom: 1px solid #ddd; }
-      .highlight-img-wrap { max-height: 220px; border: 1px solid #ddd; background: #fafafa; }
-      .highlight-img-wrap img { max-height: 220px; }
-      .print-header { display: block !important; color: #000 !important; }
-      h2 { color: #000 !important; border-bottom: 2px solid #ddd !important; }
-      .story { color: #000 !important; }
-      .stats-row { border: 1px solid #ddd !important; background: white !important; color: #000 !important; }
-      .stats-value { color: #000 !important; }
+      .card { box-shadow: none; border: none; margin-bottom: 0; background: white !important; color: #000 !important; }
+      
+      /* Print Cover Page Styling */
+      .print-cover {
+        display: flex !important;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 98vh;
+        page-break-after: always;
+        text-align: center;
+        border: 4px double #000;
+        padding: 60px 40px;
+        box-sizing: border-box;
+      }
+      .print-cover-sport {
+        font-size: 16px;
+        font-weight: 800;
+        letter-spacing: 3px;
+        color: #555;
+        margin-bottom: 30px;
+        text-transform: uppercase;
+      }
+      .print-cover-title {
+        font-size: 36px;
+        font-weight: 800;
+        margin-bottom: 20px;
+        color: #000;
+      }
+      .print-cover-subtitle {
+        font-size: 18px;
+        font-weight: 600;
+        color: #444;
+        margin-bottom: 80px;
+      }
+      .print-cover-meta {
+        font-size: 15px;
+        color: #555;
+        line-height: 1.8;
+      }
+      
+      /* Story Page Layout */
+      .story-card {
+        page-break-after: always;
+        page-break-inside: avoid;
+        padding-top: 40px;
+      }
+      .story-card h2 {
+        font-size: 26px;
+        border-bottom: 2px solid #000 !important;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+      }
+      .story {
+        color: #000 !important;
+        font-size: 17px;
+        line-height: 1.8;
+      }
+      
+      /* Stats Page Layout */
+      .stats-card {
+        page-break-after: always;
+        page-break-inside: avoid;
+        padding-top: 40px;
+      }
+      .stats-card h2 {
+        font-size: 26px;
+        border-bottom: 2px solid #000 !important;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+      }
+      .stats-row { 
+        border-bottom: 1px solid #eee !important; 
+        background: white !important; 
+        color: #000 !important; 
+        padding: 12px 0 !important;
+      }
+      .stats-value { color: #000 !important; font-weight: 700; }
       .stats-label { color: #555 !important; }
-      .stats-tag { border: 1px solid #ddd !important; color: #000 !important; background: white !important; }
-      .caption { color: #000 !important; border-left-color: #555 !important; }
-      .score { border: 1px solid #ddd !important; color: #000 !important; background: #eee !important; }
+      .stats-tag { border: 1px solid #ccc !important; color: #000 !important; background: #fafafa !important; padding: 2px 8px !important; border-radius: 4px !important; }
+      
+      /* Highlights (1 Photo per Page Scrapbook Album) */
+      .highlights-card {
+        page-break-before: always;
+      }
+      .highlights-card h2 {
+        display: none !important; /* Hide the generic gallery header in print */
+      }
+      .highlights-container {
+        display: block !important;
+      }
+      .highlight {
+        page-break-after: always;
+        page-break-inside: avoid;
+        height: 98vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border: none !important;
+        margin-bottom: 0 !important;
+        padding: 40px 0 0 0 !important;
+        box-sizing: border-box;
+      }
+      .highlight:last-child {
+        page-break-after: avoid;
+      }
+      .highlight-meta {
+        font-size: 14px;
+        font-weight: 800;
+        color: #444;
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        max-width: 600px;
+        margin-bottom: 10px;
+      }
+      .highlight-img-wrap {
+        max-height: 520px !important;
+        height: 520px !important;
+        width: 100% !important;
+        max-width: 600px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 12px solid #fff !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12) !important;
+        background: #fff !important;
+        box-sizing: border-box;
+        margin: 10px 0;
+      }
+      .highlight-img-wrap img {
+        max-height: 496px !important;
+        width: auto !important;
+        height: auto !important;
+        object-fit: contain !important;
+      }
+      .caption {
+        font-size: 16px;
+        font-style: italic;
+        color: #000 !important;
+        text-align: center;
+        border: none !important;
+        padding: 10px 0 !important;
+        margin-top: 10px;
+        max-width: 600px;
+        line-height: 1.5;
+      }
+      .score { 
+        border: 1px solid #ccc !important; 
+        color: #000 !important; 
+        background: #f5f5f5 !important; 
+        padding: 2px 8px !important;
+        border-radius: 6px !important;
+      }
+      h2 { color: #000 !important; }
     }
     .print-header { display: none; text-align: center; margin-bottom: 16px; font-size: 13px; color: #333; }
+    
+    /* Sharing Tools Styles */
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .qr-container {
+      background: white;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 16px;
+      width: 180px;
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+      position: relative;
+    }
+    .qr-container img {
+      width: 164px;
+      height: 164px;
+      border-radius: 12px;
+    }
+    .qr-placeholder-spinner {
+      width: 30px;
+      height: 30px;
+      border: 3px solid rgba(29, 78, 216, 0.1);
+      border-radius: 50%;
+      border-top-color: var(--accent);
+      animation: spin 0.8s linear infinite;
+    }
+    .share-input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.02);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--text);
+      font-family: inherit;
+    }
+    
+    /* Security Dashboard Badges */
+    .security-dashboard {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .security-badge-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 8px;
+      border-radius: 14px;
+      background: rgba(0,0,0,0.015);
+      border: 1px solid rgba(0,0,0,0.03);
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+    .security-badge-item:hover {
+      background: rgba(0,0,0,0.03);
+    }
+    .security-badge-title {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .security-badge-status {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .status-green {
+      background: rgba(16, 185, 129, 0.1);
+      color: #059669;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    .status-red {
+      background: rgba(239, 68, 68, 0.1);
+      color: #dc2626;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+    .status-yellow {
+      background: rgba(245, 158, 11, 0.1);
+      color: #d97706;
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    }
   </style>
 </head>
 <body ontouchstart="">
   <div class="container">
-    <div class="print-header">
-      ⚽ Paraguay vs Australia — FIFA World Cup 2026<br>
-      🏟️ Levi's Stadium, Santa Clara, CA &bull; June 25, 2026 (7:00 PM - 9:00 PM PST)<br>
-      Generated by MemoryWeaver
+    <!-- Print Cover Page -->
+    <div class="print-cover">
+      <div class="print-cover-sport">FIFA World Cup 2026</div>
+      <h1 class="print-cover-title">🇵🇾 Paraguay vs Australia 🇦🇺</h1>
+      <div class="print-cover-subtitle">Official Commemorative Crowd Narrative & Fan Highlights</div>
+      <div class="print-cover-meta">
+        <p>🏟️ Levi's Stadium, Santa Clara, CA</p>
+        <p>📅 Thursday, June 25, 2026 &bull; 7:00 PM - 9:00 PM PST</p>
+        <p style="margin-top: 60px; font-size: 14px; font-style: italic; font-weight: 500; color: #555;">Created on-site by MemoryWeaver Fan Crowd</p>
+      </div>
     </div>
 
     <!-- Page Header -->
@@ -586,9 +868,47 @@
       </div>
     {% endif %}
 
+    <!-- Security Check Badges -->
+    {% if story %}
+    <div class="card security-card no-print">
+      <h2>🛡️ Playbook Security Check</h2>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.5;">
+        Real-time compliance validation in accordance with Google & Kaggle 2026 AI Agent Guidelines.
+      </p>
+      <div class="security-dashboard">
+        <div class="security-badge-item">
+          <span class="security-badge-title">Privacy</span>
+          {% if security_check.privacy == 'PROTECTED' %}
+            <span class="security-badge-status status-green">🔒 Protected</span>
+          {% else %}
+            <span class="security-badge-status status-red">⚠️ Issue Found</span>
+          {% endif %}
+        </div>
+        <div class="security-badge-item">
+          <span class="security-badge-title">Consent</span>
+          {% if security_check.consent == 'CONFIRMED' %}
+            <span class="security-badge-status status-green">✅ Confirmed</span>
+          {% elif security_check.consent == 'PRIVATE' %}
+            <span class="security-badge-status status-red">❌ Private</span>
+          {% else %}
+            <span class="security-badge-status status-yellow">⏳ Pending</span>
+          {% endif %}
+        </div>
+        <div class="security-badge-item">
+          <span class="security-badge-title">Ready to Post</span>
+          {% if security_check.ready_to_post == 'YES' %}
+            <span class="security-badge-status status-green">🚀 Yes</span>
+          {% else %}
+            <span class="security-badge-status status-yellow">✋ Needs Review</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
     <!-- Engagement Stats -->
     {% if stats %}
-      <div class="card">
+      <div class="card stats-card">
         <h2>📊 Fan Engagement Stats</h2>
         <div class="stats">
           {% if stats.top_moment %}
@@ -635,52 +955,108 @@
       </div>
     {% endif %}
 
-    <!-- Top Moments Gallery -->
+    <!-- Top Moments Gallery (Chronological Chronology Sections) -->
     {% if highlights %}
-      <div class="card">
-        <h2>🔥 Top Fan Highlights</h2>
-        <div class="highlights-container">
-          {% for h in highlights %}
-            <div class="highlight {% if h.score >= 8 %}highlight-gold{% endif %}">
-              <div class="highlight-meta">
-                <span class="moment">📍 {{ h.moment }}</span>
-                <span class="score">⭐ {{ h.score }}/10</span>
-              </div>
-              <div class="highlight-img-wrap">
-                <img src="/thumbs/{{ h.filename }}" alt="Fan Highlight Photo">
-              </div>
-              <div class="caption">💬 {{ h.caption }}</div>
-            </div>
-          {% endfor %}
-        </div>
-      </div>
-    {% endif %}
+      {% set ns = namespace(has_pre=false, has_in=false, has_post=false) %}
+      {% for h in highlights %}
+        {% if h.moment in ['pre-match', 'stadium', 'fan'] %}
+          {% set ns.has_pre = true %}
+        {% elif h.moment in ['post-match'] %}
+          {% set ns.has_post = true %}
+        {% else %}
+          {% set ns.has_in = true %}
+        {% endif %}
+      {% endfor %}
 
-    <!-- Cost Breakdown Invoice Receipt -->
-    {% if cost %}
-      <div class="card no-print">
-        <h2>💳 Gemini API Usage Invoice</h2>
-        <div class="receipt-box">
-          {% for call in cost.api_calls %}
-            <div class="receipt-row">
-              <div>
-                <span class="receipt-item-name">{{ call.name }}</span>
-                <div class="receipt-item-details">
-                  Model: {{ call.model }} | P: {{ call.prompt_tokens }} t | R: {{ call.candidates_tokens }} t
+      <!-- Part I: Pre-Match Chronicles -->
+      {% if ns.has_pre %}
+        <div class="card highlights-card">
+          <div class="section-chapter-header">
+            <span class="chapter-number">PART I</span>
+            <h2>🌅 Pre-Match Atmosphere</h2>
+            <p class="chapter-subtitle">Tailgates, pre-game hype, and build-up at the stadium</p>
+          </div>
+          <div class="highlights-container">
+            {% for h in highlights if h.moment in ['pre-match', 'stadium', 'fan'] %}
+              <div class="highlight {% if h.score >= 8 %}highlight-gold{% endif %}">
+                <div class="highlight-meta">
+                  <span class="moment">📍 {{ h.moment }}</span>
+                  <span class="score">⭐ {{ h.score }}/10</span>
                 </div>
+                <div class="highlight-img-wrap">
+                  {% if h.filename.lower().endswith(('.mov', '.mp4')) %}
+                    <video src="/uploads/{{ h.filename }}" controls playsinline style="width: 100%; max-height: 320px; object-fit: cover; display: block;"></video>
+                  {% else %}
+                    <img src="/thumbs/{{ h.filename }}" alt="Fan Highlight Photo">
+                  {% endif %}
+                </div>
+                <div class="caption">💬 {{ h.caption }}</div>
               </div>
-              <div class="receipt-item-price">
-                ${{ "%.6f"|format(call.cost_usd) }}
-              </div>
-            </div>
-          {% endfor %}
-          <div class="receipt-total">
-            <span>Total Cost (USD)</span>
-            <span>${{ "%.6f"|format(cost.total_cost_usd) }}</span>
+            {% endfor %}
           </div>
         </div>
-      </div>
+      {% endif %}
+
+      <!-- Part II: In-Match Eruptions -->
+      {% if ns.has_in %}
+        <div class="card highlights-card">
+          <div class="section-chapter-header">
+            <span class="chapter-number">PART II</span>
+            <h2>⚽ Live Match Eruptions</h2>
+            <p class="chapter-subtitle">On-pitch drama, player focus, and stadium goal celebrations</p>
+          </div>
+          <div class="highlights-container">
+            {% for h in highlights if h.moment not in ['pre-match', 'stadium', 'fan', 'post-match'] %}
+              <div class="highlight {% if h.score >= 8 %}highlight-gold{% endif %}">
+                <div class="highlight-meta">
+                  <span class="moment">📍 {{ h.moment }}</span>
+                  <span class="score">⭐ {{ h.score }}/10</span>
+                </div>
+                <div class="highlight-img-wrap">
+                  {% if h.filename.lower().endswith(('.mov', '.mp4')) %}
+                    <video src="/uploads/{{ h.filename }}" controls playsinline style="width: 100%; max-height: 320px; object-fit: cover; display: block;"></video>
+                  {% else %}
+                    <img src="/thumbs/{{ h.filename }}" alt="Fan Highlight Photo">
+                  {% endif %}
+                </div>
+                <div class="caption">💬 {{ h.caption }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Part III: Post-Match Legacy -->
+      {% if ns.has_post %}
+        <div class="card highlights-card">
+          <div class="section-chapter-header">
+            <span class="chapter-number">PART III</span>
+            <h2>🏆 Post-Match Legacy</h2>
+            <p class="chapter-subtitle">Final whistle eruptions, scoreboard reflections, and fan smiles</p>
+          </div>
+          <div class="highlights-container">
+            {% for h in highlights if h.moment in ['post-match'] %}
+              <div class="highlight {% if h.score >= 8 %}highlight-gold{% endif %}">
+                <div class="highlight-meta">
+                  <span class="moment">📍 {{ h.moment }}</span>
+                  <span class="score">⭐ {{ h.score }}/10</span>
+                </div>
+                <div class="highlight-img-wrap">
+                  {% if h.filename.lower().endswith(('.mov', '.mp4')) %}
+                    <video src="/uploads/{{ h.filename }}" controls playsinline style="width: 100%; max-height: 320px; object-fit: cover; display: block;"></video>
+                  {% else %}
+                    <img src="/thumbs/{{ h.filename }}" alt="Fan Highlight Photo">
+                  {% endif %}
+                </div>
+                <div class="caption">💬 {{ h.caption }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
     {% endif %}
+
+
 
     <!-- Squad Rosters details Panel -->
     <details class="no-print" style="margin-bottom: 20px;">
@@ -717,6 +1093,94 @@
       </div>
     {% endif %}
 
+    <!-- HITL Consent Gate Card -->
+    {% if story and hitl_consent == 'PENDING' %}
+      <div class="card consent-card no-print" style="border: 1px solid rgba(245, 158, 11, 0.3); background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(255, 255, 255, 0.8) 100%);">
+        <h2>🔒 Public Sharing Consent Required</h2>
+        <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.6; font-weight: 500;">
+          To share these highlights or generate public sharing links and QR codes, you must confirm that no personal identifying information (e.g. real names, addresses, or unconsented minors) is visible in the photos or generated text, in compliance with the FIFA 26 Playbook.
+        </p>
+        <form action="/share-consent" method="POST" style="display: flex; flex-direction: column; gap: 10px;">
+          <button type="submit" name="consent_choice" value="CONFIRMED" class="btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 14px; font-size: 14.5px; font-weight: 700;">
+            ✅ Confirm Public Consent &amp; Unlock Sharing
+          </button>
+          <button type="submit" name="consent_choice" value="PRIVATE" class="btn btn-outline" style="border-color: #ef4444; color: #ef4444; background: transparent; padding: 14px; font-size: 14.5px; font-weight: 700; margin-top: 0;">
+            ❌ Keep Private / Block Sharing
+          </button>
+        </form>
+      </div>
+    {% endif %}
+
+    <!-- Share Results Card -->
+    {% if story %}
+      <div class="card share-card no-print">
+        <h2>📣 Share Match Story &amp; Highlights</h2>
+        {% if hitl_consent == 'CONFIRMED' %}
+          <p class="subtitle" style="font-size: 13.5px; margin-bottom: 16px; line-height: 1.6; color: var(--text-muted); font-weight: 500;">
+            ✅ Sharing unlocked! Scan this QR code or copy the link below to share the generated fan story and highlights with other fans.
+          </p>
+          <div class="share-content" style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap; justify-content: center; margin-top: 14px;">
+            <div class="qr-container">
+              <img id="qr-code-img" src="" alt="Sharing QR Code" style="display: none;">
+              <div id="qr-placeholder" class="qr-placeholder-spinner"></div>
+            </div>
+            <div class="share-actions" style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 10px;">
+              <input type="text" id="share-link-input" readonly value="" class="share-input" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.1); background: rgba(0,0,0,0.02); color: var(--text); font-size: 13.5px; outline: none; font-weight: 500;">
+              <button id="copy-btn" onclick="copyShareLink()" class="btn btn-secondary" style="padding: 12px 18px; font-size: 13.5px; border-radius: 12px; background: linear-gradient(135deg, var(--accent) 0%, #1d4ed8 100%);">
+                <span>🔗 Copy Share Link</span>
+              </button>
+            </div>
+          </div>
+        {% else %}
+          <!-- Sharing Locked state -->
+          <div style="background: rgba(0,0,0,0.02); border: 2.5px dashed rgba(225, 29, 72, 0.3); border-radius: 18px; padding: 24px; text-align: center; margin-top: 10px;">
+            <div style="font-size: 32px; margin-bottom: 12px;">🔒</div>
+            <h3 style="font-size: 16px; font-weight: 800; color: var(--danger); margin-bottom: 8px;">Sharing Locked (HITL Consent Required)</h3>
+            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px;">
+              Public QR codes and links are restricted until fan sharing consent is actively confirmed.
+            </p>
+            {% if hitl_consent == 'PRIVATE' %}
+              <p style="font-size: 13px; font-weight: 600; color: var(--danger); margin-bottom: 14px;">
+                ⚠️ You have opted to keep these photos private.
+              </p>
+              <form action="/share-consent" method="POST" style="margin-top: 10px;">
+                <button type="submit" name="consent_choice" value="CONFIRMED" class="btn btn-outline" style="border-color: var(--primary); color: var(--primary); font-size: 13.5px; padding: 10px 16px; margin-top: 0; display: inline-flex; width: auto; margin-left: auto; margin-right: auto;">
+                  🔓 Change to Public Sharing Consent
+                </button>
+              </form>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <!-- Regenerate Journal Card -->
+    {% if story %}
+      <div class="card no-print" style="margin-top: 20px; border: 1px solid rgba(5, 150, 105, 0.15); background: rgba(5, 150, 105, 0.02);">
+        <h2>🔄 Adjust Journal Highlights</h2>
+        <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;">
+          Want more or fewer memories in your journal? Select a new limit and regenerate the narrative and gallery instantly.
+        </p>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;">
+          <span style="font-size: 13.5px; font-weight: 600; color: var(--text-muted);">Number of highlights:</span>
+          <input type="number" id="journal-limit-select-results" min="1" max="50" value="{{ highlights|length }}" style="padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.15); font-family: inherit; font-size: 13px; font-weight: 600; outline: none; background: white; color: var(--text); width: 80px; text-align: center;">
+        </div>
+        <button onclick="handleCustomGenerateResults(this)" class="btn" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);">
+          <span>🔄 Regenerate Photo Journal</span>
+        </button>
+      </div>
+      
+      <script>
+        function handleCustomGenerateResults(btn) {
+          const selectEl = document.getElementById('journal-limit-select-results');
+          const limit = selectEl ? selectEl.value : 10;
+          btn.disabled = true;
+          btn.innerHTML = '<span class="spinner"></span> Regenerating Story...';
+          window.location.href = `/generate?limit=${limit}`;
+        }
+      </script>
+    {% endif %}
+
     <!-- Action Buttons -->
     <div style="margin-bottom: 40px; display: flex; flex-direction: column; gap: 10px;" class="no-print">
       {% if story %}
@@ -725,5 +1189,55 @@
       <a href="/" class="btn btn-outline" style="margin-top: 0;">📸 Back to Photo Album</a>
     </div>
   </div>
+
+  <script>
+    function initShareTools() {
+      const shareUrl = window.location.origin + '/results';
+      
+      const qrImg = document.getElementById('qr-code-img');
+      const qrPlaceholder = document.getElementById('qr-placeholder');
+      const shareInput = document.getElementById('share-link-input');
+      
+      if (qrImg && shareInput) {
+        shareInput.value = shareUrl;
+        
+        qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(shareUrl) + '&color=0f172a&bgcolor=ffffff&qzone=2';
+        qrImg.onload = function() {
+          qrImg.style.display = 'block';
+          if (qrPlaceholder) qrPlaceholder.style.display = 'none';
+        };
+      }
+    }
+    
+    function copyShareLink() {
+      const shareInput = document.getElementById('share-link-input');
+      const copyBtn = document.getElementById('copy-btn');
+      
+      if (shareInput && copyBtn) {
+        shareInput.select();
+        shareInput.setSelectionRange(0, 99999);
+        
+        navigator.clipboard.writeText(shareInput.value).then(() => {
+          const originalText = copyBtn.innerHTML;
+          copyBtn.innerHTML = '<span>✅ Copied!</span>';
+          copyBtn.style.borderColor = 'var(--primary)';
+          copyBtn.style.color = 'var(--primary)';
+          
+          setTimeout(() => {
+            copyBtn.innerHTML = originalText;
+            copyBtn.style.borderColor = '';
+            copyBtn.style.color = '';
+          }, 2000);
+        }).catch(err => {
+          console.error('Failed to copy: ', err);
+        });
+      }
+    }
+    
+    // Auto initialize if the share element exists
+    document.addEventListener('DOMContentLoaded', function() {
+      initShareTools();
+    });
+  </script>
 </body>
 </html>

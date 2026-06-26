@@ -183,18 +183,19 @@
       justify-content: center;
     }
     .vs-circle {
-      width: 36px;
-      height: 36px;
-      background: rgba(0, 0, 0, 0.03);
-      border: 1px solid rgba(5, 150, 105, 0.2);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 800;
-      color: var(--primary);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+       padding: 6px 12px;
+       min-width: 50px;
+       height: 34px;
+       background: rgba(0, 0, 0, 0.03);
+       border: 1px solid rgba(5, 150, 105, 0.2);
+       border-radius: 17px;
+       display: flex;
+       align-items: center;
+       justify-content: center;
+       font-size: 13px;
+       font-weight: 800;
+       color: var(--primary);
+       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
     }
     .meta-capsules {
       display: flex;
@@ -486,6 +487,28 @@
       align-items: center;
       gap: 8px;
     }
+    .gallery-section {
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .gallery-section:last-child {
+      margin-bottom: 0;
+    }
+    .section-title {
+      font-size: 12.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      border-bottom: 1.5px solid rgba(0, 0, 0, 0.04);
+      padding-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
     .memory-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
@@ -510,6 +533,24 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
+    }
+    .memory-card .moment-badge {
+      position: absolute;
+      bottom: 6px;
+      left: 6px;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      color: #ffffff;
+      font-size: 8px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      pointer-events: none;
+      z-index: 1;
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
     .memory-card .delete-btn {
       position: absolute;
@@ -546,7 +587,7 @@
       background: rgba(0, 0, 0, 0.002);
     }
 
-    /* Gamified Quest Checklist */
+    /* Interactive Timeline Quests */
     .guide-header {
       display: flex;
       justify-content: space-between;
@@ -565,60 +606,143 @@
       font-weight: 700;
       letter-spacing: 1px;
     }
-    .quest-list {
+    .timeline-quests {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 16px;
+      position: relative;
+      margin-top: 10px;
     }
-    .quest-item {
+    
+    .timeline-quests::before {
+      content: '';
+      position: absolute;
+      top: 14px;
+      bottom: 14px;
+      left: 17px;
+      width: 2px;
+      background: rgba(5, 150, 105, 0.12);
+    }
+    
+    .timeline-item {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      position: relative;
       background: rgba(0, 0, 0, 0.005);
-      border: 1px solid rgba(0, 0, 0, 0.025);
-      border-radius: 14px;
-      padding: 14px;
+      border: 1px solid rgba(0, 0, 0, 0.02);
+      border-radius: 16px;
+      padding: 12px 14px;
       transition: all 0.2s ease;
     }
-    .quest-item:hover {
+    
+    .timeline-item:hover {
       background: rgba(5, 150, 105, 0.02);
-      border-color: rgba(5, 150, 105, 0.12);
+      border-color: rgba(5, 150, 105, 0.1);
       transform: translateX(4px);
     }
-    .quest-top {
+    
+    .timeline-time-badge {
+      width: 36px;
+      height: 36px;
+      background: #ffffff;
+      border: 2px solid var(--primary);
+      border-radius: 50%;
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 6px;
-    }
-    .quest-badge {
-      font-size: 10px;
+      justify-content: center;
+      font-size: 11px;
       font-weight: 800;
-      padding: 2px 8px;
-      border-radius: 6px;
-      display: inline-block;
-    }
-    .quest-high {
-      background: rgba(5, 150, 105, 0.08);
       color: var(--primary);
-      border: 1px solid rgba(5, 150, 105, 0.2);
+      box-shadow: 0 3px 8px rgba(5, 150, 105, 0.08);
+      z-index: 1;
+      flex-shrink: 0;
     }
-    .quest-med {
-      background: rgba(29, 78, 216, 0.08);
-      color: var(--accent);
-      border: 1px solid rgba(29, 78, 216, 0.2);
+    
+    .timeline-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
-    .quest-low {
-      background: rgba(180, 83, 9, 0.08);
-      color: var(--warning);
-      border: 1px solid rgba(180, 83, 9, 0.2);
+    
+    .timeline-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
     }
-    .quest-title {
-      font-size: 14px;
-      font-weight: 700;
+    
+    .timeline-event-name {
+      font-size: 13.5px;
+      font-weight: 800;
       color: var(--text);
     }
-    .quest-desc {
+    
+    .timeline-status-badge {
+      font-size: 8px;
+      font-weight: 800;
+      padding: 2.5px 6px;
+      border-radius: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .status-seeking {
+      background: rgba(180, 83, 9, 0.06);
+      color: var(--warning);
+      border: 1px solid rgba(180, 83, 9, 0.15);
+      animation: pulse-border 2s infinite alternate;
+    }
+    
+    @keyframes pulse-border {
+      0% { box-shadow: 0 0 0 rgba(180, 83, 9, 0); }
+      100% { box-shadow: 0 0 6px rgba(180, 83, 9, 0.2); }
+    }
+    
+    .status-captured {
+      background: rgba(5, 150, 105, 0.06);
+      color: var(--primary);
+      border: 1px solid rgba(5, 150, 105, 0.15);
+      box-shadow: 0 0 6px rgba(5, 150, 105, 0.1);
+    }
+    
+    .timeline-req-desc {
       font-size: 12px;
       color: var(--text-muted);
-      line-height: 1.5;
+      line-height: 1.45;
+      font-weight: 500;
+    }
+
+    .timeline-upload-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      padding: 6px 14px;
+      background: linear-gradient(135deg, rgba(5, 150, 105, 0.08) 0%, rgba(29, 78, 216, 0.08) 100%);
+      border: 1px solid rgba(5, 150, 105, 0.2);
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      width: fit-content;
+      text-decoration: none;
+    }
+    
+    .timeline-upload-btn:hover {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      border-color: transparent;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15);
+      transform: translateY(-1px);
+    }
+
+    .timeline-upload-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 6px rgba(5, 150, 105, 0.1);
     }
 
     /* Roster details Block styling */
@@ -885,6 +1009,69 @@
       border-color: rgba(217, 119, 6, 0.15);
       color: var(--gold);
     }
+    
+    /* Milestones & Progress bar styling */
+    .progress-container {
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 100px;
+      height: 12px;
+      overflow: hidden;
+      position: relative;
+      margin: 10px 0;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+    .progress-bar {
+      background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+      height: 100%;
+      width: 0%;
+      border-radius: 100px;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 8px rgba(5, 150, 105, 0.4);
+    }
+    .milestone-item {
+      background: rgba(255, 255, 255, 0.4);
+      border: 1px solid rgba(0, 0, 0, 0.04);
+      border-radius: 18px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .milestone-item:hover {
+      transform: translateY(-2px) scale(1.01);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.02);
+    }
+    .milestone-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+    .milestone-title {
+      font-weight: 800;
+      font-size: 14.5px;
+      color: var(--text);
+    }
+    .milestone-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+    .milestone-badge {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 6px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      text-transform: uppercase;
+      letter-spacing: 0.75px;
+      white-space: nowrap;
+      text-align: center;
+      display: inline-block;
+      transition: all 0.3s ease;
+    }
   </style>
   <script>
     function triggerFlash() {
@@ -900,6 +1087,17 @@
       }, 40);
     }
 
+    function triggerQuestUpload(timestamp) {
+      const questInput = document.getElementById('quest-timestamp-input');
+      if (questInput) {
+        questInput.value = timestamp;
+      }
+      const fileInput = document.getElementById('file-input');
+      if (fileInput) {
+        fileInput.click();
+      }
+    }
+
     function updateFileLabel(input) {
       const fileInfo = document.getElementById('file-info');
       const uploadText = document.getElementById('upload-text');
@@ -908,6 +1106,15 @@
         fileInfo.style.display = 'block';
         fileInfo.innerHTML = '✨ <strong>' + input.files.length + '</strong> photo(s) selected';
         uploadText.textContent = 'Tap to edit selection';
+        
+        // Auto-submit if upload was triggered for a specific quest (direct upload link)
+        const questInput = document.getElementById('quest-timestamp-input');
+        if (questInput && questInput.value) {
+          const btn = document.getElementById('upload-btn');
+          if (btn) {
+            btn.click();
+          }
+        }
       } else {
         fileInfo.style.display = 'none';
         uploadText.textContent = 'Choose Photos / Videos';
@@ -927,7 +1134,7 @@
       // Delay disabling the button slightly so Safari allows the form submission to initiate
       setTimeout(() => {
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> Uploading Match Memories...';
+        btn.innerHTML = '<span class="spinner"></span> Feeding the Inferno... 🔥';
       }, 50);
       return true;
     }
@@ -976,71 +1183,503 @@
     }
 
     function handleGenerateClick(btn) {
+      const selectEl = document.getElementById('journal-limit-select');
+      const limit = selectEl ? selectEl.value : 10;
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span> Synthesizing Match Story...';
-      window.location.href = '/generate';
+      window.location.href = `/generate?limit=${limit}`;
     }
+
+    const OVERRIDE_SCORE = "{{ override_score }}";
+    const OVERRIDE_TIMESTAMP = "{{ override_timestamp }}";
 
     const KICKOFF_TIME = new Date("2026-06-25T19:00:00-07:00");
     const END_TIME = new Date("2026-06-25T21:00:00-07:00");
 
-    function updateMatchClock() {
-      const clockEl = document.getElementById('match-clock');
-      const statusText = document.getElementById('album-status-span');
-      if (!clockEl) return;
-
-      const now = new Date();
+    function getMatchScore(now) {
+      if (OVERRIDE_SCORE === '0-0') {
+        return { paraguay: 0, australia: 0, status: 'Live' };
+      }
       
-      if (now < KICKOFF_TIME) {
-        const diffMs = KICKOFF_TIME - now;
-        const diffHours = Math.floor(diffMs / 3600000);
-        const diffMins = Math.floor((diffMs % 3600000) / 60000);
-        const diffSecs = Math.floor((diffMs % 60000) / 1000);
-        
-        let countdownStr = "⏱️ Kick-off in ";
-        if (diffHours > 0) {
-          countdownStr += diffHours + "h " + diffMins + "m " + diffSecs + "s";
-        } else {
-          countdownStr += diffMins + "m " + diffSecs + "s";
-        }
-        clockEl.textContent = countdownStr;
-        clockEl.style.color = 'var(--accent)';
-        
-        if (statusText) {
-          statusText.innerHTML = '<span class="pulse-dot" style="background-color: var(--warning); box-shadow: 0 0 10px var(--warning);"></span> Match Countdown';
-        }
-      } else if (now >= KICKOFF_TIME && now < END_TIME) {
-        const elapsedMs = now - KICKOFF_TIME;
-        const elapsedMins = Math.floor(elapsedMs / 60000);
-        const elapsedSecs = Math.floor((elapsedMs % 60000) / 1000);
-        
-        let matchTimeStr = "⚽ LIVE: " + elapsedMins + "'" + (elapsedSecs < 10 ? "0" : "") + elapsedSecs + '"';
-        if (elapsedMins >= 45 && elapsedMins < 60) {
-          matchTimeStr = "☕ HT - HALFTIME";
-        }
-        clockEl.textContent = matchTimeStr;
-        clockEl.style.color = 'var(--primary)';
-        
-        if (statusText) {
-          statusText.innerHTML = '<span class="pulse-dot" style="background-color: var(--danger); box-shadow: 0 0 10px var(--danger); animation: pulse 1s infinite alternate;"></span> MATCH LIVE';
-        }
+      let ms = now.getTime();
+      if (OVERRIDE_TIMESTAMP) {
+        ms = parseFloat(OVERRIDE_TIMESTAMP) * 1000;
+      }
+      
+      const kickoffMs = KICKOFF_TIME.getTime();
+      const goalAusMs = kickoffMs + 24 * 60 * 1000;
+      const goalPyMs = kickoffMs + 82 * 60 * 1000;
+      
+      if (ms < kickoffMs) {
+        return { paraguay: 0, australia: 0, status: 'Pre-Match' };
+      } else if (ms < goalAusMs) {
+        return { paraguay: 0, australia: 0, status: 'Live' };
+      } else if (ms < goalPyMs) {
+        return { paraguay: 0, australia: 1, status: 'Live' };
       } else {
-        clockEl.textContent = "🏁 FT - Full Time";
-        clockEl.style.color = 'var(--text-muted)';
-        
-        if (statusText) {
-          statusText.innerHTML = '<span class="pulse-dot" style="background-color: var(--text-muted); box-shadow: none;"></span> Event Completed';
-        }
+        return { paraguay: 1, australia: 1, status: 'Completed' };
       }
     }
 
+    function updateLiveScore() {
+      const vsCircle = document.getElementById('scoreboard-vs-score');
+      const questScoreBadge = document.getElementById('quest-score-badge');
+      if (!vsCircle && !questScoreBadge) return;
+      
+      const now = new Date();
+      const scoreObj = getMatchScore(now);
+      const scoreStr = `${scoreObj.paraguay} - ${scoreObj.australia}`;
+      
+      if (scoreObj.status === 'Pre-Match') {
+        if (vsCircle) vsCircle.textContent = 'VS';
+        if (questScoreBadge) questScoreBadge.textContent = 'SCORE: 0 - 0';
+      } else {
+        if (vsCircle) vsCircle.textContent = scoreStr;
+        if (questScoreBadge) questScoreBadge.textContent = `SCORE: ${scoreStr}`;
+      }
+    }
+
+    function updateMatchClock() {
+      const clockEl = document.getElementById('match-clock');
+      const statusText = document.getElementById('album-status-span');
+      if (clockEl) {
+        let now = new Date();
+        if (OVERRIDE_TIMESTAMP) {
+          now = new Date(parseFloat(OVERRIDE_TIMESTAMP) * 1000);
+        }
+        
+        if (now < KICKOFF_TIME) {
+          const diffMs = KICKOFF_TIME - now;
+          const diffHours = Math.floor(diffMs / 3600000);
+          const diffMins = Math.floor((diffMs % 3600000) / 60000);
+          const diffSecs = Math.floor((diffMs % 60000) / 1000);
+          
+          let countdownStr = "⏱️ Kick-off in ";
+          if (diffHours > 0) {
+            countdownStr += diffHours + "h " + diffMins + "m " + diffSecs + "s";
+          } else {
+            countdownStr += diffMins + "m " + diffSecs + "s";
+          }
+          clockEl.textContent = countdownStr;
+          clockEl.style.color = 'var(--accent)';
+          
+          if (statusText) {
+            statusText.innerHTML = '<span class="pulse-dot" style="background-color: var(--warning); box-shadow: 0 0 10px var(--warning);"></span> Match Countdown';
+          }
+        } else {
+          const elapsedMs = now - KICKOFF_TIME;
+          const elapsedMins = Math.floor(elapsedMs / 60000);
+          const elapsedSecs = Math.floor((elapsedMs % 60000) / 1000);
+          
+          if (elapsedMins < 45) {
+            clockEl.textContent = "⚽ LIVE: " + elapsedMins + "'" + (elapsedSecs < 10 ? "0" : "") + elapsedSecs + '"';
+            clockEl.style.color = 'var(--primary)';
+            if (statusText) {
+              statusText.innerHTML = '<span class="pulse-dot" style="background-color: var(--danger); box-shadow: 0 0 10px var(--danger); animation: pulse 1s infinite alternate;"></span> MATCH LIVE';
+            }
+          } else if (elapsedMins < 60) {
+            clockEl.textContent = "☕ HT - HALFTIME";
+            clockEl.style.color = 'var(--primary)';
+            if (statusText) {
+              statusText.innerHTML = '<span class="pulse-dot" style="background-color: var(--warning); box-shadow: 0 0 10px var(--warning); animation: pulse 1s infinite alternate;"></span> HALFTIME';
+            }
+          } else if (elapsedMins < 105) {
+            const playMins = elapsedMins - 15;
+            clockEl.textContent = "⚽ LIVE: " + playMins + "'" + (elapsedSecs < 10 ? "0" : "") + elapsedSecs + '"';
+            clockEl.style.color = 'var(--primary)';
+            if (statusText) {
+              statusText.innerHTML = '<span class="pulse-dot" style="background-color: var(--danger); box-shadow: 0 0 10px var(--danger); animation: pulse 1s infinite alternate;"></span> MATCH LIVE';
+            }
+          } else {
+            clockEl.textContent = "🏁 FT - Full Time";
+            clockEl.style.color = 'var(--text-muted)';
+            if (statusText) {
+              statusText.innerHTML = '<span class="pulse-dot" style="background-color: var(--text-muted); box-shadow: none;"></span> Event Completed';
+            }
+          }
+        }
+      }
+      updateLiveScore();
+    }
+
+    function updateMilestones(count) {
+      const targetEl = document.getElementById('next-milestone-target');
+      const percentEl = document.getElementById('milestone-percentage');
+      const barEl = document.getElementById('milestone-progress-bar');
+      const remainingEl = document.getElementById('milestone-remaining');
+      
+      if (!targetEl || !percentEl || !barEl || !remainingEl) return;
+      
+      let nextTarget = 100;
+      let prevTarget = 0;
+      let label = '100 Photos';
+      let rewardName = 'AI Story Weaver';
+      
+      if (count >= 100000) {
+        nextTarget = 100000;
+        prevTarget = 10000;
+        label = '100,000 Photos';
+        rewardName = 'Ultimate Stadium Mosaic';
+      } else if (count >= 10000) {
+        nextTarget = 100000;
+        prevTarget = 10000;
+        label = '100,000 Photos';
+        rewardName = 'Ultimate Stadium Mosaic';
+      } else if (count >= 1000) {
+        nextTarget = 10000;
+        prevTarget = 1000;
+        label = '10,000 Photos';
+        rewardName = 'Official Match Digital Museum';
+      } else if (count >= 100) {
+        nextTarget = 1000;
+        prevTarget = 100;
+        label = '1,000 Photos';
+        rewardName = 'Ultra-HD PDF & Section Highlights';
+      }
+      
+      targetEl.textContent = label;
+      
+      let percent = 0;
+      if (count >= 100000) {
+        percent = 100;
+      } else {
+        const range = nextTarget - prevTarget;
+        const currentProgress = count - prevTarget;
+        percent = Math.min(100, Math.max(0, Math.floor((currentProgress / range) * 100)));
+      }
+      
+      percentEl.textContent = percent + '%';
+      barEl.style.width = percent + '%';
+      
+      if (count >= 100000) {
+        remainingEl.innerHTML = '🎉 <strong>ALL CROWDSOURCING MILESTONES ACHIEVED!</strong> You are legends!';
+      } else {
+        const remaining = nextTarget - count;
+        remainingEl.innerHTML = `We need <strong>${remaining.toLocaleString()}</strong> more photo(s) to unlock the <strong>${rewardName}</strong>!`;
+      }
+      
+      const milestones = [100, 1000, 10000, 100000];
+      milestones.forEach(m => {
+        const badge = document.getElementById('badge-' + m);
+        const item = document.getElementById('milestone-' + m);
+        if (badge && item) {
+          if (count >= m) {
+            badge.textContent = '✅ UNLOCKED';
+            badge.style.background = 'rgba(5, 150, 105, 0.1)';
+            badge.style.borderColor = 'rgba(5, 150, 105, 0.3)';
+            badge.style.color = 'var(--primary)';
+            item.style.background = 'rgba(5, 150, 105, 0.03)';
+            item.style.borderColor = 'rgba(5, 150, 105, 0.15)';
+          } else {
+            badge.textContent = '🔒 LOCKED';
+            badge.style.background = '';
+            badge.style.borderColor = '';
+            badge.style.color = '';
+            item.style.background = '';
+            item.style.borderColor = '';
+          }
+        }
+      });
+    }
+
+    function pollAlbumCount() {
+      fetch('/album-count')
+        .then(response => response.json())
+        .then(data => {
+          const count = data.count;
+          const myUploads = JSON.parse(localStorage.getItem('my_uploads') || '[]');
+          const yourCount = myUploads.length;
+          
+          // Update total count displays
+          const globalCountStrong = document.getElementById('global-contribution-count');
+          if (globalCountStrong) {
+            globalCountStrong.textContent = count;
+          }
+          const yourCountStrong = document.getElementById('your-contribution-count');
+          if (yourCountStrong) {
+            yourCountStrong.textContent = yourCount;
+          }
+          
+          const globalBadge = document.querySelector('.global-count-badge');
+          if (globalBadge) {
+            globalBadge.textContent = count + ' GLOBAL';
+          }
+          
+          const yourBadge = document.querySelector('.your-count-badge');
+          if (yourBadge) {
+            yourBadge.textContent = yourCount + ' YOURS';
+          }
+          
+          // Dynamically update the encouragement banner
+          const encBox = document.getElementById('encouragement-box');
+          if (encBox) {
+            let encHtml = '';
+            if (count === 0) {
+              encHtml = `
+                <div class="enc-content enc-low" style="background: rgba(225, 29, 72, 0.05); border-color: rgba(225, 29, 72, 0.2); color: var(--danger);">
+                  <span class="enc-icon">💥</span>
+                  <div>
+                    <strong>THE STADIUM IS WAITING!</strong> Be the spark that sets this match on fire! Upload the first tailgate, crowd, or warmup photos NOW and kickstart the most epic, high-octane fan journal in World Cup history! Let's go!
+                  </div>
+                </div>`;
+            } else if (count < 5) {
+              encHtml = `
+                <div class="enc-content enc-low" style="background: rgba(180, 83, 9, 0.05); border-color: rgba(180, 83, 9, 0.2); color: var(--warning);">
+                  <span class="enc-icon">🔥</span>
+                  <div>
+                    <strong>SPARK DETECTED!</strong> We have <strong>${count}</strong> photo(s) in the furnace! We need at least <strong>5</strong> crowd eruptions, action shots, or fan selfies to unleash the AI Weaver and ignite our legendary fan-owned match chronicle!
+                  </div>
+                </div>`;
+            } else if (count < 15) {
+              encHtml = `
+                <div class="enc-content enc-med" style="background: rgba(5, 150, 105, 0.05); border-color: rgba(5, 150, 105, 0.2); color: var(--primary);">
+                  <span class="enc-icon">⚡</span>
+                  <div>
+                    <strong>INFERNO IN PROGRESS!</strong> <strong>${count}</strong> mind-blowing memories captured! The stands are shaking! Keep sharing the QR code, rally your row, and upload every single goal, flag-wave, and tackle. Don't leave a single angle uncaptured!
+                  </div>
+                </div>`;
+            } else {
+              encHtml = `
+                <div class="enc-content enc-high" style="background: rgba(217, 119, 6, 0.05); border-color: rgba(217, 119, 6, 0.2); color: var(--gold);">
+                  <span class="enc-icon">🏆</span>
+                  <div>
+                    <strong>LEGENDARY STADIUM BLAZE!</strong> An incredible <strong>${count}</strong> photos uploaded by this wild crowd! Snapping the final whistle, player handshakes, and scoreboard reflections will seal the greatest fan journal in World Cup history! You guys are absolute legends!
+                  </div>
+                </div>`;
+            }
+            encBox.innerHTML = encHtml;
+          }
+          
+          // Update the global milestones & rewards panel dynamically
+          updateMilestones(count);
+        })
+        .catch(err => console.error('Error polling count:', err));
+    }
+
+    function handleDeleteClick(event, filename) {
+      if (!confirm('Remove this photo from the album?')) {
+        event.preventDefault();
+        return false;
+      }
+      
+      // Remove from localStorage immediately
+      let myUploads = JSON.parse(localStorage.getItem('my_uploads') || '[]');
+      myUploads = myUploads.filter(f => f !== filename);
+      localStorage.setItem('my_uploads', JSON.stringify(myUploads));
+      
+      return true;
+    }
+
+    function renderGallery() {
+      const container = document.getElementById('gallery-container');
+      if (!container) return;
+      
+      // Extract any server-rendered files to pre-fill localStorage (helps when cookies work)
+      const staticCards = container.querySelectorAll('.memory-card img');
+      if (staticCards.length > 0) {
+        let myUploads = JSON.parse(localStorage.getItem('my_uploads') || '[]');
+        let updated = false;
+        staticCards.forEach(img => {
+          const src = img.getAttribute('src');
+          if (src) {
+            const parts = src.split('/');
+            const filename = parts[parts.length - 1];
+            if (filename && !myUploads.includes(filename)) {
+              myUploads.push(filename);
+              updated = true;
+            }
+          }
+        });
+        if (updated) {
+          localStorage.setItem('my_uploads', JSON.stringify(myUploads));
+        }
+      }
+      
+      fetch('/album-classified')
+        .then(response => response.json())
+        .then(data => {
+          const preMatch = data['pre-match'] || [];
+          const inMatch = data['in-match'] || [];
+          const postMatch = data['post-match'] || [];
+          const allFiles = [...preMatch, ...inMatch, ...postMatch];
+          const allFilenames = allFiles.map(x => x.filename);
+          
+          // Get user's uploads from localStorage
+          let myUploads = JSON.parse(localStorage.getItem('my_uploads') || '[]');
+          
+          // Filter to only include files that currently exist on the server
+          myUploads = myUploads.filter(f => allFilenames.includes(f));
+          localStorage.setItem('my_uploads', JSON.stringify(myUploads));
+          const yourCount = myUploads.length;
+          
+          // Force update local and global count badges
+          const globalCountStrong = document.getElementById('global-contribution-count');
+          if (globalCountStrong) {
+            globalCountStrong.textContent = allFiles.length;
+          }
+          const yourCountStrong = document.getElementById('your-contribution-count');
+          if (yourCountStrong) {
+            yourCountStrong.textContent = yourCount;
+          }
+          const globalBadge = document.querySelector('.global-count-badge');
+          if (globalBadge) {
+            globalBadge.textContent = allFiles.length + ' GLOBAL';
+          }
+          const yourBadge = document.querySelector('.your-count-badge');
+          if (yourBadge) {
+            yourBadge.textContent = yourCount + ' YOURS';
+          }
+          
+          // Update the global milestones & rewards panel dynamically
+          updateMilestones(allFiles.length);
+          
+          // Dynamic Quest checkoff logic based on myUploads files and their timestamps
+          const quests = [
+            { id: 'kickoff', start: 1782439200 - 300, end: 1782439200 + 300 }, // 19:00 PST (18:55 - 19:05)
+            { id: 'goal-aus', start: 1782440640 - 240, end: 1782440640 + 240 }, // 19:24 PST (19:20 - 19:28)
+            { id: 'corner-py', start: 1782441480 - 240, end: 1782441480 + 240 }, // 19:38 PST (19:34 - 19:42)
+            { id: 'halftime', start: 1782441900 - 120, end: 1782441900 + 900 }, // 19:45 PST (19:43 - 20:00)
+            { id: 'goal-py', start: 1782444120 - 240, end: 1782444120 + 240 }, // 20:22 PST (20:18 - 20:26)
+            { id: 'yellow-card', start: 1782444780 - 240, end: 1782444780 + 240 }, // 20:33 PST (20:29 - 20:37)
+            { id: 'fulltime', start: 1782445800 - 120, end: 1782445800 + 1800 } // 20:45 PST (20:43 - 21:15)
+          ];
+          
+          const myUploadObjects = allFiles.filter(item => myUploads.includes(item.filename));
+          quests.forEach(quest => {
+            const isCaptured = myUploadObjects.some(obj => obj.timestamp >= quest.start && obj.timestamp <= quest.end);
+            const badge = document.getElementById('badge-quest-' + quest.id);
+            if (badge) {
+              if (isCaptured) {
+                badge.textContent = '✅ Captured';
+                badge.className = 'timeline-status-badge status-captured';
+              } else {
+                badge.textContent = '📡 Seeking';
+                badge.className = 'timeline-status-badge status-seeking';
+              }
+            }
+          });
+          
+          if (myUploads.length > 0) {
+            const preMatchFiles = preMatch.filter(item => myUploads.includes(item.filename)).map(item => item.filename);
+            const inMatchFiles = inMatch.filter(item => myUploads.includes(item.filename)).map(item => item.filename);
+            const postMatchFiles = postMatch.filter(item => myUploads.includes(item.filename)).map(item => item.filename);
+            
+            let html = '';
+            
+            const renderSection = (title, icon, files, key) => {
+              if (files.length === 0) return '';
+              let sectHtml = `<div class="gallery-section">`;
+              sectHtml += `<h3 class="section-title">${icon} ${title}</h3>`;
+              sectHtml += `<div class="memory-grid">`;
+              files.forEach(filename => {
+                const isVideo = filename.toLowerCase().endsWith('.mov') || filename.toLowerCase().endsWith('.mp4');
+                const mediaTag = isVideo 
+                  ? `<video src="/uploads/${filename}" style="width:100%; height:100%; object-fit:cover;" autoplay loop muted playsinline></video>`
+                  : `<img src="/thumbs/${filename}" alt="Memory">`;
+                sectHtml += `
+                  <div class="memory-card">
+                    ${mediaTag}
+                    <span class="moment-badge">${key}</span>
+                    <a href="/delete/${filename}" class="delete-btn" title="Delete Memory" onclick="return handleDeleteClick(event, '${filename}')">&times;</a>
+                  </div>`;
+              });
+              sectHtml += `</div></div>`;
+              return sectHtml;
+            };
+            
+            html += renderSection('Part I: Pre-Match Atmosphere', '🌅', preMatchFiles, 'pre-match');
+            html += renderSection('Part II: Live Match Eruptions', '⚽', inMatchFiles, 'in-match');
+            html += renderSection('Part III: Post-Match Legacy', '🏆', postMatchFiles, 'post-match');
+            
+            container.innerHTML = html;
+          } else {
+            if (allFiles.length > 0) {
+              container.innerHTML = `
+                <div class="empty-gallery">
+                  You haven't uploaded any photos to this album yet. Share your match memories below to build your personal reel!
+                </div>`;
+            } else {
+              container.innerHTML = `
+                <div class="empty-gallery">
+                  No match memories uploaded yet. Be the first to capture the action!
+                </div>`;
+            }
+          }
+        })
+        .catch(err => {
+          console.error('Error loading gallery files:', err);
+          if (container.querySelectorAll('.memory-card').length === 0) {
+            container.innerHTML = `
+              <div class="empty-gallery">
+                No match memories uploaded yet. Be the first to capture the action!
+              </div>`;
+          }
+        });
+    }
+
     function initPageUtilities() {
+      // Process new files parameter if present
+      const urlParams = new URLSearchParams(window.location.search);
+      const newFilesParam = urlParams.get('new_files');
+      if (newFilesParam) {
+        const newFiles = newFilesParam.split(',');
+        let myUploads = JSON.parse(localStorage.getItem('my_uploads') || '[]');
+        newFiles.forEach(f => {
+          if (f && !myUploads.includes(f)) {
+            myUploads.push(f);
+          }
+        });
+        localStorage.setItem('my_uploads', JSON.stringify(myUploads));
+        
+        // Clean URL to keep it pretty
+        const successParam = urlParams.get('success');
+        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + 
+                         (successParam ? "?success=" + encodeURIComponent(successParam) : "");
+        window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+      }
+
       initShareTools();
       updateMatchClock();
       setInterval(updateMatchClock, 1000);
+      
+      // Perform initial poll and start 5-second polling interval
+      pollAlbumCount();
+      setInterval(pollAlbumCount, 5000);
+      
+      // Initial gallery render
+      renderGallery();
     }
 
     window.addEventListener('DOMContentLoaded', initPageUtilities);
+
+    window.addEventListener('pageshow', function(event) {
+      // Always reset the upload button to active and clear file input on page entry (safeguard for Safari BFCache)
+      const btn = document.getElementById('upload-btn');
+      const fileInput = document.getElementById('file-input');
+      const fileInfo = document.getElementById('file-info');
+      const uploadText = document.getElementById('upload-text');
+      const questInput = document.getElementById('quest-timestamp-input');
+      
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<span>🔥 UPLOAD TO THE INFERNO!</span>';
+      }
+      if (fileInput) {
+        fileInput.value = '';
+      }
+      if (fileInfo) {
+        fileInfo.style.display = 'none';
+      }
+      if (uploadText) {
+        uploadText.textContent = 'Choose Photos / Videos';
+      }
+      if (questInput) {
+        questInput.value = '';
+      }
+      
+      // Render gallery to stay in sync
+      renderGallery();
+    });
   </script>
 </head>
 <body ontouchstart="">
@@ -1062,7 +1701,7 @@
         </div>
         
         <div class="scoreboard-vs">
-          <div class="vs-circle">VS</div>
+          <div class="vs-circle" id="scoreboard-vs-score">{{ score_text }}</div>
         </div>
         
         <div class="team-node">
@@ -1084,6 +1723,7 @@
     <!-- Main Card -->
     <div class="card">
       <form action="/upload" method="POST" enctype="multipart/form-data" onsubmit="return handleUploadSubmit(event)">
+        <input type="hidden" name="quest_timestamp" id="quest-timestamp-input">
         <div class="file-upload-zone">
           <div class="viewfinder-corner corner-tl"></div>
           <div class="viewfinder-corner corner-tr"></div>
@@ -1091,15 +1731,15 @@
           <div class="viewfinder-corner corner-br"></div>
           <div class="laser-line"></div>
           
-          <span class="upload-icon">📷</span>
-          <span class="upload-text" id="upload-text">Choose Photos / Videos</span>
-          <span class="upload-subtext">Tap anywhere to browse gallery</span>
+          <span class="upload-icon">📸</span>
+          <span class="upload-text" id="upload-text">TAP TO CAPTURE THE HEAT!</span>
+          <span class="upload-subtext">Tap anywhere to dump your match-day photos directly into the fire</span>
           <input type="file" id="file-input" name="photos" multiple accept="image/*,video/*" onchange="updateFileLabel(this)">
           <div class="selected-files-info" id="file-info"></div>
         </div>
         
         <button class="btn" type="submit" id="upload-btn" style="margin-top: 16px;">
-          <span>📤 Upload Match Memories</span>
+          <span>🔥 UPLOAD TO THE INFERNO!</span>
         </button>
       </form>
 
@@ -1108,58 +1748,59 @@
       {% endif %}
 
       <div class="count-badge">
-        📷 <strong>{{ count }}</strong> photo(s) in the album so far
+        📷 <strong id="global-contribution-count">{{ count }}</strong> photo(s) uploaded by everyone &bull; you contributed <strong id="your-contribution-count">0</strong>
       </div>
 
       <!-- Dynamic Crowd Encouragement Banner -->
-      <div class="encouragement-box">
+      <div class="encouragement-box" id="encouragement-box">
         {% if count == 0 %}
-          <div class="enc-content enc-low">
-            <span class="enc-icon">💡</span>
+          <div class="enc-content enc-low" style="background: rgba(225, 29, 72, 0.05); border-color: rgba(225, 29, 72, 0.2); color: var(--danger);">
+            <span class="enc-icon">💥</span>
             <div>
-              <strong>Let's weave a story!</strong> Upload your first few photos (cheering fans, warmups) to start weaving the match diary.
+              <strong>THE STADIUM IS WAITING!</strong> Be the spark that sets this match on fire! Upload the first tailgate, crowd, or warmup photos NOW and kickstart the most epic, high-octane fan journal in World Cup history! Let's go!
             </div>
           </div>
         {% elif count < 5 %}
-          <div class="enc-content enc-low">
-            <span class="enc-icon">🌱</span>
+          <div class="enc-content enc-low" style="background: rgba(180, 83, 9, 0.05); border-color: rgba(180, 83, 9, 0.2); color: var(--warning);">
+            <span class="enc-icon">🔥</span>
             <div>
-              <strong>Off to a great start!</strong> You've added <strong>{{ count }}</strong> photo(s). Upload at least <strong>5</strong> action or crowd shots to weave a high-fidelity story!
+              <strong>SPARK DETECTED!</strong> We have <strong>{{ count }}</strong> photo(s) in the furnace! We need at least <strong>5</strong> crowd eruptions, action shots, or fan selfies to unleash the AI Weaver and ignite our legendary fan-owned match chronicle!
             </div>
           </div>
         {% elif count < 15 %}
-          <div class="enc-content enc-med">
-            <span class="enc-icon">🚀</span>
+          <div class="enc-content enc-med" style="background: rgba(5, 150, 105, 0.05); border-color: rgba(5, 150, 105, 0.2); color: var(--primary);">
+            <span class="enc-icon">⚡</span>
             <div>
-              <strong>Superb progress!</strong> <strong>{{ count }}</strong> memories captured. Keep snapping goals, players, and fans to build a stellar end-of-game highlight album!
+              <strong>INFERNO IN PROGRESS!</strong> <strong>{{ count }}</strong> mind-blowing memories captured! The stands are shaking! Keep sharing the QR code, rally your row, and upload every single goal, flag-wave, and tackle. Don't leave a single angle uncaptured!
             </div>
           </div>
         {% else %}
-          <div class="enc-content enc-high">
-            <span class="enc-icon">✨</span>
+          <div class="enc-content enc-high" style="background: rgba(217, 119, 6, 0.05); border-color: rgba(217, 119, 6, 0.2); color: var(--gold);">
+            <span class="enc-icon">🏆</span>
             <div>
-              <strong>Legendary match diary!</strong> <strong>{{ count }}</strong> memories in the album. Add the final whistle and scoreboard reactions to complete the perfect game day story!
+              <strong>LEGENDARY STADIUM BLAZE!</strong> An incredible <strong>{{ count }}</strong> photos uploaded by this wild crowd! Snapping the final whistle, player handshakes, and scoreboard reflections will seal the greatest fan journal in World Cup history! You guys are absolute legends!
             </div>
           </div>
         {% endif %}
       </div>
 
-      {% if count > 20 %}
-        <div class="warn-badge">
-          ⚠️ <strong>High Album Volume:</strong> Over 20 photos may exceed Gemini API batch context size. Consider clearing and uploading only the best highlights!
-        </div>
-      {% endif %}
-
       <!-- Generation Actions -->
-      <div style="display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; flex-direction: column; gap: 12px; background: rgba(5, 150, 105, 0.03); border: 1px solid rgba(5, 150, 105, 0.15); padding: 18px; border-radius: 20px;">
+        <h3 style="font-size: 14px; font-weight: 800; text-transform: uppercase; color: var(--primary); letter-spacing: 0.5px;">✨ Weave Photo Journal</h3>
+        
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px;">
+          <span style="font-size: 13px; font-weight: 600; color: var(--text-muted);">Journal highlights count:</span>
+          <input type="number" id="journal-limit-select" min="1" max="50" value="10" style="padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.15); font-family: inherit; font-size: 13px; font-weight: 600; outline: none; background: white; color: var(--text); width: 80px; text-align: center;">
+        </div>
+
+        <button onclick="handleGenerateClick(this)" class="btn" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; box-shadow: 0 4px 15px rgba(5, 150, 105, 0.15);">
+          <span>✨ Generate/Update Journal</span>
+        </button>
+
         {% if story_ready %}
-          <a href="/results" class="btn" style="background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); color: white; box-shadow: 0 8px 20px rgba(29, 78, 216, 0.2);">
-            <span>🎉 View Highlights &amp; Story</span>
+          <a href="/results" class="btn btn-secondary" style="margin-top: 4px; border: 1.5px solid var(--accent); color: var(--accent);">
+            <span>🎉 View Current Story</span>
           </a>
-        {% else %}
-          <button class="btn btn-secondary" disabled style="opacity:0.6; cursor:not-allowed;">
-            <span>⏳ Story will be woven at full-time</span>
-          </button>
         {% endif %}
       </div>
     </div>
@@ -1170,8 +1811,8 @@
         <h2>📣 Invite Other Photo Takers</h2>
         <span class="guide-badge" style="background: rgba(29, 78, 216, 0.08); border-color: rgba(29, 78, 216, 0.2); color: var(--accent);">SHARE</span>
       </div>
-      <p class="subtitle" style="font-size: 13px; margin-bottom: 12px; line-height: 1.5;">
-        Let other fans scan this code to instantly upload their photos and contribute to the Paraguay vs Australia album!
+      <p class="subtitle" style="font-size: 13.5px; margin-bottom: 12px; line-height: 1.6; color: var(--text-muted); font-weight: 500;">
+        📣 <strong>BLAST THIS QR CODE TO THE STANDS!</strong> Pass the code to your row, your section, and your tailgate friends. Let's gather thousands of high-octane angles and burn our names into World Cup history forever!
       </p>
       
       <div class="share-content">
@@ -1193,69 +1834,261 @@
     <div class="card gallery-card">
       <div class="gallery-header">
         <span class="gallery-title">📸 Live Memory Roll</span>
-        <span class="guide-badge" style="background: rgba(5, 150, 105, 0.08); border-color: rgba(5, 150, 105, 0.2); color: var(--primary);">
-          {{ count }} TOTAL
-        </span>
+        <div style="display: flex; gap: 6px; align-items: center;">
+          <span class="guide-badge global-count-badge" style="background: rgba(5, 150, 105, 0.08); border-color: rgba(5, 150, 105, 0.2); color: var(--primary);">
+            {{ count }} GLOBAL
+          </span>
+          <span class="guide-badge your-count-badge" style="background: rgba(29, 78, 216, 0.08); border-color: rgba(29, 78, 216, 0.2); color: var(--accent);">
+            0 YOURS
+          </span>
+        </div>
       </div>
       
-      {% if uploaded_files %}
-        <div class="memory-grid">
-          {% for filename in uploaded_files %}
-            <div class="memory-card">
-              <img src="/thumbs/{{ filename }}" alt="Memory">
-              <a href="/delete/{{ filename }}" class="delete-btn" title="Delete Memory" onclick="return confirm('Remove this photo from the album?')">&times;</a>
+      <div id="gallery-container">
+        {% if uploaded_files_classified and (uploaded_files_classified['pre-match'] or uploaded_files_classified['in-match'] or uploaded_files_classified['post-match']) %}
+          
+          {% if uploaded_files_classified['pre-match'] %}
+            <div class="gallery-section">
+              <h3 class="section-title">🌅 Part I: Pre-Match Atmosphere</h3>
+              <div class="memory-grid">
+                {% for item in uploaded_files_classified['pre-match'] %}
+                  <div class="memory-card">
+                    <img src="/thumbs/{{ item.filename }}" alt="Memory">
+                    <span class="moment-badge">pre-match</span>
+                    <a href="/delete/{{ item.filename }}" class="delete-btn" title="Delete Memory" onclick="return handleDeleteClick(event, '{{ item.filename }}')">&times;</a>
+                  </div>
+                {% endfor %}
+              </div>
             </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <div class="empty-gallery">
-          No match memories uploaded yet. Be the first to capture the action!
-        </div>
-      {% endif %}
+          {% endif %}
+          
+          {% if uploaded_files_classified['in-match'] %}
+            <div class="gallery-section">
+              <h3 class="section-title">⚽ Part II: Live Match Eruptions</h3>
+              <div class="memory-grid">
+                {% for item in uploaded_files_classified['in-match'] %}
+                  <div class="memory-card">
+                    <img src="/thumbs/{{ item.filename }}" alt="Memory">
+                    <span class="moment-badge">in-match</span>
+                    <a href="/delete/{{ item.filename }}" class="delete-btn" title="Delete Memory" onclick="return handleDeleteClick(event, '{{ item.filename }}')">&times;</a>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+          
+          {% if uploaded_files_classified['post-match'] %}
+            <div class="gallery-section">
+              <h3 class="section-title">🏆 Part III: Post-Match Legacy</h3>
+              <div class="memory-grid">
+                {% for item in uploaded_files_classified['post-match'] %}
+                  <div class="memory-card">
+                    <img src="/thumbs/{{ item.filename }}" alt="Memory">
+                    <span class="moment-badge">post-match</span>
+                    <a href="/delete/{{ item.filename }}" class="delete-btn" title="Delete Memory" onclick="return handleDeleteClick(event, '{{ item.filename }}')">&times;</a>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+          
+        {% elif uploaded_files %}
+          <div class="memory-grid">
+            {% for filename in uploaded_files %}
+              <div class="memory-card">
+                <img src="/thumbs/{{ filename }}" alt="Memory">
+                <a href="/delete/{{ filename }}" class="delete-btn" title="Delete Memory" onclick="return handleDeleteClick(event, '{{ filename }}')">&times;</a>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-gallery">
+            No match memories uploaded yet. Be the first to capture the action!
+          </div>
+        {% endif %}
+      </div>
     </div>
 
-    <!-- Gamified Quest Checklist Card -->
+    <!-- Global Crowd Milestones & Rewards Card -->
+    <div class="card milestone-card">
+      <div class="guide-header">
+        <h2>⚡ Stadium Challenge Goals</h2>
+        <span class="guide-badge" style="background: rgba(5, 150, 105, 0.08); border-color: rgba(5, 150, 105, 0.2); color: var(--primary);">UNLOCKED BENEFITS</span>
+      </div>
+      <p class="subtitle" style="font-size: 13px; line-height: 1.5; color: var(--text-muted); font-weight: 500;">
+        🔥 <strong>SET THE STADIUM ON FIRE!</strong> Crowd-source thousands of angles to unlock legendary, exclusive rewards. Your photos aren't just memories—they are fuel for the fire! Let's push for 100K!
+      </p>
+
+      <div class="milestone-progress-section" style="background: rgba(0, 0, 0, 0.015); border: 1px solid rgba(0, 0, 0, 0.03); border-radius: 20px; padding: 18px 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 800; margin-bottom: 8px;">
+          <span style="color: var(--text);">Next Unlock: <span id="next-milestone-target" style="color: var(--primary);">100 Photos</span></span>
+          <span id="milestone-percentage" style="background: rgba(5, 150, 105, 0.1); color: var(--primary); padding: 2px 8px; border-radius: 6px; font-size: 12.5px;">0%</span>
+        </div>
+        <div class="progress-container">
+          <div id="milestone-progress-bar" class="progress-bar"></div>
+        </div>
+        <div id="milestone-remaining" style="font-size: 12.5px; color: var(--text-muted); text-align: center; margin-top: 8px; font-weight: 600; line-height: 1.4;">
+          We need <strong>100</strong> more photo(s) to unlock the <strong>AI Story Weaver</strong>!
+        </div>
+      </div>
+
+      <div class="milestone-list" style="display: flex; flex-direction: column; gap: 12px;">
+        
+        <div class="milestone-item" id="milestone-100">
+          <div class="milestone-info">
+            <span class="milestone-title">🔥 100 Photos Milestone</span>
+            <span class="milestone-desc">Unlocks <strong>AI Story Weaver</strong>: Generates an automatic, dynamic match timeline and narrative text stories based on early fan reports.</span>
+          </div>
+          <span class="milestone-badge" id="badge-100">🔒 LOCKED</span>
+        </div>
+
+        <div class="milestone-item" id="milestone-1000">
+          <div class="milestone-info">
+            <span class="milestone-title">⚡ 1,000 Photos Milestone</span>
+            <span class="milestone-desc">Unlocks <strong>Ultra-HD Memory Book</strong>: Print-ready high-res commemorative PDF featuring row highlights and panoramic spectator collages.</span>
+          </div>
+          <span class="milestone-badge" id="badge-1000">🔒 LOCKED</span>
+        </div>
+
+        <div class="milestone-item" id="milestone-10000">
+          <div class="milestone-info">
+            <span class="milestone-title">👑 10,000 Photos Milestone</span>
+            <span class="milestone-desc">Unlocks <strong>Interactive Digital Museum</strong>: Immersive match-day hub complete with crowd-sourced stadium map angles and spectator soundscapes.</span>
+          </div>
+          <span class="milestone-badge" id="badge-10000">🔒 LOCKED</span>
+        </div>
+
+        <div class="milestone-item" id="milestone-100000">
+          <div class="milestone-info">
+            <span class="milestone-title">🏆 100,000 Photos Milestone</span>
+            <span class="milestone-desc">Unlocks <strong>Gigapixel Commemorative Poster</strong>: High-definition zoomable mosaic wall compiled using every photo uploaded in the stadium.</span>
+          </div>
+          <span class="milestone-badge" id="badge-100000">🔒 LOCKED</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Gamified Match Event Quests Timeline Card -->
     <div class="card guide-card">
       <div class="guide-header">
-        <h2>🏆 Fan Photo Quests</h2>
-        <span class="guide-badge">HIGH SCORE INTEL</span>
+        <h2>⏱️ Live Match Event Quests</h2>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <span class="score-badge" id="quest-score-badge" style="font-weight: 800; font-size: 13px; background: rgba(5, 150, 105, 0.1); color: var(--primary); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(5, 150, 105, 0.2);">{{ quest_score }}</span>
+          <span class="guide-badge">HIGH SCORE INTEL</span>
+        </div>
       </div>
-      <p class="subtitle" style="font-size: 13px; margin-bottom: 12px; line-height: 1.5;">
-        Complete these photo quests to help MemoryWeaver build an immersive, multi-angle story!
+      <p class="subtitle" style="font-size: 13px; margin-bottom: 12px; line-height: 1.5; color: var(--text-muted); font-weight: 500;">
+        We need stadium photos from these exact match milestones! Help MemoryWeaver capture these key moments.
       </p>
       
-      <div class="quest-list">
-        <div class="quest-item">
-          <div class="quest-top">
-            <span class="quest-badge quest-high">+100 XP</span>
-            <span class="quest-title">🔴 Crowd Celebration</span>
+      <div class="timeline-quests">
+        
+        <!-- Kickoff 1' -->
+        <div class="timeline-item" id="quest-kickoff">
+          <div class="timeline-time-badge">1'</div>
+          <div class="timeline-content">
+            <div class="timeline-title-row">
+              <span class="timeline-event-name">⏱️ Kickoff Whistle</span>
+              <span class="timeline-status-badge status-seeking" id="badge-quest-kickoff">📡 Seeking</span>
+            </div>
+            <p class="timeline-req-desc">Upload stadium kickoff formations, starting lineup huddles, or the stadium clock at 7:00 PM PST!</p>
+            <button type="button" class="timeline-upload-btn" onclick="triggerQuestUpload(1782439200)">
+              📷 Upload Photo
+            </button>
           </div>
-          <p class="quest-desc">Group selfies cheering, fans in team colors, scarves, face paint, or screaming goal celebrations.</p>
+        </div>
+        
+        <!-- Goal Australia 24' -->
+        <div class="timeline-item" id="quest-goal-aus">
+          <div class="timeline-time-badge">24'</div>
+          <div class="timeline-content">
+            <div class="timeline-title-row">
+              <span class="timeline-event-name">⚽ Goal Australia (Goodwin)</span>
+              <span class="timeline-status-badge status-seeking" id="badge-quest-goal-aus">📡 Seeking</span>
+            </div>
+            <p class="timeline-req-desc">Upload Craig Goodwin's corner flag celebration, or Australian fans erupting in your section (approx. 7:24 PM PST)!</p>
+            <button type="button" class="timeline-upload-btn" onclick="triggerQuestUpload(1782440640)">
+              📷 Upload Photo
+            </button>
+          </div>
+        </div>
+        
+        <!-- Corner Pressure 38' -->
+        <div class="timeline-item" id="quest-corner-py">
+          <div class="timeline-time-badge">38'</div>
+          <div class="timeline-content">
+            <div class="timeline-title-row">
+              <span class="timeline-event-name">📐 Corner Pressure</span>
+              <span class="timeline-status-badge status-seeking" id="badge-quest-corner-py">📡 Seeking</span>
+            </div>
+            <p class="timeline-req-desc">Upload Paraguay corners near the net, goalkeeper Ryan organizing the defense, or fan scarf waves (approx. 7:38 PM PST)!</p>
+            <button type="button" class="timeline-upload-btn" onclick="triggerQuestUpload(1782441480)">
+              📷 Upload Photo
+            </button>
+          </div>
+        </div>
+        
+        <!-- Halftime 45' -->
+        <div class="timeline-item" id="quest-halftime">
+          <div class="timeline-time-badge">45'</div>
+          <div class="timeline-content">
+            <div class="timeline-title-row">
+              <span class="timeline-event-name">⏸️ Halftime Scoreboard</span>
+              <span class="timeline-status-badge status-seeking" id="badge-quest-halftime">📡 Seeking</span>
+            </div>
+            <p class="timeline-req-desc">Upload photos of the scoreboard showing Paraguay 0 - 1 Australia, snacks run, or tailgating highlights (approx. 7:45 - 8:00 PM PST)!</p>
+            <button type="button" class="timeline-upload-btn" onclick="triggerQuestUpload(1782441900)">
+              📷 Upload Photo
+            </button>
+          </div>
+        </div>
+        
+        <!-- Goal Paraguay 67' -->
+        <div class="timeline-item" id="quest-goal-py">
+          <div class="timeline-time-badge">67'</div>
+          <div class="timeline-content">
+            <div class="timeline-title-row">
+              <span class="timeline-event-name">⚽ Goal Paraguay (Almirón)</span>
+              <span class="timeline-status-badge status-seeking" id="badge-quest-goal-py">📡 Seeking</span>
+            </div>
+            <p class="timeline-req-desc">Upload Miguel Almirón's equalizer celebration, or Paraguayan flags and fans celebrating in section 120 (approx. 8:22 PM PST)!</p>
+            <button type="button" class="timeline-upload-btn" onclick="triggerQuestUpload(1782444120)">
+              📷 Upload Photo
+            </button>
+          </div>
+        </div>
+        
+        <!-- Yellow Card 78' -->
+        <div class="timeline-item" id="quest-yellow-card">
+          <div class="timeline-time-badge">78'</div>
+          <div class="timeline-content">
+            <div class="timeline-title-row">
+              <span class="timeline-event-name">🟨 Irvine Yellow Card</span>
+              <span class="timeline-status-badge status-seeking" id="badge-quest-yellow-card">📡 Seeking</span>
+            </div>
+            <p class="timeline-req-desc">Upload the referee displaying the card to Jackson Irvine, team captain discussions, or crowd reactions (approx. 8:33 PM PST)!</p>
+            <button type="button" class="timeline-upload-btn" onclick="triggerQuestUpload(1782444780)">
+              📷 Upload Photo
+            </button>
+          </div>
+        </div>
+        
+        <!-- Full time 90' -->
+        <div class="timeline-item" id="quest-fulltime">
+          <div class="timeline-time-badge">90'</div>
+          <div class="timeline-content">
+            <div class="timeline-title-row">
+              <span class="timeline-event-name">🏁 Full-Time Whistle</span>
+              <span class="timeline-status-badge status-seeking" id="badge-quest-fulltime">📡 Seeking</span>
+            </div>
+            <p class="timeline-req-desc">Upload the final 1-1 scoreboard, player handshakes, sad/happy fan faces, or leaving the stadium (approx. 8:45 PM PST onwards)!</p>
+            <button type="button" class="timeline-upload-btn" onclick="triggerQuestUpload(1782445800)">
+              📷 Upload Photo
+            </button>
+          </div>
         </div>
 
-        <div class="quest-item">
-          <div class="quest-top">
-            <span class="quest-badge quest-med">+75 XP</span>
-            <span class="quest-title">⚽ Player Telemetry</span>
-          </div>
-          <p class="quest-desc">Player lineups, warm-ups, corner kicks, or field actions showing visible player numbers.</p>
-        </div>
-
-        <div class="quest-item">
-          <div class="quest-top">
-            <span class="quest-badge quest-low">+50 XP</span>
-            <span class="quest-title">🏟️ Levi's Atmosphere</span>
-          </div>
-          <p class="quest-desc">Panorama of the stands, stadium snacks, pre-match tailgates, or sponsor banners.</p>
-        </div>
-
-        <div class="quest-item">
-          <div class="quest-top">
-            <span class="quest-badge quest-med">+75 XP</span>
-            <span class="quest-title">⏱️ Key Landmarks</span>
-          </div>
-          <p class="quest-desc">Stadium clock at kickoff, halftime scoreboard configuration, or reactions at the final whistle.</p>
-        </div>
       </div>
     </div>
 
