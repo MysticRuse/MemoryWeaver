@@ -1,0 +1,576 @@
+[
+  {
+    "timestamp": "2026-06-25 23:11:02",
+    "level": "INFO",
+    "type": "UPLOAD",
+    "message": "Uploaded 1 photo memory/memories",
+    "details": {
+      "files": [
+        "stress_test_2_1782454262_da7561.jpg"
+      ]
+    },
+    "request_info": {
+      "ip": "127.0.0.1",
+      "url": "http://127.0.0.1:5001/upload",
+      "method": "POST",
+      "platform": null,
+      "browser": null,
+      "version": null,
+      "user_agent": "python-requests/2.34.2"
+    }
+  },
+  {
+    "timestamp": "2026-06-25 23:11:02",
+    "level": "INFO",
+    "type": "UPLOAD",
+    "message": "Uploaded 1 photo memory/memories",
+    "details": {
+      "files": [
+        "stress_test_7_1782454262_421c86.jpg"
+      ]
+    },
+    "request_info": {
+      "ip": "127.0.0.1",
+      "url": "http://127.0.0.1:5001/upload",
+      "method": "POST",
+      "platform": null,
+      "browser": null,
+      "version": null,
+      "user_agent": "python-requests/2.34.2"
+    }
+  },
+  {
+    "timestamp": "2026-06-25 23:11:02",
+    "level": "INFO",
+    "type": "UPLOAD",
+    "message": "Uploaded 1 photo memory/memories",
+    "details": {
+      "files": [
+        "stress_test_5_1782454262_433213.jpg"
+      ]
+    },
+    "request_info": {
+      "ip": "127.0.0.1",
+      "url": "http://127.0.0.1:5001/upload",
+      "method": "POST",
+      "platform": null,
+      "browser": null,
+      "version": null,
+      "user_agent": "python-requests/2.34.2"
+    }
+  },
+  {
+    "timestamp": "2026-06-25 23:11:05",
+    "level": "INFO",
+    "type": "DELETE",
+    "message": "Deleted photo memory: stress_test_0_1782454262_6a3c8f.jpg",
+    "details": {
+      "filename": "stress_test_0_1782454262_6a3c8f.jpg"
+    },
+    "request_info": {
+      "ip": "127.0.0.1",
+      "url": "http://127.0.0.1:5001/delete/stress_test_0_1782454262_6a3c8f.jpg",
+      "method": "GET",
+      "platform": null,
+      "browser": null,
+      "version": null,
+      "user_agent": "python-requests/2.34.2"
+    }
+  },
+  {
+    "timestamp": "2026-06-25 23:11:05",
+    "level": "INFO",
+    "type": "DELETE",
+    "message": "Deleted photo memory: stress_test_1_1782454262_370e5f.jpg",
+    "details": {
+      "filename": "stress_test_1_1782454262_370e5f.jpg"
+    },
+    "request_info": {
+      "ip": "127.0.0.1",
+      "url": "http://127.0.0.1:5001/delete/stress_test_1_1782454262_370e5f.jpg",
+      "method": "GET",
+      "platform": null,
+      "browser": null,
+      "version": null,
+      "user_agent": "python-requests/2.34.2"
+    }
+  },
+  {
+    "timestamp": "2026-06-25 23:11:05",
+    "level": "INFO",
+    "type": "DELETE",
+    "message": "Deleted photo memory: stress_test_2_1782454262_da7561.jpg",
+    "details": {
+      "filename": "stress_test_2_1782454262_da7561.jpg"
+    },
+    "request_info": {
+      "ip": "127.0.0.1",
+      "url": "http://127.0.0.1:5001/delete/stress_test_2_1782454262_da7561.jpg",
+      "method": "GET",
+      "platform": null,
+      "browser": null,
+      "version": null,
+      "user_agent": "python-requests/2.34.2"
+    }
+  },
+  {
+    "timestamp": "2026-06-25 23:11:05",
+    "level": "INFO",
+    "type": "DELETE",
+    "message": "Deleted photo memory: stress_test_3_1782454262_cc707f.jpg",
+    "details": {
+      "filename": "stress_test_3_1782454262_cc707f.jpg"
+    },
+    "request_info": {
+      "ip": "127.0.0.1",
+      "url": "http://127.0.0.1:5001/delete/stress_test_3_1782454262_cc707f.jpg",
+      "method": "GET",
+      "platform": null,
+      "browser": null,
+      "version": null,
+      "user_agent": "python-requests/2.34.2"
+    }
+  },
+  {
+    "timestamp": "2026-06-25 23:11:05",
+    "level": "INFO",
+    "type": "DELETE",
+    "message": "Deleted photo memory: stress_test_4_1782454262_dc2e6d.jpg",
+    "details": {
+      "filename": "stress_test_4_1782454262_dc2e6d.jpg"
+    },
+    "request_info": {
+      "ip": "127.0.0.1",
+      "url": "http://127.0.0.1:5001/delete/stress_test_4_1782454262_dc2e6d.jpg",
+      "method": "GET",
+      "platform": null,
+      "browser": null,
+      "version": null,
+      "user_agent": "python-requests/2.34.2"
+    }
+  },
+  {
+    "timestamp": "2026-06-25 23:11:05",
+    "level": "INFO",
+    "type": "DELETE",
+    "message": "Deleted photo memory: stress_test_5_1782454262_433213.jpg",
+    "details": {
+      "filename": "stress_test_5_1782454262_433213.jpg"
+    },
+    "request_info": {
+      "ip": "127.0.0.1",
+      "url": "http://127.0.0.1:5001/delete/stress_test_5_1782454262_433213.jpg",
+      "method": "GET",
+      "platform": null,
+      "browser": null,
+      "version": null,
+      "user_agent": "python-requests/2.34.2"
+    }
+  },
+  {
+    "timestamp": "2026-06-25 23:11:05",
+    "level": "INFO",
+    "type": "DELETE",
+    "message": "Deleted photo memory: stress_test_6_1782454262_cedebf.jpg",
+    "details": {
+      "filename": "stress_test_6_1782454262_cedebf.jpg"
+    },
+    "request_info": {
+      "ip": "127.0.0.1",
+      "url": "http://127.0.0.1:5001/delete/stress_test_6_1782454262_cedebf.jpg",
+      "method": "GET",
+      "platform": null,
+      "browser": null,
+      "version": null,
+      "user_agent": "python-requests/2.34.2"
+    }
+  },
+  {
+    "timestamp": "2026-06-25 23:11:05",
+    "level": "INFO",
+    "type": "DELETE",
+    "message": "Deleted photo memory: stress_test_7_1782454262_421c86.jpg",
+    "details": {
+      "filename": "stress_test_7_1782454262_421c86.jpg"
+    },
+    "request_info": {
+      "ip": "127.0.0.1",
+      "url": "http://127.0.0.1:5001/delete/stress_test_7_1782454262_421c86.jpg",
+      "method": "GET",
+      "platform": null,
+      "browser": null,
+      "version": null,
+      "user_agent": "python-requests/2.34.2"
+    }
+  },
+  {
+    "timestamp": "2026-06-25 23:11:05",
+    "level": "INFO",
+    "type": "DELETE",
+    "message": "Deleted photo memory: stress_test_8_1782454262_90dfc8.jpg",
+    "details": {
+      "filename": "stress_test_8_1782454262_90dfc8.jpg"
+    },
+    "request_info": {
+      "ip": "127.0.0.1",
+      "url": "http://127.0.0.1:5001/delete/stress_test_8_1782454262_90dfc8.jpg",
+      "method": "GET",
+      "platform": null,
+      "browser": null,
+      "version": null,
+      "user_agent": "python-requests/2.34.2"
+    }
+  },
+  {
+    "timestamp": "2026-06-25 23:11:05",
+    "level": "INFO",
+    "type": "DELETE",
+    "message": "Deleted photo memory: stress_test_9_1782454262_cacac1.jpg",
+    "details": {
+      "filename": "stress_test_9_1782454262_cacac1.jpg"
+    },
+    "request_info": {
+      "ip": "127.0.0.1",
+      "url": "http://127.0.0.1:5001/delete/stress_test_9_1782454262_cacac1.jpg",
+      "method": "GET",
+      "platform": null,
+      "browser": null,
+      "version": null,
+      "user_agent": "python-requests/2.34.2"
+    }
+  },
+  {
+    "timestamp": "2026-06-25 23:14:16",
+    "level": "INFO",
+    "type": "PIPELINE",
+    "message": "Started AI Story Weaver Pipeline",
+    "details": {},
+    "request_info": {
+      "ip": "2601:647:4d7f:c640:14c7:73d6:2e40:aeca",
+      "url": "https://maximize-basket-antihero.ngrok-free.dev/generate",
+      "method": "GET",
+      "platform": null,
+      "browser": null,
+      "version": null,
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36"
+    }
+  },
+  {
+    "timestamp": "2026-06-25 23:15:00",
+    "level": "INFO",
+    "type": "PIPELINE",
+    "message": "AI Story Weaver Pipeline completed successfully",
+    "details": {
+      "api_calls": [
+        {
+          "name": "Moderation and Scoring",
+          "model": "gemini-2.5-flash",
+          "prompt_tokens": 7600,
+          "candidates_tokens": 2463,
+          "cost_usd": 0.0013089
+        },
+        {
+          "name": "Story & Stats Generation",
+          "model": "gemini-2.5-flash",
+          "prompt_tokens": 591,
+          "candidates_tokens": 422,
+          "cost_usd": 0.000170925
+        }
+      ],
+      "total_cost_usd": 0.001479825
+    }
+  },
+  {
+    "timestamp": "2026-06-25 23:16:05",
+    "level": "INFO",
+    "type": "PIPELINE",
+    "message": "Started AI Story Weaver Pipeline",
+    "details": {},
+    "request_info": {
+      "ip": "2601:647:4d7f:c640:14c7:73d6:2e40:aeca",
+      "url": "https://maximize-basket-antihero.ngrok-free.dev/generate",
+      "method": "GET",
+      "platform": null,
+      "browser": null,
+      "version": null,
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36"
+    }
+  },
+  {
+    "timestamp": "2026-06-25 23:16:14",
+    "level": "INFO",
+    "type": "PIPELINE",
+    "message": "AI Story Weaver Pipeline completed successfully",
+    "details": {
+      "api_calls": [
+        {
+          "name": "Moderation and Scoring (Loaded from Cache)",
+          "model": "gemini-2.5-flash",
+          "prompt_tokens": 0,
+          "candidates_tokens": 0,
+          "cost_usd": 0.0
+        },
+        {
+          "name": "Story & Stats Generation",
+          "model": "gemini-2.5-flash",
+          "prompt_tokens": 591,
+          "candidates_tokens": 482,
+          "cost_usd": 0.000188925
+        }
+      ],
+      "total_cost_usd": 0.000188925
+    }
+  },
+  {
+    "timestamp": "2026-06-25 23:20:05",
+    "level": "INFO",
+    "type": "UPLOAD",
+    "message": "Uploaded 6 photo memory/memories",
+    "details": {
+      "files": [
+        "IMG_2779_1782454805_8f73e9.jpeg",
+        "IMG_2780_1782454805_bc8e7f.jpeg",
+        "IMG_2781_1782454805_0446ba.jpeg",
+        "IMG_2775_1782454805_71ffff.jpeg",
+        "IMG_2773_1782454805_b20151.jpeg",
+        "IMG_2774_1782454805_0f47c8.jpeg"
+      ]
+    },
+    "request_info": {
+      "ip": "2a04:4e41:6405:62d::2ef7:462d",
+      "url": "https://maximize-basket-antihero.ngrok-free.dev/upload",
+      "method": "POST",
+      "platform": null,
+      "browser": null,
+      "version": null,
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Mobile/15E148 Safari/604.1"
+    }
+  },
+  {
+    "timestamp": "2026-06-25 23:48:10",
+    "level": "INFO",
+    "type": "UPLOAD",
+    "message": "Uploaded 3 photo memory/memories",
+    "details": {
+      "files": [
+        "IMG_4433_1782456490_0c19c4.jpeg",
+        "IMG_4426_1782456490_354ec0.jpeg",
+        "IMG_4424_1782456490_83a6a1.jpeg"
+      ]
+    },
+    "request_info": {
+      "ip": "108.230.155.108",
+      "url": "https://maximize-basket-antihero.ngrok-free.dev/upload",
+      "method": "POST",
+      "platform": null,
+      "browser": null,
+      "version": null,
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.0 Mobile/15E148 Safari/604.1"
+    }
+  },
+  {
+    "timestamp": "2026-06-26 14:41:26",
+    "level": "INFO",
+    "type": "PIPELINE",
+    "message": "Started AI Story Weaver Pipeline",
+    "details": {},
+    "request_info": {
+      "ip": "108.230.155.108",
+      "url": "https://maximize-basket-antihero.ngrok-free.dev/generate",
+      "method": "GET",
+      "platform": null,
+      "browser": null,
+      "version": null,
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Safari/605.1.15"
+    }
+  },
+  {
+    "timestamp": "2026-06-26 14:42:16",
+    "level": "INFO",
+    "type": "PIPELINE",
+    "message": "AI Story Weaver Pipeline completed successfully",
+    "details": {
+      "api_calls": [
+        {
+          "name": "Moderation and Scoring",
+          "model": "gemini-2.5-flash",
+          "prompt_tokens": 9922,
+          "candidates_tokens": 3128,
+          "cost_usd": 0.0016825499999999999
+        },
+        {
+          "name": "Story & Stats Generation",
+          "model": "gemini-2.5-flash",
+          "prompt_tokens": 592,
+          "candidates_tokens": 529,
+          "cost_usd": 0.00020309999999999998
+        }
+      ],
+      "total_cost_usd": 0.0018856499999999998
+    }
+  },
+  {
+    "timestamp": "2026-06-26 15:10:33",
+    "level": "INFO",
+    "type": "PIPELINE",
+    "message": "Started AI Story Weaver Pipeline",
+    "details": {},
+    "request_info": {
+      "ip": "2601:647:4d7f:c640:14c7:73d6:2e40:aeca",
+      "url": "https://maximize-basket-antihero.ngrok-free.dev/generate",
+      "method": "GET",
+      "platform": null,
+      "browser": null,
+      "version": null,
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36"
+    }
+  },
+  {
+    "timestamp": "2026-06-26 15:11:18",
+    "level": "INFO",
+    "type": "PIPELINE",
+    "message": "AI Story Weaver Pipeline completed successfully",
+    "details": {
+      "api_calls": [
+        {
+          "name": "Moderation and Scoring",
+          "model": "gemini-2.5-flash",
+          "prompt_tokens": 9922,
+          "candidates_tokens": 3170,
+          "cost_usd": 0.0016951499999999999
+        },
+        {
+          "name": "Story & Stats Generation",
+          "model": "gemini-2.5-flash",
+          "prompt_tokens": 576,
+          "candidates_tokens": 522,
+          "cost_usd": 0.00019979999999999998
+        }
+      ],
+      "total_cost_usd": 0.0018949499999999998
+    }
+  },
+  {
+    "timestamp": "2026-06-26 15:14:34",
+    "level": "INFO",
+    "type": "PIPELINE",
+    "message": "Started AI Story Weaver Pipeline",
+    "details": {},
+    "request_info": {
+      "ip": "2601:647:4d7f:c640:14c7:73d6:2e40:aeca",
+      "url": "https://maximize-basket-antihero.ngrok-free.dev/generate",
+      "method": "GET",
+      "platform": null,
+      "browser": null,
+      "version": null,
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36"
+    }
+  },
+  {
+    "timestamp": "2026-06-26 15:14:41",
+    "level": "INFO",
+    "type": "PIPELINE",
+    "message": "AI Story Weaver Pipeline completed successfully",
+    "details": {
+      "api_calls": [
+        {
+          "name": "Moderation and Scoring (Loaded from Cache)",
+          "model": "gemini-2.5-flash",
+          "prompt_tokens": 0,
+          "candidates_tokens": 0,
+          "cost_usd": 0.0
+        },
+        {
+          "name": "Story & Stats Generation",
+          "model": "gemini-2.5-flash",
+          "prompt_tokens": 576,
+          "candidates_tokens": 501,
+          "cost_usd": 0.0001935
+        }
+      ],
+      "total_cost_usd": 0.0001935
+    }
+  },
+  {
+    "timestamp": "2026-06-26 15:16:03",
+    "level": "INFO",
+    "type": "PIPELINE",
+    "message": "Started AI Story Weaver Pipeline",
+    "details": {},
+    "request_info": {
+      "ip": "2601:647:4d7f:c640:14c7:73d6:2e40:aeca",
+      "url": "https://maximize-basket-antihero.ngrok-free.dev/generate",
+      "method": "GET",
+      "platform": null,
+      "browser": null,
+      "version": null,
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36"
+    }
+  },
+  {
+    "timestamp": "2026-06-26 15:16:12",
+    "level": "INFO",
+    "type": "PIPELINE",
+    "message": "AI Story Weaver Pipeline completed successfully",
+    "details": {
+      "api_calls": [
+        {
+          "name": "Moderation and Scoring (Loaded from Cache)",
+          "model": "gemini-2.5-flash",
+          "prompt_tokens": 0,
+          "candidates_tokens": 0,
+          "cost_usd": 0.0
+        },
+        {
+          "name": "Story & Stats Generation",
+          "model": "gemini-2.5-flash",
+          "prompt_tokens": 576,
+          "candidates_tokens": 468,
+          "cost_usd": 0.0001836
+        }
+      ],
+      "total_cost_usd": 0.0001836
+    }
+  },
+  {
+    "timestamp": "2026-06-26 15:36:09",
+    "level": "INFO",
+    "type": "PIPELINE",
+    "message": "Started AI Story Weaver Pipeline",
+    "details": {},
+    "request_info": {
+      "ip": "127.0.0.1",
+      "url": "http://localhost:5001/generate",
+      "method": "GET",
+      "platform": null,
+      "browser": null,
+      "version": null,
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36"
+    }
+  },
+  {
+    "timestamp": "2026-06-26 15:36:17",
+    "level": "INFO",
+    "type": "PIPELINE",
+    "message": "AI Story Weaver Pipeline completed successfully",
+    "details": {
+      "api_calls": [
+        {
+          "name": "Moderation and Scoring (Loaded from Cache)",
+          "model": "gemini-2.5-flash",
+          "prompt_tokens": 0,
+          "candidates_tokens": 0,
+          "cost_usd": 0.0
+        },
+        {
+          "name": "Story & Stats Generation",
+          "model": "gemini-2.5-flash",
+          "prompt_tokens": 576,
+          "candidates_tokens": 486,
+          "cost_usd": 0.00018899999999999999
+        }
+      ],
+      "total_cost_usd": 0.00018899999999999999
+    }
+  }
+]

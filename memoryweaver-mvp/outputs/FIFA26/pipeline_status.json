@@ -1,0 +1,32 @@
+{
+  "running": false,
+  "error": null,
+  "stage": "Done",
+  "log": [
+    "Starting pipeline...",
+    "Uploads unchanged \u2014 using cached photo scores",
+    "10 photos passed moderation and scoring",
+    "[Activating: story-weaver skill]",
+    "CALLING: generate_story_and_stats(detected_score='0-0')",
+    "RESULT: generate_story_and_stats response received (len=1912)",
+    "Done. Artefacts written to outputs/FIFA26",
+    "Pipeline complete!"
+  ],
+  "started_at": 1782513369.569577,
+  "api_calls": [
+    {
+      "name": "Moderation and Scoring (Loaded from Cache)",
+      "model": "gemini-2.5-flash",
+      "prompt_tokens": 0,
+      "candidates_tokens": 0,
+      "cost_usd": 0.0
+    },
+    {
+      "name": "Story & Stats Generation",
+      "model": "gemini-2.5-flash",
+      "prompt_tokens": 576,
+      "candidates_tokens": 486,
+      "cost_usd": 0.00018899999999999999
+    }
+  ]
+}

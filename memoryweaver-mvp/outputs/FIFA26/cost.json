@@ -1,0 +1,21 @@
+{
+  "api_calls": [
+    {
+      "name": "Moderation and Scoring (Loaded from Cache)",
+      "model": "gemini-2.5-flash",
+      "prompt_tokens": 0,
+      "candidates_tokens": 0,
+      "cost_usd": 0.0
+    },
+    {
+      "name": "Story & Stats Generation",
+      "model": "gemini-2.5-flash",
+      "prompt_tokens": 576,
+      "candidates_tokens": 486,
+      "cost_usd": 0.00018899999999999999
+    }
+  ],
+  "total_prompt_tokens": 576,
+  "total_candidates_tokens": 486,
+  "total_cost_usd": 0.00018899999999999999
+}

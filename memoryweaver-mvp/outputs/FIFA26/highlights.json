@@ -1,0 +1,109 @@
+{
+  "_fingerprint": "fc2c307395c091e48c561a538f2eb5f4",
+  "detected_score": "0-0",
+  "photos": [
+    {
+      "usable": true,
+      "moderation_reason": "ok",
+      "score": 9,
+      "moment": "pre-match",
+      "caption": "The stadium screen welcomes everyone as the teams gather on the pitch under the bright California sun.",
+      "energy": "high",
+      "players_visible": [],
+      "filename": "IMG_4426_1782456490_354ec0.jpeg"
+    },
+    {
+      "usable": true,
+      "moderation_reason": "ok",
+      "score": 9,
+      "moment": "pre-match",
+      "caption": "The teams, including Australia and Paraguay, proudly march onto the field for the ceremonial walkout.",
+      "energy": "high",
+      "players_visible": [],
+      "filename": "IMG_2774_1782454805_0f47c8.jpeg"
+    },
+    {
+      "usable": true,
+      "moderation_reason": "ok",
+      "score": 9,
+      "moment": "pre-match",
+      "caption": "A giant Australian flag covers the pitch, creating an incredible atmosphere before kickoff.",
+      "energy": "high",
+      "players_visible": [],
+      "filename": "IMG_2773_1782454805_b20151.jpeg"
+    },
+    {
+      "usable": true,
+      "moderation_reason": "ok",
+      "score": 9,
+      "moment": "pre-match",
+      "caption": "The Australian and Paraguayan teams walk out to a roaring crowd, marking the start of an exciting match.",
+      "energy": "high",
+      "players_visible": [],
+      "filename": "IMG_2775_1782454805_71ffff.jpeg"
+    },
+    {
+      "usable": true,
+      "moderation_reason": "ok",
+      "score": 9,
+      "moment": "in-match",
+      "caption": "A \"FULL HOUSE\" of 68,827 passionate fans packs the stadium, cheering on their teams in this exciting match.",
+      "energy": "high",
+      "players_visible": [],
+      "filename": "IMG_0617_1782445383_d132be.jpeg"
+    },
+    {
+      "usable": true,
+      "moderation_reason": "ok",
+      "score": 9,
+      "moment": "in-match",
+      "caption": "Australia's Riley McGree (number 6) and Nathaniel Atkinson (number 25) challenge Paraguay players in red and white stripes for possession.",
+      "energy": "high",
+      "players_visible": [
+        "Riley McGree",
+        "Nathaniel Atkinson"
+      ],
+      "filename": "image_1782440534_bb0175.jpg"
+    },
+    {
+      "usable": true,
+      "moderation_reason": "ok",
+      "score": 9,
+      "moment": "in-match",
+      "caption": "Players from Australia and Paraguay crowd the penalty box, anticipating a set-piece near the goal.",
+      "energy": "high",
+      "players_visible": [],
+      "filename": "image_1782440376_7fa0d9.jpg"
+    },
+    {
+      "usable": true,
+      "moderation_reason": "ok",
+      "score": 9,
+      "moment": "pre-match",
+      "caption": "Players from both teams warm up on the meticulously maintained pitch under the bright stadium lights, preparing for kickoff.",
+      "energy": "medium",
+      "players_visible": [],
+      "filename": "738CA553-A351-4AB5-80ED-CFD1B6F3CCDC_1782437215_61cc9a.jpeg"
+    },
+    {
+      "usable": true,
+      "moderation_reason": "ok",
+      "score": 9,
+      "moment": "pre-match",
+      "caption": "Two excited fans capture a happy selfie, soaking in the electric atmosphere of the World Cup match.",
+      "energy": "high",
+      "players_visible": [],
+      "filename": "EF8E9828-376A-4694-8573-8F94DD6EF879_1782437215_4d2b3b.jpeg"
+    },
+    {
+      "usable": true,
+      "moderation_reason": "ok",
+      "score": 9,
+      "moment": "pre-match",
+      "caption": "A group of cheerful fans takes a selfie, proudly wearing their \"FIFA World Cup 2026 Can Mex USA\" shirts.",
+      "energy": "high",
+      "players_visible": [],
+      "filename": "IMG_0553_1782436408_826853.jpeg"
+    }
+  ]
+}

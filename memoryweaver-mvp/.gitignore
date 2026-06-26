@@ -1,1 +1,6 @@
 .env
+__pycache__/
+*.pyc
+venv/
+.agents/
+.DS_Store
