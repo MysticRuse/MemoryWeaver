@@ -260,15 +260,16 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      max-height: 320px;
+      max-height: 600px;
       overflow: hidden;
       border: 1px solid rgba(0, 0, 0, 0.05);
       position: relative;
     }
     .highlight-img-wrap img {
       width: 100%;
-      max-height: 320px;
-      object-fit: cover;
+      height: auto;
+      max-height: 600px;
+      object-fit: contain;
       display: block;
       transition: transform 0.5s ease;
     }
@@ -538,7 +539,7 @@
         font-size: 10.5px;
       }
       .highlight-img-wrap {
-        max-height: 240px;
+        max-height: 500px;
       }
       .caption {
         padding: 8px 12px;
@@ -868,7 +869,7 @@
       </div>
     {% endif %}
 
-    <!-- Security Check Badges -->
+    {# <!-- COMMENTED OUT: Playbook Security Check — not shown to end users (re-enable for admin/compliance view)
     {% if story %}
     <div class="card security-card no-print">
       <h2>🛡️ Playbook Security Check</h2>
@@ -905,6 +906,7 @@
       </div>
     </div>
     {% endif %}
+    END COMMENT --> #}
 
     <!-- Engagement Stats -->
     {% if stats %}
@@ -1086,14 +1088,16 @@
       </div>
     </details>
 
+    {# <!-- COMMENTED OUT: Generate Story Now (not for end-users)
     {% if not story %}
       <div class="card" style="text-align:center">
         <p style="color:var(--text-muted);margin-bottom:16px">No story generated yet for this session.</p>
         <a href="/generate" class="btn">✨ Generate Story Now</a>
       </div>
     {% endif %}
+    END COMMENT --> #}
 
-    <!-- HITL Consent Gate Card -->
+    {# <!-- COMMENTED OUT: HITL Consent Gate — not shown to end users (re-enable for compliance workflow)
     {% if story and hitl_consent == 'PENDING' %}
       <div class="card consent-card no-print" style="border: 1px solid rgba(245, 158, 11, 0.3); background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(255, 255, 255, 0.8) 100%);">
         <h2>🔒 Public Sharing Consent Required</h2>
@@ -1110,51 +1114,37 @@
         </form>
       </div>
     {% endif %}
+    END COMMENT --> #}
 
-    <!-- Share Results Card -->
+    <!-- Share Results Card — always shown as unlocked for contributors -->
     {% if story %}
       <div class="card share-card no-print">
         <h2>📣 Share Match Story &amp; Highlights</h2>
-        {% if hitl_consent == 'CONFIRMED' %}
-          <p class="subtitle" style="font-size: 13.5px; margin-bottom: 16px; line-height: 1.6; color: var(--text-muted); font-weight: 500;">
-            ✅ Sharing unlocked! Scan this QR code or copy the link below to share the generated fan story and highlights with other fans.
-          </p>
-          <div class="share-content" style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap; justify-content: center; margin-top: 14px;">
-            <div class="qr-container">
-              <img id="qr-code-img" src="" alt="Sharing QR Code" style="display: none;">
-              <div id="qr-placeholder" class="qr-placeholder-spinner"></div>
-            </div>
-            <div class="share-actions" style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 10px;">
-              <input type="text" id="share-link-input" readonly value="" class="share-input" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.1); background: rgba(0,0,0,0.02); color: var(--text); font-size: 13.5px; outline: none; font-weight: 500;">
-              <button id="copy-btn" onclick="copyShareLink()" class="btn btn-secondary" style="padding: 12px 18px; font-size: 13.5px; border-radius: 12px; background: linear-gradient(135deg, var(--accent) 0%, #1d4ed8 100%);">
-                <span>🔗 Copy Share Link</span>
-              </button>
-            </div>
+        <p class="subtitle" style="font-size: 13.5px; margin-bottom: 16px; line-height: 1.6; color: var(--text-muted); font-weight: 500;">
+          ✅ Your fan story is ready! Scan this QR code or copy the link below to share the highlights with your crew.
+        </p>
+        <div class="share-content" style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap; justify-content: center; margin-top: 14px;">
+          <div class="qr-container">
+            <img id="qr-code-img" src="" alt="Sharing QR Code" style="display: none;">
+            <div id="qr-placeholder" class="qr-placeholder-spinner"></div>
           </div>
+          <div class="share-actions" style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 10px;">
+            <input type="text" id="share-link-input" readonly value="" class="share-input" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.1); background: rgba(0,0,0,0.02); color: var(--text); font-size: 13.5px; outline: none; font-weight: 500;">
+            <button id="copy-btn" onclick="copyShareLink()" class="btn btn-secondary" style="padding: 12px 18px; font-size: 13.5px; border-radius: 12px; background: linear-gradient(135deg, var(--accent) 0%, #1d4ed8 100%);">
+              <span>🔗 Copy Share Link</span>
+            </button>
+          </div>
+        </div>
+        {# <!-- COMMENTED OUT: Sharing Locked state (re-enable with consent gate above for compliance workflow)
         {% else %}
-          <!-- Sharing Locked state -->
           <div style="background: rgba(0,0,0,0.02); border: 2.5px dashed rgba(225, 29, 72, 0.3); border-radius: 18px; padding: 24px; text-align: center; margin-top: 10px;">
-            <div style="font-size: 32px; margin-bottom: 12px;">🔒</div>
-            <h3 style="font-size: 16px; font-weight: 800; color: var(--danger); margin-bottom: 8px;">Sharing Locked (HITL Consent Required)</h3>
-            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px;">
-              Public QR codes and links are restricted until fan sharing consent is actively confirmed.
-            </p>
-            {% if hitl_consent == 'PRIVATE' %}
-              <p style="font-size: 13px; font-weight: 600; color: var(--danger); margin-bottom: 14px;">
-                ⚠️ You have opted to keep these photos private.
-              </p>
-              <form action="/share-consent" method="POST" style="margin-top: 10px;">
-                <button type="submit" name="consent_choice" value="CONFIRMED" class="btn btn-outline" style="border-color: var(--primary); color: var(--primary); font-size: 13.5px; padding: 10px 16px; margin-top: 0; display: inline-flex; width: auto; margin-left: auto; margin-right: auto;">
-                  🔓 Change to Public Sharing Consent
-                </button>
-              </form>
-            {% endif %}
+            ...
           </div>
-        {% endif %}
+        END COMMENT --> #}
       </div>
     {% endif %}
 
-    <!-- Regenerate Journal Card -->
+    {# <!-- COMMENTED OUT: Regenerate Journal Card (not for end-users)
     {% if story %}
       <div class="card no-print" style="margin-top: 20px; border: 1px solid rgba(5, 150, 105, 0.15); background: rgba(5, 150, 105, 0.02);">
         <h2>🔄 Adjust Journal Highlights</h2>
@@ -1180,6 +1170,7 @@
         }
       </script>
     {% endif %}
+    END COMMENT --> #}
 
     <!-- Action Buttons -->
     <div style="margin-bottom: 40px; display: flex; flex-direction: column; gap: 10px;" class="no-print">

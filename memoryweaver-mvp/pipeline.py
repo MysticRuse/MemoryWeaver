@@ -62,7 +62,7 @@ def _uploads_fingerprint(upload_dir):
 MATCH_CONTEXT = "FIFA World Cup 2026 Group D, Levi's Stadium, San Francisco, June 25 2026"
 
 
-GEMINI_MAX_PX = 1024  # Gemini needs ~1MP to understand content; 4K adds tokens with no benefit
+GEMINI_MAX_PX = 1024  # Gemini needs ~1MP to recognize tiny players on the pitch from fan photos
 
 
 def _image_to_part(image_path):
@@ -82,11 +82,23 @@ def _generate_with_retry(contents, name="API Call", max_retries=5, response_mime
         try:
             config = None
             if response_mime_type or response_schema:
+                # Always force JSON mode when a schema is provided so the model
+                # generates schema-conformant JSON instead of free-form markdown
+                effective_mime = response_mime_type or ("application/json" if response_schema else None)
                 config = types.GenerateContentConfig(
-                    response_mime_type=response_mime_type,
-                    response_schema=response_schema
+                    response_mime_type=effective_mime,
+                    response_schema=response_schema,
+                    http_options=types.HttpOptions(timeout=600000) # 10 minute timeout
                 )
-            resp = client.models.generate_content(model=MODEL, contents=contents, config=config)
+            else:
+                config = types.GenerateContentConfig(
+                    http_options=types.HttpOptions(timeout=600000)
+                )
+            resp = client.models.generate_content(
+                model=MODEL, 
+                contents=contents, 
+                config=config
+            )
             
             # Extract token details from response metadata
             prompt_tokens = resp.usage_metadata.prompt_token_count if resp.usage_metadata else 0
@@ -97,14 +109,23 @@ def _generate_with_retry(contents, name="API Call", max_retries=5, response_mime
             output_cost = candidates_tokens * (0.30 / 1000000)
             cost_usd = input_cost + output_cost
             
-            # Clean up markdown formatting and validate JSON
-            text_content = resp.text.strip()
-            if response_mime_type == "application/json" or response_schema is not None:
-                if text_content.startswith('```json'):
-                    text_content = text_content[7:]
-                if text_content.endswith('```'):
-                    text_content = text_content[:-3]
-                text_content = text_content.strip()
+            # If the SDK already parsed the response into a Pydantic object, serialise
+            # it back to JSON so callers always receive a JSON string.
+            parsed = getattr(resp, 'parsed', None)
+            if parsed is not None:
+                if hasattr(parsed, 'model_dump'):
+                    text_content = json.dumps(parsed.model_dump())
+                else:
+                    text_content = json.dumps(dict(parsed))
+            else:
+                # Fall back to resp.text and strip any markdown fences
+                text_content = (resp.text or '').strip()
+                if response_mime_type == "application/json" or response_schema is not None:
+                    if text_content.startswith('```json'):
+                        text_content = text_content[7:]
+                    if text_content.endswith('```'):
+                        text_content = text_content[:-3]
+                    text_content = text_content.strip()
                 # Test parse it, throws JSONDecodeError if invalid, triggering retry
                 json.loads(text_content)
 
@@ -124,6 +145,7 @@ def _generate_with_retry(contents, name="API Call", max_retries=5, response_mime
                 'RESOURCE_EXHAUSTED' in msg or 
                 '503' in msg or 
                 'UNAVAILABLE' in msg or 
+                'timed out' in msg.lower() or
                 isinstance(e, json.JSONDecodeError)
             )
             if is_retryable:
@@ -242,26 +264,13 @@ def classify_moment(upload_dir, filename, ai_moment):
     """
     meta_moment, _ = classify_by_metadata_only(upload_dir, filename)
     
-    # If the metadata says it was taken pre-match, it is pre-match
-    if meta_moment == 'pre-match':
-        return 'pre-match'
-        
-    # If the metadata says post-match, but the AI content is game action (e.g. stoppage time goals), keep as in-match
-    if meta_moment == 'post-match':
-        if ai_moment in ['in-match', 'goal', 'player', 'celebration']:
-            return 'in-match'
-        return 'post-match'
-        
-    # If metadata says in-match, but the AI content is pre-match (e.g. warmups right at kickoff) or post-match
-    if meta_moment == 'in-match':
-        if ai_moment in ['pre-match', 'post-match']:
-            return ai_moment
-        return 'in-match'
-        
-    return meta_moment
+    # We completely trust the AI's visual classification (ai_moment) over metadata.
+    # The AI can physically see if it's tailgating (pre-match) or active gameplay (in-match).
+    # Metadata timestamps are often corrupted by timezone issues or bulk upload timings.
+    return ai_moment
 
 
-def get_current_score():
+def get_current_score(latest_ts=None):
     import time, os
     override_score = os.getenv('OVERRIDE_SCORE')
     if override_score:
@@ -274,9 +283,9 @@ def get_current_score():
         try:
             now_ts = float(override_ts)
         except ValueError:
-            now_ts = time.time()
+            now_ts = latest_ts if latest_ts else time.time()
     else:
-        now_ts = time.time()
+        now_ts = latest_ts if latest_ts else time.time()
         
     if now_ts < 1782439200:
         return "0-0", "No goals have been scored yet by either team. Both teams are at 0-0."
@@ -288,15 +297,16 @@ def get_current_score():
         return "1-1", "The match ended or is tied at 1-1. Craig Goodwin scored for Australia at 24', and Miguel Almirón scored the equalizer for Paraguay at 67'."
 
 
-def score_and_group_photos(session_id, log=print, limit=10):
+def score_and_group_photos(session_id, log=print, limit=10, consider_limit=100, include_videos=True):
     """
     Score and moderate all media (photos and videos) in a single batched API call.
     """
     upload_dir = f'uploads/{session_id}'
+    valid_exts = ('.jpg', '.jpeg', '.png', '.heic', '.mov', '.mp4') if include_videos else ('.jpg', '.jpeg', '.png', '.heic')
     files = [f for f in os.listdir(upload_dir)
-             if f.lower().endswith(('.jpg', '.jpeg', '.png', '.heic', '.mov', '.mp4'))]
+             if f.lower().endswith(valid_exts)]
 
-    # Sort files by modification time, most recent first, and limit to 100
+    # Sort files by modification time, most recent first, and limit to consider_limit
     files_with_time = []
     for f in files:
         path = os.path.join(upload_dir, f)
@@ -305,24 +315,76 @@ def score_and_group_photos(session_id, log=print, limit=10):
         except Exception:
             files_with_time.append((f, 0))
     files_with_time.sort(key=lambda x: x[1], reverse=True)
-    files = [x[0] for x in files_with_time[:100]]
+    files = [x[0] for x in files_with_time[:consider_limit]]
 
-    # Programmatic deduplication based on MD5 content hashes
-    seen_hashes = set()
-    deduped_files = []
+    # Programmatic deduplication based on MD5 content hashes and original filenames
+    import re
+    import imagehash
+    from PIL import Image
+
+    # 1. Deduplicate by base filename (preferring photos over videos for Live Photos)
+    base_groups = {}
     for f in files:
+        base_match = re.search(r'^(.*?)_\d{10}_[0-9a-f]{6}(\.[a-zA-Z0-9]+)$', f)
+        base_name = base_match.group(1).lower() if base_match else os.path.splitext(f)[0].lower()
+        if base_name not in base_groups:
+            base_groups[base_name] = []
+        base_groups[base_name].append(f)
+
+    selected_by_base = []
+    for base_name, group in base_groups.items():
+        photos = [f for f in group if f.lower().endswith(('.jpg', '.jpeg', '.png', '.heic'))]
+        if photos:
+            selected_by_base.append(photos[0]) # files was sorted by mtime, so [0] is newest
+        else:
+            selected_by_base.append(group[0])
+            
+    # Restore mtime ordering for the selected files (oldest to newest for clustering)
+    selected_by_base.sort(key=lambda f: os.path.getmtime(os.path.join(upload_dir, f)))
+
+    # 2. Perceptual Hashing (Burst Filter) with strict Hamming distance
+    import imagehash
+    from PIL import Image
+    deduped_files = []
+    seen_hashes = []
+    
+    for f in selected_by_base:
         path = os.path.join(upload_dir, f)
         try:
-            with open(path, 'rb') as fh:
-                f_hash = hashlib.md5(fh.read()).hexdigest()
-            if f_hash in seen_hashes:
-                log(f"Programmatic Deduplication: Skipped duplicate file content: {f}")
-                continue
-            seen_hashes.add(f_hash)
+            if f.lower().endswith(('.jpg', '.jpeg', '.png', '.heic')):
+                img = Image.open(path)
+                phash = imagehash.phash(img)
+                
+                # Check Hamming distance against all seen hashes. 
+                # A distance of <= 4 means it's an exact burst duplicate.
+                is_duplicate = False
+                for seen in seen_hashes:
+                    if not isinstance(seen, str): # ensure it's an imagehash, not an MD5 string
+                        if abs(phash - seen) <= 4:
+                            is_duplicate = True
+                            break
+                        
+                if is_duplicate:
+                    log(f"Perceptual Deduplication: Skipped visually identical burst photo: {f}")
+                    continue
+                    
+                seen_hashes.append(phash)
+            else:
+                # Fallback to MD5 for videos
+                with open(path, 'rb') as fh:
+                    f_hash = hashlib.md5(fh.read()).hexdigest()
+                # Store as string so we don't try to subtract from imagehash
+                if f_hash in seen_hashes:
+                    continue
+                seen_hashes.append(f_hash)
+
             deduped_files.append(f)
         except Exception as e:
             log(f"Deduplication check error for {f}: {e}")
             deduped_files.append(f)
+
+    # Sort deduplicated files back to newest-first
+    deduped_files.sort(key=lambda f: os.path.getmtime(os.path.join(upload_dir, f)), reverse=True)
 
     parts = []
     valid_files = []
@@ -363,7 +425,14 @@ def score_and_group_photos(session_id, log=print, limit=10):
         if not valid_files:
             return []
 
-        score_str, score_details = get_current_score()
+        # Find the latest timestamp across all valid files to determine the current score state
+        max_ts = 0
+        for f in valid_files:
+            _, ts = classify_by_metadata_only(upload_dir, f)
+            if ts > max_ts:
+                max_ts = ts
+                
+        score_str, score_details = get_current_score(latest_ts=max_ts if max_ts > 0 else None)
         parts.append(
             f'These are {len(valid_files)} fan photos and videos from {MATCH_CONTEXT}. '
             'This is a fan memory app — media files (photos/videos) taken by fans attending the match are the heart of this experience. '
@@ -372,8 +441,8 @@ def score_and_group_photos(session_id, log=print, limit=10):
             'that are inconsistent with these details. (For example, if no goals have been scored, '
             'do not mention any goals, scoring attempts that succeeded, or goal celebrations).\n'
             'Return a JSON object containing two fields:\n'
-            '1. "detected_score": a string representing the match score (e.g., "0-0", "0-1", "1-1") detected from the scoreboard. '
-            f'If no scoreboard media is present or no goals are shown, default strictly to the current live score: "{score_str}".\n'
+            '1. "detected_score": a string representing the match score (e.g., "0-0", "0-1", "1-1") ONLY IF explicitly detected from the photos (e.g., a scoreboard is visible). '
+            'If no scoreboard media is present or no score is visible in the photos, you MUST set this strictly to "HIDDEN". Do NOT guess the score or use the live score.\n'
             '2. "photos": a JSON array containing one object per media file, with these fields:\n'
             '   {"filename": "the exact filename of this media file as matching the [Media Index X: filename=Y] marker", '
             '   "usable": true/false, "moderation_reason": "why rejected or ok", '
@@ -385,10 +454,14 @@ def score_and_group_photos(session_id, log=print, limit=10):
             '(b) not blurry or black, (c) a real match or fan attendance photo/video, not a screenshot or unrelated image.\n'
             '2. SCORE (PERSONALIZATION & VARIETY): rate the photo/video 0-10 based on its value as a personal fan memory. '
             'CRITICAL PERSONALIZATION INSTRUCTIONS:\n'
-            '   - Identify if there is a core group of people who attended the match together (e.g. same recurring people like the father and daughter, or specific friends appearing across multiple photos).\n'
-            '   - Assign higher scores (8-10) to personal, candid, or group photos and videos featuring these same recurring people (e.g., selfies in the stadium, family smiles). These represent key personal important moments of the match-day experience.\n'
-            '   - Rate generic stadium landscape, scoreboard, or gameplay shots that do not show the core attendees lower (typically 4-7), unless they are outstanding/unique.\n'
-            '   - AVOID DUPLICATES AND NEAR-DUPLICATES: If there are multiple similar photos of the same scene (e.g., multiple scoreboard photos showing 0-0, or multiple near-identical selfies), select only the single best one to have a high score, and score the others very low (1-3) or mark them as usable=false with moderation_reason="Duplicate/near-duplicate". We want a diverse journal with no repetitive highlights.\n'
+            '   - Identify the core group of people who attended the match together.\n'
+            '   - CELEBRATE DIFFERENT GROUPINGS: You should give high scores (8-10) to distinct subsets of the group. For example, give a high score to ONE great photo of the entire 6-member group, ONE great photo of just the 4-member family, ONE photo of the father and son, and ONE photo of the father and daughter. These are all distinct, highly valuable personal moments!\n'
+            '   - Ensure a BROADER VARIETY of the match experience. Try to find these different groupings across different moments: `pre-match`, `in-match`, AND `post-match`.\n'
+            '   - MAXIMUM 1 PHOTO PER GROUPING: You are strictly forbidden from giving a score of 8 or higher to more than ONE photo of the exact same people. If you find two great photos of the 4-member family, you MUST pick the BEST one (score 8-10) and deliberately score the second one poorly (score 1-4). No exceptions!\n'
+            '   - PREFER LARGER GROUPS FOR SIMILAR PHOTOS: When evaluating multiple similar photos of your core group, you MUST prioritize and keep the photo with the HIGHEST number of people in the group versus the lowest (e.g. keep the 6-person photo and penalize the 4-person photo taken at the same spot).\n'
+            '   - AVOID VISUAL REDUNDANCY FOR ALL EVENTS: If there are multiple photos of the exact same event (e.g., two photos of teams entering the pitch, two photos of the same free kick), you MUST pick the single best one and deliberately score the duplicates poorly (score 1-4). Never give high scores to visually similar scenes.\n'
+            '   - PRIORITIZE ACTUAL GAMEPLAY ACTION: You MUST give a score of 9 or 10 to ANY photo that shows the green pitch with players actively playing the match! Even if the players are tiny dots from the upper stands, if the green field and active match are visible, it gets a 9 or 10. No exceptions!\n'
+            '   - PENALIZE BORING FILLER: Rate generic crowd photos without the core family, substitutions (like electronic substitution boards), scoreboards, or completely empty pitches very low (1-3). NEVER score a scoreboard or substitution board higher than a 3.\n'
             'For the caption, write one vivid sentence from the fan perspective: '
             'for fan photos/videos describe who is in the moment and what they are feeling; '
             'for player/action media use real team and player names.\n'
@@ -444,16 +517,44 @@ def score_and_group_photos(session_id, log=print, limit=10):
     log(f'{len(usable)}/{len(valid_files)} media files passed moderation')
 
     usable.sort(key=lambda x: x['score'], reverse=True)
+    
+    # Force distribution across the timeline
+    moments_map = {'pre-match': [], 'in-match': [], 'post-match': []}
+    for item in usable:
+        m = item.get('moment', 'in-match')
+        if m in moments_map:
+            moments_map[m].append(item)
+        else:
+            moments_map['in-match'].append(item)
+            
+    final_selection = []
+    while len(final_selection) < limit and any(moments_map.values()):
+        for m in ['pre-match', 'in-match', 'post-match']:
+            if moments_map[m] and len(final_selection) < limit:
+                final_selection.append(moments_map[m].pop(0))
+                
+    # Sort the final selection chronologically using exact timestamps embedded in filenames
+    import re
+    def get_timestamp(item):
+        m = re.search(r'_(\d{10})_', item.get('filename', ''))
+        if m:
+            return int(m.group(1))
+        # Fallback to moment order if no timestamp in filename
+        moment_order = {'pre-match': 0, 'in-match': 1, 'post-match': 2}
+        return 9999999999 + moment_order.get(item.get('moment', 'in-match'), 1)
+        
+    final_selection.sort(key=get_timestamp)
+
     os.makedirs(f'outputs/{session_id}', exist_ok=True)
     cache = {
         '_fingerprint': _uploads_fingerprint(upload_dir), 
         'detected_score': detected_score,
         'limit': limit,
-        'photos': usable[:limit]
+        'photos': final_selection
     }
     with open(f'outputs/{session_id}/highlights.json', 'w') as fh:
         json.dump(cache, fh, indent=2)
-    return usable[:limit]
+    return final_selection
 
 
 def generate_artefacts(session_id, scored, detected_score='0-0', log=print):
@@ -466,8 +567,7 @@ def generate_artefacts(session_id, scored, detected_score='0-0', log=print):
     a shareable image card (using Gemini image generation) as an additional
     artefact for social sharing.
     """
-    top5 = scored[:5]
-    captions = '\n'.join([f"- {p['moment']}: {p['caption']}" for p in top5])
+    captions = '\n'.join([f"- {p['moment']}: {p['caption']}" for p in scored])
     moments = [p['moment'] for p in scored]
     # Flatten all identified players across photos, deduplicated
     all_players = list(dict.fromkeys(
@@ -487,7 +587,7 @@ Using ONLY these photo captions and player data, write:
    their reactions, the atmosphere in the stands, and personal moments captured in photos.
    Use real team and player names — never describe jersey colours.
 2. A fan stats card based strictly on what was captured in photos, containing:
-   - "top_moment": a brief sentence describing the single most memorable personal or family moment.
+   - "top_moment": a brief sentence describing the single most exciting match action or stadium vibe moment. Do NOT focus on specific people or family members attending.
    - "energy": one of '⭐', '⭐⭐', '⭐⭐⭐', '⭐⭐⭐⭐', '⭐⭐⭐⭐⭐' representing the overall excitement level.
    - "atmosphere": a short description of the crowd atmosphere (e.g., 'Electric and family-friendly').
    - "players_spotted": a list of player names identified in the media.
@@ -508,17 +608,16 @@ If the match score is "0-0", you MUST describe the match as a scoreless draw or 
 Return JSON only conforming to the schema.'''
 
     log('[Activating: story-weaver skill]')
-    log(f"CALLING: generate_story_and_stats(detected_score='{final_score}')")
+    log(f'CALLING: generate_story_and_stats(detected_score={final_score!r})')
     raw = _generate_with_retry(
         combined_prompt, 
         name="Story & Stats Generation", 
         response_schema=StoryAndStatsResponse
     )
-    log(f'RESULT: generate_story_and_stats response received (len={len(raw)})')
     data = json.loads(raw)
-
     story = str(data.get('story') or data.get('match_story', ''))
     stats = data.get('stats') or data.get('fan_stats_card', {})
+
     if isinstance(stats, str):
         stats = {}
         
@@ -535,7 +634,7 @@ Return JSON only conforming to the schema.'''
     return story, stats
 
 
-def run_pipeline(session_id='FIFA26', log=print, limit=10):
+def run_pipeline(session_id='FIFA26', log=print, limit=10, consider_limit=100, include_videos=True):
     global api_calls_log
     api_calls_log = []
     
@@ -568,7 +667,7 @@ def run_pipeline(session_id='FIFA26', log=print, limit=10):
             log('Uploads or limit have changed — re-scoring photos')
 
     if scored is None:
-        scored = score_and_group_photos(session_id, log=log, limit=limit)
+        scored = score_and_group_photos(session_id, log=log, limit=limit, consider_limit=consider_limit, include_videos=include_videos)
 
     if not scored:
         raise ValueError('No usable photos after moderation — ask contributors to upload clearer match photos.')

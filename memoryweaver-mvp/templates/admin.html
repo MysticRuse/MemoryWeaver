@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MemoryWeaver - Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script>
+    function handleGenerateClick(btn) {
+      const selectEl = document.getElementById('journal-limit-select');
+      const limit = selectEl ? selectEl.value : 10;
+      const considerEl = document.getElementById('journal-consider-select');
+      const considerLimit = considerEl ? considerEl.value : 100;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Synthesizing Match Story...';
+      window.location.href = `/generate?limit=${limit}&consider_limit=${considerLimit}`;
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <div class="scoreboard">
+      <div class="scoreboard-top">
+        <span class="live-status">Admin Dashboard</span>
+        <span class="tournament-badge">MemoryWeaver</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display: flex; flex-direction: column; gap: 12px; background: rgba(5, 150, 105, 0.03); border: 1px solid rgba(5, 150, 105, 0.15); padding: 18px; border-radius: 20px;">
+        <h3 style="font-size: 14px; font-weight: 800; text-transform: uppercase; color: var(--primary); letter-spacing: 0.5px;">✨ Weave Photo Journal</h3>
+        
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px;">
+          <span style="font-size: 13px; font-weight: 600; color: var(--text-muted);">Journal highlights count:</span>
+          <input type="number" id="journal-limit-select" min="1" max="50" value="10" style="padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.15); font-family: inherit; font-size: 13px; font-weight: 600; outline: none; background: white; color: var(--text); width: 80px; text-align: center;">
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px;">
+          <span style="font-size: 13px; font-weight: 600; color: var(--text-muted);">Items considered (API calls):</span>
+          <input type="number" id="journal-consider-select" min="1" max="200" value="100" style="padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.15); font-family: inherit; font-size: 13px; font-weight: 600; outline: none; background: white; color: var(--text); width: 80px; text-align: center;">
+        </div>
+
+        <button onclick="handleGenerateClick(this)" class="btn" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; box-shadow: 0 4px 15px rgba(5, 150, 105, 0.15);">
+          <span>✨ Generate/Update Journal</span>
+        </button>
+
+        {% if story_ready %}
+          <a href="/results" class="btn btn-secondary" style="margin-top: 4px; border: 1.5px solid var(--accent); color: var(--accent);">
+            <span>🎉 View Current Story</span>
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</body>
+</html>

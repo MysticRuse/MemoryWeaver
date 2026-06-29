@@ -1185,9 +1185,11 @@
     function handleGenerateClick(btn) {
       const selectEl = document.getElementById('journal-limit-select');
       const limit = selectEl ? selectEl.value : 10;
+      const considerEl = document.getElementById('journal-consider-select');
+      const considerLimit = considerEl ? considerEl.value : 100;
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span> Synthesizing Match Story...';
-      window.location.href = `/generate?limit=${limit}`;
+      window.location.href = `/generate?limit=${limit}&consider_limit=${considerLimit}`;
     }
 
     const OVERRIDE_SCORE = "{{ override_score }}";
@@ -1197,10 +1199,6 @@
     const END_TIME = new Date("2026-06-25T21:00:00-07:00");
 
     function getMatchScore(now) {
-      if (OVERRIDE_SCORE === '0-0') {
-        return { paraguay: 0, australia: 0, status: 'Live' };
-      }
-      
       let ms = now.getTime();
       if (OVERRIDE_TIMESTAMP) {
         ms = parseFloat(OVERRIDE_TIMESTAMP) * 1000;
@@ -1210,15 +1208,25 @@
       const goalAusMs = kickoffMs + 24 * 60 * 1000;
       const goalPyMs = kickoffMs + 82 * 60 * 1000;
       
+      let status = 'Live';
       if (ms < kickoffMs) {
-        return { paraguay: 0, australia: 0, status: 'Pre-Match' };
-      } else if (ms < goalAusMs) {
-        return { paraguay: 0, australia: 0, status: 'Live' };
-      } else if (ms < goalPyMs) {
-        return { paraguay: 0, australia: 1, status: 'Live' };
-      } else {
-        return { paraguay: 1, australia: 1, status: 'Completed' };
+        status = 'Pre-Match';
+      } else if (ms >= goalPyMs + 30 * 60 * 1000) {
+        status = 'Completed';
       }
+      
+      if (OVERRIDE_SCORE === 'HIDDEN') {
+        return { hidden: true, status: status };
+      }
+      
+      if (OVERRIDE_SCORE) {
+        const parts = OVERRIDE_SCORE.split('-');
+        if (parts.length === 2) {
+          return { paraguay: parseInt(parts[0]), australia: parseInt(parts[1]), status: status };
+        }
+      }
+      
+      return { hidden: true, status: status };
     }
 
     function updateLiveScore() {
@@ -1230,12 +1238,21 @@
       const scoreObj = getMatchScore(now);
       const scoreStr = `${scoreObj.paraguay} - ${scoreObj.australia}`;
       
-      if (scoreObj.status === 'Pre-Match') {
+      if (scoreObj.hidden) {
         if (vsCircle) vsCircle.textContent = 'VS';
-        if (questScoreBadge) questScoreBadge.textContent = 'SCORE: 0 - 0';
+        if (questScoreBadge) questScoreBadge.style.display = 'none';
+      } else if (scoreObj.status === 'Pre-Match') {
+        if (vsCircle) vsCircle.textContent = 'VS';
+        if (questScoreBadge) {
+          questScoreBadge.style.display = 'inline-block';
+          questScoreBadge.textContent = 'SCORE: 0 - 0';
+        }
       } else {
         if (vsCircle) vsCircle.textContent = scoreStr;
-        if (questScoreBadge) questScoreBadge.textContent = `SCORE: ${scoreStr}`;
+        if (questScoreBadge) {
+          questScoreBadge.style.display = 'inline-block';
+          questScoreBadge.textContent = `SCORE: ${scoreStr}`;
+        }
       }
     }
 
@@ -1783,26 +1800,15 @@
           </div>
         {% endif %}
       </div>
-
-      <!-- Generation Actions -->
-      <div style="display: flex; flex-direction: column; gap: 12px; background: rgba(5, 150, 105, 0.03); border: 1px solid rgba(5, 150, 105, 0.15); padding: 18px; border-radius: 20px;">
-        <h3 style="font-size: 14px; font-weight: 800; text-transform: uppercase; color: var(--primary); letter-spacing: 0.5px;">✨ Weave Photo Journal</h3>
-        
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px;">
-          <span style="font-size: 13px; font-weight: 600; color: var(--text-muted);">Journal highlights count:</span>
-          <input type="number" id="journal-limit-select" min="1" max="50" value="10" style="padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.15); font-family: inherit; font-size: 13px; font-weight: 600; outline: none; background: white; color: var(--text); width: 80px; text-align: center;">
-        </div>
-
-        <button onclick="handleGenerateClick(this)" class="btn" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; box-shadow: 0 4px 15px rgba(5, 150, 105, 0.15);">
-          <span>✨ Generate/Update Journal</span>
-        </button>
-
-        {% if story_ready %}
-          <a href="/results" class="btn btn-secondary" style="margin-top: 4px; border: 1.5px solid var(--accent); color: var(--accent);">
-            <span>🎉 View Current Story</span>
-          </a>
-        {% endif %}
+      
+      {% if story_ready %}
+      <div style="margin-top: 16px;">
+        <a href="/results" class="btn" style="background: linear-gradient(135deg, var(--accent) 0%, #2563eb 100%); color: white; box-shadow: 0 4px 15px rgba(29, 78, 216, 0.2);">
+          <span>🎉 View Memory Artifacts</span>
+        </a>
       </div>
+      {% endif %}
+
     </div>
 
     <!-- Share Album Card -->

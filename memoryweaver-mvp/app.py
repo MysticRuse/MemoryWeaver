@@ -153,35 +153,47 @@ def index():
         else:
             my_uploads_classified['in-match'].append(item)
             
-    story_ready = os.path.exists(f'{OUTPUT_DIR}/story.txt')
+    story_ready = os.path.exists(f'{OUTPUT_DIR}/story.txt') and os.path.getsize(f'{OUTPUT_DIR}/story.txt') > 0
     success = request.args.get('success')
     
-    # Calculate current score based on time and overrides
-    override_score = os.getenv('OVERRIDE_SCORE')
+    import pipeline as pl
+    max_ts = 0
+    for f in all_files:
+        if f.startswith('.'): continue
+        try:
+            _, ts = pl.classify_by_metadata_only(UPLOAD_DIR, f)
+            if ts > max_ts: max_ts = ts
+        except Exception:
+            pass
+
+    detected_score = None
+    highlights_path = f'{OUTPUT_DIR}/highlights.json'
+    if os.path.exists(highlights_path):
+        try:
+            with open(highlights_path) as f:
+                detected_score = json.load(f).get('detected_score')
+        except Exception:
+            pass
+
+    override_score = os.getenv('OVERRIDE_SCORE') or detected_score
     override_ts = os.getenv('OVERRIDE_TIMESTAMP')
     if override_ts:
         try:
             now_ts = float(override_ts)
         except ValueError:
-            now_ts = time.time()
+            now_ts = max_ts if max_ts > 0 else time.time()
     else:
-        now_ts = time.time()
+        now_ts = max_ts if max_ts > 0 else time.time()
 
-    if override_score == '0-0':
-        score_text = "0 - 0"
-        quest_score = "SCORE: 0 - 0"
-    elif now_ts < 1782439200:
+    if override_score == 'HIDDEN':
         score_text = "VS"
-        quest_score = "SCORE: 0 - 0"
-    elif now_ts < 1782440640:
-        score_text = "0 - 0"
-        quest_score = "SCORE: 0 - 0"
-    elif now_ts < 1782444120:
-        score_text = "0 - 1"
-        quest_score = "SCORE: 0 - 1"
+        quest_score = ""
+    elif override_score:
+        score_text = override_score.replace('-', ' - ')
+        quest_score = f"SCORE: {score_text}"
     else:
-        score_text = "1 - 1"
-        quest_score = "SCORE: 1 - 1"
+        score_text = "VS"
+        quest_score = ""
     
     response = make_response(render_template(
         'uploads.html',
@@ -194,7 +206,7 @@ def index():
         score_text=score_text,
         quest_score=quest_score,
         override_score=override_score or '',
-        override_timestamp=override_ts or ''
+        override_timestamp=str(now_ts)
     ))
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, public, max-age=0'
     response.headers['Pragma'] = 'no-cache'
@@ -350,8 +362,41 @@ def thumb_file(filename):
     return send_from_directory(os.path.abspath(UPLOAD_DIR), filename)
 
 
-@app.route('/generate')
+@app.route('/generate', methods=['GET', 'POST'])
 def generate():
+    if request.method == 'GET':
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+        files = [f for f in os.listdir(UPLOAD_DIR) if os.path.isfile(os.path.join(UPLOAD_DIR, f)) and not f.startswith('.')]
+        photo_count = sum(1 for f in files if f.lower().endswith(('.jpg', '.jpeg', '.png', '.heic')))
+        video_count = sum(1 for f in files if f.lower().endswith(('.mp4', '.mov')))
+        
+        import re, hashlib
+        seen_bases = set()
+        seen_hashes = set()
+        duplicate_count = 0
+        for f in files:
+            base_match = re.search(r'^(.*?)_\d{10}_[0-9a-f]{6}(\.[a-zA-Z0-9]+)$', f)
+            original_base = (base_match.group(1) + base_match.group(2)).lower() if base_match else f.lower()
+            if original_base in seen_bases:
+                duplicate_count += 1
+                continue
+            try:
+                with open(os.path.join(UPLOAD_DIR, f), 'rb') as fh:
+                    f_hash = hashlib.md5(fh.read()).hexdigest()
+                if f_hash in seen_hashes:
+                    duplicate_count += 1
+                    continue
+                seen_hashes.add(f_hash)
+            except Exception:
+                pass
+            seen_bases.add(original_base)
+            
+        return render_template('admin_generate.html', photo_count=photo_count, video_count=video_count, duplicate_count=duplicate_count)
+
+    limit = request.form.get('limit', default=10, type=int)
+    consider_limit = request.form.get('consider_limit', default=100, type=int)
+    include_videos = request.form.get('include_videos') == 'on'
+    
     load_pipeline_status()
     # If already running, check for timeout
     if pipeline_status['running']:
@@ -363,13 +408,10 @@ def generate():
         else:
             return render_template('processing.html')
 
-    # Get requested limit parameter
-    limit = request.args.get('limit', default=10, type=int)
-
     # Reset state
     pipeline_status.update({'running': True, 'error': None, 'stage': 'Starting', 'log': [], 'started_at': time.time(), 'api_calls': []})
     save_pipeline_status()
-    log_event("PIPELINE", f"Started AI Story Weaver Pipeline with limit {limit}", level="INFO")
+    log_event("PIPELINE", f"Started AI Story Weaver Pipeline with limit {limit} and consider_limit {consider_limit}", level="INFO")
 
     def run():
       try:
@@ -390,7 +432,7 @@ def generate():
           pipeline_status['api_calls'] = list(pl.api_calls_log)
           save_pipeline_status()
 
-        pl.run_pipeline(SESSION_ID, log=log_callback, limit=limit)
+        pl.run_pipeline(SESSION_ID, log=log_callback, limit=limit, consider_limit=consider_limit, include_videos=include_videos)
         pipeline_log('Pipeline complete!')
         load_pipeline_status()
         pipeline_status['stage'] = 'Done'
@@ -520,7 +562,9 @@ def results():
         try:
             with open(path) as f:
                 val = loader(f)
-            if attr == 'story': story = val
+            if attr == 'story':
+                # Treat whitespace-only content as no story
+                story = val.strip()
             elif attr == 'stats': stats = val
             elif attr == 'cost': cost = val
             else: highlights = val
@@ -621,6 +665,11 @@ def show_logs():
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
     return response
+
+@app.route('/admin')
+def admin():
+    story_ready = os.path.exists(f'{OUTPUT_DIR}/story.txt') and os.path.getsize(f'{OUTPUT_DIR}/story.txt') > 0
+    return render_template('admin.html', story_ready=story_ready)
 
 
 if __name__ == '__main__':
