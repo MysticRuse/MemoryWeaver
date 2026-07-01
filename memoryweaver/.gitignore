@@ -206,3 +206,9 @@ tools/a2a-inspector/
 # Local Storage (media, caches, artifacts)
 local_storage/
 **/local_storage/
+
+# Google OAuth API keys
+credentials.json
+token.json
+client_secret_*.json
+*.apps.googleusercontent.com.json

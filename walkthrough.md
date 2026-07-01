@@ -88,6 +88,21 @@ This document tracks all changes made to the repository on a day-by-day basis. U
 * **Upload Dialog Removal**:
   * Removed the blocking browser `alert()` modal on successful uploads inside `upload.html`, keeping only the dynamic button spinner state that resets immediately when the upload completes.
 
+### 5. Local Pre-Cleaner & Human-in-the-Loop Review
+* **`pipeline/local_cleaner.py`**:
+  * Added edge-variance blur filtering using Pillow's `FIND_EDGES` filter to score image sharpness.
+  * Added difference hash (dHash) deduplication to cluster and drop identical burst shots locally.
+  * Extracted EXIF camera metadata to dynamically register uploader identities in the Memory Bank.
+* **FastAPI Router (`app/fast_api_app.py`)**:
+  * Added `/api/select-folder` to trigger a native macOS Finder directory selector (via Tkinter).
+  * Added `/api/pre-clean` to classify directory files without modifying source content.
+  * Added `/api/serve-raw` to stream local images, converting `.heic` files on-the-fly for web preview.
+  * Added `/api/confirm-ingest` to copy user-selected images to `local_storage/uploads/` and generate thumbnails.
+* **`frontend/upload.html`**:
+  * Designed a 3-step ingestion wizard.
+  * Rendered side-by-side **Accepted Set** and **Rejected Set** interactive trays where users can click thumbnails to toggle photos between sets.
+
+
 
 
 

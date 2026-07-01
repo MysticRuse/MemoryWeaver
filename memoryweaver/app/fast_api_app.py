@@ -158,6 +158,142 @@ def delete_photo(filename: str = Form(...)):
         return {"status": "error", "message": f"Failed to delete file: {str(e)}"}
 
 
+selected_folder_path = None
+pre_clean_results = {"accepted": [], "rejected": []}
+
+from pydantic import BaseModel
+class IngestRequest(BaseModel):
+    filenames: list[str]
+
+@app.post("/api/select-folder")
+def select_folder():
+    """Opens a native macOS Finder folder selector and returns file count."""
+    global selected_folder_path
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+        
+        root = tk.Tk()
+        root.withdraw()  # Hide main window
+        root.attributes('-topmost', True)  # Bring Finder dialog to the top
+        
+        folder = filedialog.askdirectory(parent=root, title="Select Google Photos Folder")
+        root.destroy()
+        
+        if folder:
+            selected_folder_path = folder
+            files = [f for f in os.listdir(folder) 
+                     if f.lower().endswith(('.jpg', '.jpeg', '.png', '.heic'))]
+            return {"status": "success", "folder": folder, "count": len(files)}
+        return {"status": "error", "message": "No folder selected"}
+    except Exception as e:
+        return {"status": "error", "message": f"Folder selector failed: {str(e)}"}
+
+@app.post("/api/pre-clean")
+def run_pre_clean(blur_threshold: float = 12.0, dup_threshold: int = 8):
+    """Executes local_cleaner.py to classify photos into accepted/rejected trays."""
+    global selected_folder_path, pre_clean_results
+    if not selected_folder_path:
+        return {"status": "error", "message": "No folder selected. Please select a folder first."}
+    
+    from pipeline.local_cleaner import analyze_directory
+    try:
+        res = analyze_directory(selected_folder_path, blur_threshold, dup_threshold)
+        pre_clean_results = res
+        return {"status": "success", "accepted": res["accepted"], "rejected": res["rejected"]}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/serve-raw")
+def serve_raw_file(filename: str):
+    """Streams local images from the selected folder, converting HEIC on-the-fly."""
+    global selected_folder_path
+    if not selected_folder_path:
+        return {"status": "error", "message": "No folder selected"}
+        
+    safe_filename = os.path.basename(filename)
+    full_path = os.path.join(selected_folder_path, safe_filename)
+    
+    if os.path.exists(full_path):
+        if safe_filename.lower().endswith('.heic'):
+            try:
+                from PIL import Image
+                from pillow_heif import register_heif_opener
+                import io
+                from fastapi.responses import Response
+                
+                register_heif_opener()
+                with Image.open(full_path) as im:
+                    buf = io.BytesIO()
+                    im.save(buf, format="JPEG", quality=75)
+                    return Response(content=buf.getvalue(), media_type="image/jpeg")
+            except Exception as e:
+                return {"status": "error", "message": f"HEIC conversion failed: {str(e)}"}
+                
+        from fastapi.responses import FileResponse
+        return FileResponse(full_path)
+    return {"status": "error", "message": "File not found"}
+
+@app.post("/api/confirm-ingest")
+def confirm_ingest(req: IngestRequest):
+    """Copies the approved accepted photo list to local_storage/uploads/."""
+    global selected_folder_path, pre_clean_results
+    if not selected_folder_path:
+        return {"status": "error", "message": "No active folder session."}
+        
+    try:
+        import shutil
+        import hashlib
+        from PIL import Image
+        from agents.memory.tools.memory_bank import MemoryBankStore
+        from pipeline.local_cleaner import get_exif_metadata
+        
+        upload_dir = os.path.join(local_storage_dir, "uploads")
+        thumb_dir = os.path.join(local_storage_dir, "thumbs")
+        
+        # Clear existing uploads/thumbs
+        shutil.rmtree(upload_dir, ignore_errors=True)
+        shutil.rmtree(thumb_dir, ignore_errors=True)
+        os.makedirs(upload_dir, exist_ok=True)
+        os.makedirs(thumb_dir, exist_ok=True)
+        
+        store = MemoryBankStore()
+        ingested = []
+        
+        for filename in req.filenames:
+            src_path = os.path.join(selected_folder_path, filename)
+            if not os.path.exists(src_path):
+                continue
+                
+            # Resolve uploader/contributor info
+            meta = get_exif_metadata(src_path)
+            uploader_name = meta["uploader"]
+            contributor_id = hashlib.sha256(uploader_name.strip().lower().encode()).hexdigest()[:12]
+            
+            # Map name in Memory Bank
+            store.upsert_contributor(contributor_id, uploader_name, [], 0)
+            
+            # Copy file with hashing prefix
+            timestamp_prefix = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+            unique_name = f"{contributor_id}_{timestamp_prefix}_{filename}"
+            dest_path = os.path.join(upload_dir, unique_name)
+            
+            shutil.copy2(src_path, dest_path)
+            
+            # Generate thumbnail locally for viewer page performance
+            try:
+                with Image.open(dest_path) as img:
+                    img.thumbnail((200, 200))
+                    img.save(os.path.join(thumb_dir, unique_name))
+            except:
+                pass
+                
+            ingested.append(filename)
+            
+        return {"status": "success", "ingested_count": len(ingested)}
+    except Exception as e:
+        return {"status": "error", "message": f"Ingestion failed: {str(e)}"}
+
 @app.get("/trip-stats")
 def get_trip_stats():
     """Returns the total number of uploaded photos in the active trip pool."""
