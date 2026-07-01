@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import datetime
 from dotenv import load_dotenv
 # Resolve parent directory to locate the .env file in project root
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -29,7 +30,7 @@ from a2a.utils.constants import (
     AGENT_CARD_WELL_KNOWN_PATH,
     EXTENDED_AGENT_CARD_PATH,
 )
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from google.adk.a2a.executor.a2a_agent_executor import A2aAgentExecutor
@@ -187,44 +188,78 @@ def select_folder():
     except Exception as e:
         return {"status": "error", "message": f"Folder selector failed: {str(e)}"}
 
+@app.post("/api/set-folder")
+def set_folder(folder: str):
+    global selected_folder_path
+    selected_folder_path = folder
+    return {"status": "success", "folder": folder}
+
 progress_state = {
-    "pre_clean": {"current": 0, "total": 0, "status": "idle"},
-    "pipeline": {"current": 0, "total": 0, "status": "idle", "phase": "idle"}
+    "pre_clean": {"current": 0, "total": 0, "status": "idle", "start_time": 0.0},
+    "pipeline": {"current": 0, "total": 0, "status": "idle", "phase": "idle", "start_time": 0.0}
 }
 
 @app.get("/api/progress")
 def get_progress():
     """Returns the current progress state of long-running operations."""
-    return progress_state
+    global selected_folder_path
+    # Inject active elapsed time calculations
+    import time
+    resp = {}
+    for key, val in progress_state.items():
+        resp[key] = val.copy()
+        if val["status"] == "running" and val["start_time"] > 0:
+            resp[key]["elapsed"] = round(time.time() - val["start_time"], 1)
+        else:
+            resp[key]["elapsed"] = 0.0
+    resp["folder"] = selected_folder_path
+    return resp
 
-@app.post("/api/pre-clean")
-def run_pre_clean(blur_threshold: float = 12.0, dup_threshold: int = 8):
-    """Executes local_cleaner.py to classify photos into accepted/rejected trays."""
-    global selected_folder_path, pre_clean_results, progress_state
-    if not selected_folder_path:
-        return {"status": "error", "message": "No folder selected. Please select a folder first."}
-    
-    progress_state["pre_clean"] = {"current": 0, "total": 0, "status": "running"}
+def run_pre_clean_background(folder: str, blur_threshold: float, dup_threshold: int):
+    global pre_clean_results, progress_state
     
     def pre_clean_progress(current, total):
         progress_state["pre_clean"]["current"] = current
         progress_state["pre_clean"]["total"] = total
-        if current >= total:
-            progress_state["pre_clean"]["status"] = "complete"
             
     from pipeline.local_cleaner import analyze_directory
     try:
         res = analyze_directory(
-            selected_folder_path, 
+            folder, 
             blur_threshold, 
             dup_threshold, 
             progress_callback=pre_clean_progress
         )
         pre_clean_results = res
-        return {"status": "success", "accepted": res["accepted"], "rejected": res["rejected"]}
+        progress_state["pre_clean"]["status"] = "complete"
     except Exception as e:
         progress_state["pre_clean"]["status"] = "error"
-        return {"status": "error", "message": str(e)}
+        progress_state["pre_clean"]["error_msg"] = str(e)
+
+@app.post("/api/pre-clean")
+def run_pre_clean(background_tasks: BackgroundTasks, blur_threshold: float = 12.0, dup_threshold: int = 8):
+    """Triggers the local_cleaner.py analysis in the background."""
+    global selected_folder_path, progress_state
+    if not selected_folder_path:
+        return {"status": "error", "message": "No folder selected. Please select a folder first."}
+    
+    # Synchronously reset to running state to prevent frontend from reading 'complete' from a previous run
+    import time
+    progress_state["pre_clean"] = {
+        "current": 0, 
+        "total": 0, 
+        "status": "running", 
+        "start_time": time.time()
+    }
+    
+    background_tasks.add_task(run_pre_clean_background, selected_folder_path, blur_threshold, dup_threshold)
+    return {"status": "success", "message": "Pre-clean analysis started in the background."}
+
+@app.get("/api/pre-clean-results")
+def get_pre_clean_results():
+    """Returns the completed accepted/rejected pre-clean lists."""
+    global pre_clean_results
+    return pre_clean_results
 
 @app.get("/api/serve-raw")
 def serve_raw_file(filename: str):
@@ -401,19 +436,14 @@ def get_pipeline_logs():
     return {"status": "success", "logs": pipeline_logs}
 
 
-@app.post("/generate")
-def run_generation_pipeline():
-    """Triggers the full multi-agent moderation, curation, memory and narration pipeline."""
+def run_generation_background():
+    """Asynchronous background worker for the 5-agent pipeline."""
     import time
     start_time = time.time()
-    global progress_state
+    global progress_state, pipeline_logs
     try:
-        global pipeline_logs
         pipeline_logs.clear()
-        
         log_pipeline_step("Initiating pipeline orchestration...")
-        
-        progress_state["pipeline"] = {"current": 0, "total": 0, "status": "running", "phase": "initiating"}
         
         def pipeline_progress(current, total, phase):
             progress_state["pipeline"]["current"] = current
@@ -438,15 +468,9 @@ def run_generation_pipeline():
         uncached_mod = stats.get("uncached_moderated", 0)
         uncached_score = stats.get("uncached_scored", 0)
         
-        # Moderation uses approx 1000 input / 100 output per photo
-        # Curation/scoring uses approx 1500 input / 150 output per photo
-        # Narrative generation uses approx 800 input / 250 output per moment
         moments_count = stats.get("moments_count", 0)
-        
         est_input_tokens = (uncached_mod * 1000) + (uncached_score * 1500) + (moments_count * 800)
         est_output_tokens = (uncached_mod * 100) + (uncached_score * 150) + (moments_count * 250)
-        
-        # Gemini 2.5 Flash Pricing (standard pricing: $0.000075 / 1k input, $0.0003 / 1k output)
         est_cost = (est_input_tokens * 0.000075 / 1000) + (est_output_tokens * 0.0003 / 1000)
         
         log_pipeline_step(f"PERFORMANCE REPORT (UNCACHED RUNS ONLY):")
@@ -457,11 +481,25 @@ def run_generation_pipeline():
         log_pipeline_step(f"  - Estimated API Cost: ${est_cost:.6f} USD")
         # ==========================================
         
-        return {"status": "success", "stats": stats}
     except Exception as e:
         progress_state["pipeline"]["status"] = "error"
         log_pipeline_step(f"CRITICAL ERROR: {str(e)}")
-        return {"status": "error", "message": str(e)}
+
+@app.post("/generate")
+def run_generation_pipeline(background_tasks: BackgroundTasks):
+    """Triggers the full multi-agent moderation, curation, memory and narration pipeline."""
+    global progress_state
+    import time
+    # Synchronously reset to prevent frontend race condition
+    progress_state["pipeline"] = {
+        "current": 0, 
+        "total": 0, 
+        "status": "running", 
+        "phase": "initiating",
+        "start_time": time.time()
+    }
+    background_tasks.add_task(run_generation_background)
+    return {"status": "success", "message": "Pipeline started in the background."}
 
 
 # Main execution

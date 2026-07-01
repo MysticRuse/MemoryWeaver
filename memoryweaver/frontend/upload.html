@@ -35,7 +35,7 @@
 
         .container {
             width: 100%;
-            max-width: 900px;
+            max-width: 1000px;
             display: flex;
             flex-direction: column;
             gap: 24px;
@@ -224,115 +224,207 @@
             transition: width 0.2s ease;
         }
 
-        /* Dual Trays */
-        .trays-container {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
-            margin-top: 16px;
-        }
-
-        @media (min-width: 768px) {
-            .trays-container {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-
-        .tray {
-            background: rgba(0, 0, 0, 0.2);
+        /* HITL Photo Workspace */
+        .workspace {
+            margin-top: 20px;
             border: 1px solid var(--border);
             border-radius: 20px;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            height: 380px;
+            background: rgba(0, 0, 0, 0.15);
+            padding: 20px;
         }
 
-        .tray-header {
+        /* Filters Bar */
+        .workspace-filters {
             display: flex;
-            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
             align-items: center;
-            margin-bottom: 12px;
-            font-weight: 600;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
         }
 
-        .tray-title-accepted { color: var(--success); }
-        .tray-title-rejected { color: var(--danger); }
-
-        .tray-grid {
-            flex: 1;
-            overflow-y: auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        .filter-group {
+            display: flex;
             gap: 8px;
-            align-content: start;
-            padding-right: 4px;
+            align-items: center;
         }
 
-        /* Custom Scrollbar for Trays */
-        .tray-grid::-webkit-scrollbar {
-            width: 6px;
-        }
-        .tray-grid::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .tray-grid::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-        }
-
-        .tray-item {
-            position: relative;
-            aspect-ratio: 1;
-            border-radius: 8px;
-            overflow: hidden;
+        .filter-toggle-buttons {
+            display: flex;
+            background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2px;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 700;
+            padding: 6px 16px;
+            border-radius: 18px;
             cursor: pointer;
             transition: all 0.3s;
         }
 
-        .tray-item img {
+        .toggle-btn.active.accepted-toggle {
+            background: var(--success);
+            color: #000;
+        }
+
+        .toggle-btn.active.rejected-toggle {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .search-input, .select-input {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 20px;
+            outline: none;
+            font-family: inherit;
+            font-size: 13px;
+        }
+
+        .search-input:focus, .select-input:focus {
+            border-color: var(--accent);
+        }
+
+        /* Photo Grid */
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .photo-card {
+            background: rgba(22, 28, 38, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .photo-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .photo-card.similar-highlight {
+            border-color: #ffae00 !important;
+            box-shadow: 0 0 14px rgba(255, 174, 0, 0.6) !important;
+            transform: scale(1.03);
+            z-index: 10;
+        }
+
+        .photo-img-container {
+            width: 100%;
+            height: 120px;
+            position: relative;
+            background: #000;
+        }
+
+        .photo-img-container img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        .tray-item:hover {
-            transform: scale(1.05);
-            border-color: var(--accent);
+        .photo-card-body {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
         }
 
-        .tray-item-meta {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            font-size: 8px;
-            padding: 2px;
-            text-align: center;
+        .photo-name {
+            font-size: 11px;
+            font-weight: 600;
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
+            color: #ffffff;
         }
 
-        .move-badge {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            background: rgba(0, 0, 0, 0.8);
-            border-radius: 50%;
-            width: 16px;
-            height: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
+        .photo-badge {
+            font-size: 9px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            padding: 2px 6px;
+            border-radius: 4px;
+            align-self: start;
+            color: var(--text-muted);
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .photo-action-btn {
+            margin-top: auto;
+            width: 100%;
+            padding: 6px;
+            font-size: 11px;
             font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
         }
 
-        .tray-item.rejected-item {
-            border-color: rgba(231, 76, 60, 0.3);
+        .btn-exclude {
+            background: rgba(231, 76, 60, 0.15);
+            color: var(--danger);
+        }
+
+        .btn-exclude:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .btn-include {
+            background: rgba(46, 204, 113, 0.15);
+            color: var(--success);
+        }
+
+        .btn-include:hover {
+            background: var(--success);
+            color: #000;
+        }
+
+        .photo-reason {
+            font-size: 9px;
+            color: var(--danger);
+            font-style: italic;
+            margin-top: 2px;
+        }
+
+        /* Pagination */
+        .pagination-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .page-info {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
         }
 
         /* Console Window */
@@ -458,26 +550,42 @@
                         </div>
                     </div>
 
-                    <!-- Interactive Trays -->
-                    <div id="trays" class="trays-container" style="display: none;">
-                        <div class="tray">
-                            <div class="tray-header">
-                                <span class="tray-title-accepted">🟢 Accepted Set (<span id="count-accepted">0</span>)</span>
-                                <span style="font-size: 11px; color: var(--text-muted);">Will be curated</span>
+                    <!-- Spacious HITL Workspace -->
+                    <div id="trays" class="workspace" style="display: none;">
+                        <div class="workspace-filters">
+                            <div class="filter-group">
+                                <div class="filter-toggle-buttons">
+                                    <button class="toggle-btn active accepted-toggle" id="tab-toggle-accepted" onclick="setWorkspaceView('accepted')">
+                                        🟢 Accepted (<span id="count-accepted">0</span>)
+                                    </button>
+                                    <button class="toggle-btn rejected-toggle" id="tab-toggle-rejected" onclick="setWorkspaceView('rejected')">
+                                        🔴 Rejected (<span id="count-rejected">0</span>)
+                                    </button>
+                                </div>
                             </div>
-                            <div class="tray-grid" id="grid-accepted">
-                                <!-- Dynamic thumbnails -->
+                            
+                            <div class="filter-group">
+                                <select id="sort-order" class="select-input" onchange="applyFilters()">
+                                    <option value="similarity">📁 Group Duplicates / Bursts</option>
+                                    <option value="name">Sorted: Filename</option>
+                                </select>
+                                <select id="camera-filter" class="select-input" onchange="applyFilters()">
+                                    <option value="all">📷 All Camera Models</option>
+                                </select>
+                                <input type="text" id="search-filter" class="search-input" placeholder="🔍 Search filename..." oninput="applyFilters()">
                             </div>
                         </div>
 
-                        <div class="tray">
-                            <div class="tray-header">
-                                <span class="tray-title-rejected">🔴 Rejected Set (<span id="count-rejected">0</span>)</span>
-                                <span style="font-size: 11px; color: var(--text-muted);">Filtered out</span>
-                            </div>
-                            <div class="tray-grid" id="grid-rejected">
-                                <!-- Dynamic thumbnails -->
-                            </div>
+                        <!-- Main Photo Grid -->
+                        <div class="photo-grid" id="workspace-grid">
+                            <!-- Dynamic Photo Cards -->
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="pagination-bar">
+                            <button class="btn" style="padding: 6px 16px;" onclick="changePage(-1)">◀ Previous</button>
+                            <span class="page-info" id="pagination-info">Page 1 of 1</span>
+                            <button class="btn" style="padding: 6px 16px;" onclick="changePage(1)">Next ▶</button>
                         </div>
                     </div>
                 </div>
@@ -541,8 +649,136 @@
         let currentFolder = "";
         let acceptedList = [];
         let rejectedList = [];
+        let filteredList = []; // Holds items after applying search & camera filters
+        
+        let workspaceView = "accepted"; // 'accepted' or 'rejected'
+        let currentPage = 1;
+        const itemsPerPage = 24;
+        
         let pollingInterval = null;
         let progressInterval = null;
+
+        // Auto-detect and sync with active backend tasks on page load/refresh
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const res = await fetch('/api/progress');
+                const progress = await res.json();
+                
+                // Load active folder path if set in backend
+                if (progress.folder) {
+                    currentFolder = progress.folder;
+                    document.getElementById('selectedPath').textContent = currentFolder;
+                    document.getElementById('folder-info').style.display = 'block';
+                    document.getElementById('step-clean').style.display = 'block';
+                }
+                
+                // If pre-clean is already running on the server
+                if (progress.pre_clean && progress.pre_clean.status === 'running') {
+                    document.getElementById('pre-clean-progress-container').style.display = 'block';
+                    
+                    const btn = document.getElementById('btnPreClean');
+                    const spinner = document.getElementById('cleanSpinner');
+                    const btnText = document.getElementById('cleanBtnText');
+                    
+                    btn.disabled = true;
+                    spinner.style.display = 'inline-block';
+                    btnText.textContent = 'Analyzing Sharpness & Duplicates...';
+                    
+                    startProgressPolling('pre_clean');
+                    
+                    const checkCompletion = setInterval(async () => {
+                        const progRes = await fetch('/api/progress');
+                        const progData = await progRes.json();
+                        const state = progData['pre_clean'];
+                        
+                        if (state.status === 'complete') {
+                            clearInterval(checkCompletion);
+                            stopProgressPolling('pre_clean');
+                            
+                            const resultRes = await fetch('/api/pre-clean-results');
+                            const results = await resultRes.json();
+                            acceptedList = results.accepted || [];
+                            rejectedList = results.rejected || [];
+                            
+                            currentPage = 1;
+                            populateCameraFilter();
+                            applyFilters();
+                            
+                            document.getElementById('trays').style.display = 'block';
+                            document.getElementById('step-curation').style.display = 'block';
+                            btn.disabled = false;
+                            spinner.style.display = 'none';
+                            btnText.textContent = 'Run Pre-Clean Analysis';
+                        } else if (state.status === 'error') {
+                            clearInterval(checkCompletion);
+                            stopProgressPolling('pre_clean');
+                            alert("Pre-cleaning encountered an error: " + (state.error_msg || "Unknown error"));
+                            btn.disabled = false;
+                            spinner.style.display = 'none';
+                            btnText.textContent = 'Run Pre-Clean Analysis';
+                        }
+                    }, 500);
+                } else if (progress.pre_clean && progress.pre_clean.status === 'complete') {
+                    // Pre-clean is complete, fetch and show results automatically
+                    const resultRes = await fetch('/api/pre-clean-results');
+                    const results = await resultRes.json();
+                    if (results && ((results.accepted && results.accepted.length > 0) || (results.rejected && results.rejected.length > 0))) {
+                        acceptedList = results.accepted || [];
+                        rejectedList = results.rejected || [];
+                        
+                        currentPage = 1;
+                        populateCameraFilter();
+                        applyFilters();
+                        
+                        document.getElementById('step-clean').style.display = 'block';
+                        document.getElementById('trays').style.display = 'block';
+                        document.getElementById('step-curation').style.display = 'block';
+                    }
+                }
+                
+                // If pipeline curation is running or complete on the server
+                if (progress.pipeline) {
+                    if (progress.pipeline.status === 'running') {
+                        document.getElementById('pipeline-progress-container').style.display = 'block';
+                        document.getElementById('console-area').style.display = 'block';
+                        
+                        const btn = document.getElementById('btnBuild');
+                        const spinner = document.getElementById('buildSpinner');
+                        
+                        btn.disabled = true;
+                        spinner.style.display = 'inline-block';
+                        
+                        startProgressPolling('pipeline');
+                        startLogPolling();
+                    } else if (progress.pipeline.status === 'complete') {
+                        document.getElementById('pipeline-progress-container').style.display = 'block';
+                        document.getElementById('console-area').style.display = 'block';
+                        document.getElementById('btnViewerLink').style.display = 'inline-block';
+                        
+                        const fill = document.getElementById('pipeline-progress-fill');
+                        if (fill) fill.style.width = '100%';
+                        const text = document.getElementById('pipeline-progress-text');
+                        if (text) text.textContent = `100% (${progress.pipeline.current}/${progress.pipeline.total})`;
+                        const phase = document.getElementById('pipeline-progress-phase');
+                        if (phase) phase.textContent = "Phase 5/5: Narrator Journal Synthesis";
+                        
+                        // Fetch final logs once
+                        const logBox = document.getElementById('log-box');
+                        try {
+                            const logRes = await fetch('/logs');
+                            const logData = await logRes.json();
+                            const logs = logData.logs || [];
+                            logBox.innerHTML = logs.join('\n');
+                            logBox.scrollTop = logBox.scrollHeight;
+                        } catch (e) {
+                            console.error("Failed to load final logs:", e);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Error auto-syncing progress on load:", err);
+            }
+        });
 
         function switchTab(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -578,26 +814,55 @@
             spinner.style.display = 'inline-block';
             btnText.textContent = 'Analyzing Sharpness & Duplicates...';
             
-            // Show pre-clean progress bar
             document.getElementById('pre-clean-progress-container').style.display = 'block';
             startProgressPolling('pre_clean');
 
             try {
+                // Starts background task
                 const res = await fetch('/api/pre-clean', { method: 'POST' });
                 const data = await res.json();
-                if (data.status === 'success') {
-                    acceptedList = data.accepted;
-                    rejectedList = data.rejected;
-                    
-                    renderTrays();
-                    document.getElementById('trays').style.display = 'grid';
-                    document.getElementById('step-curation').style.display = 'block';
-                } else {
-                    alert(data.message || "Pre-clean failed");
+                if (data.status !== 'success') {
+                    throw new Error(data.message || "Failed to start pre-cleaning");
                 }
+                
+                // We let the progress polling finish, then fetch results.
+                // Poll check loop
+                const checkCompletion = setInterval(async () => {
+                    const progRes = await fetch('/api/progress');
+                    const progData = await progRes.json();
+                    const state = progData['pre_clean'];
+                    
+                    if (state.status === 'complete') {
+                        clearInterval(checkCompletion);
+                        stopProgressPolling('pre_clean');
+                        
+                        // Load final results
+                        const resultRes = await fetch('/api/pre-clean-results');
+                        const results = await resultRes.json();
+                        acceptedList = results.accepted;
+                        rejectedList = results.rejected;
+                        
+                        currentPage = 1;
+                        populateCameraFilter();
+                        applyFilters();
+                        
+                        document.getElementById('trays').style.display = 'block';
+                        document.getElementById('step-curation').style.display = 'block';
+                        btn.disabled = false;
+                        spinner.style.display = 'none';
+                        btnText.textContent = 'Run Pre-Clean Analysis';
+                    } else if (state.status === 'error') {
+                        clearInterval(checkCompletion);
+                        stopProgressPolling('pre_clean');
+                        alert("Pre-cleaning encountered an error: " + (state.error_msg || "Unknown error"));
+                        btn.disabled = false;
+                        spinner.style.display = 'none';
+                        btnText.textContent = 'Run Pre-Clean Analysis';
+                    }
+                }, 500);
+
             } catch (err) {
                 alert("Error running pre-clean: " + err.message);
-            } finally {
                 btn.disabled = false;
                 spinner.style.display = 'none';
                 btnText.textContent = 'Run Pre-Clean Analysis';
@@ -605,64 +870,222 @@
             }
         }
 
-        function renderTrays() {
-            const acceptedGrid = document.getElementById('grid-accepted');
-            const rejectedGrid = document.getElementById('grid-rejected');
+        function populateCameraFilter() {
+            const filter = document.getElementById('camera-filter');
+            filter.innerHTML = '<option value="all">📷 All Camera Models</option>';
+            
+            const cameras = new Set();
+            [...acceptedList, ...rejectedList].forEach(item => {
+                if (item.uploader) cameras.add(item.uploader);
+            });
+            
+            cameras.forEach(cam => {
+                const opt = document.createElement('option');
+                opt.value = cam;
+                opt.textContent = cam;
+                filter.appendChild(opt);
+            });
+        }
+
+        function setWorkspaceView(view) {
+            workspaceView = view;
+            currentPage = 1;
+            
+            document.getElementById('tab-toggle-accepted').classList.toggle('active', view === 'accepted');
+            document.getElementById('tab-toggle-rejected').classList.toggle('active', view === 'rejected');
+            
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const cameraVal = document.getElementById('camera-filter').value;
+            const searchVal = document.getElementById('search-filter').value.toLowerCase().trim();
+            const sortVal = document.getElementById('sort-order').value;
+            
+            const sourceList = workspaceView === 'accepted' ? acceptedList : rejectedList;
+            
+            // Filter first
+            let list = sourceList.filter(item => {
+                const matchesCamera = (cameraVal === 'all' || item.uploader === cameraVal);
+                const matchesSearch = (searchVal === '' || item.filename.toLowerCase().includes(searchVal));
+                return matchesCamera && matchesSearch;
+            });
+            
+            // Sort
+            if (sortVal === 'similarity') {
+                list.sort((a, b) => {
+                    const aHas = (a.clusterNumber !== undefined);
+                    const bHas = (b.clusterNumber !== undefined);
+                    if (aHas && !bHas) return -1;
+                    if (!aHas && bHas) return 1;
+                    if (aHas && bHas) {
+                        if (a.clusterNumber !== b.clusterNumber) {
+                            return a.clusterNumber - b.clusterNumber;
+                        }
+                        // Within same cluster, put sharpest at top
+                        return b.sharpness - a.sharpness;
+                    }
+                    return a.filename.localeCompare(b.filename);
+                });
+            } else {
+                list.sort((a, b) => a.filename.localeCompare(b.filename));
+            }
+            
+            filteredList = list;
             
             document.getElementById('count-accepted').textContent = acceptedList.length;
             document.getElementById('count-rejected').textContent = rejectedList.length;
             
-            acceptedGrid.innerHTML = '';
-            rejectedGrid.innerHTML = '';
+            renderGrid();
+        }
 
-            acceptedList.forEach((item, idx) => {
-                const card = createTrayItem(item, 'accepted', idx);
-                acceptedGrid.appendChild(card);
-            });
+        function renderGrid() {
+            const grid = document.getElementById('workspace-grid');
+            grid.innerHTML = '';
+            
+            const totalPages = Math.max(1, Math.ceil(filteredList.length / itemsPerPage));
+            if (currentPage > totalPages) currentPage = totalPages;
+            
+            document.getElementById('pagination-info').textContent = `Page ${currentPage} of ${totalPages} (${filteredList.length} total)`;
+            
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pageItems = filteredList.slice(start, end);
+            
+            if (pageItems.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">No images match your filter settings.</div>';
+                return;
+            }
 
-            rejectedList.forEach((item, idx) => {
-                const card = createTrayItem(item, 'rejected', idx);
-                rejectedGrid.appendChild(card);
+            pageItems.forEach((item) => {
+                const card = createPhotoCard(item);
+                grid.appendChild(card);
             });
         }
 
-        function createTrayItem(item, trayType, index) {
-            const el = document.createElement('div');
-            el.className = `tray-item ${trayType === 'rejected' ? 'rejected-item' : ''}`;
-            el.title = `${item.filename}\nSharpness: ${item.sharpness}\nCamera: ${item.uploader}\n${item.reason || ''}`;
+        function createPhotoCard(item) {
+            const card = document.createElement('div');
+            card.className = 'photo-card';
+            card.id = `card-${item.filename.replace(/\./g, '_')}`;
+            
+            // Add visual cue for clustered items
+            if (item.clusterNumber !== undefined) {
+                card.style.borderColor = 'rgba(255, 174, 0, 0.35)';
+                card.style.background = 'rgba(255, 174, 0, 0.02)';
+            }
+            
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'photo-img-container';
             
             const img = document.createElement('img');
             img.src = `/api/serve-raw?filename=${encodeURIComponent(item.filename)}`;
             img.loading = 'lazy';
+            imgContainer.appendChild(img);
             
-            const badge = document.createElement('div');
-            badge.className = 'move-badge';
-            badge.textContent = trayType === 'accepted' ? '✕' : '＋';
-            badge.style.color = trayType === 'accepted' ? '#e74c3c' : '#2ecc71';
+            const body = document.createElement('div');
+            body.className = 'photo-card-body';
             
-            const label = document.createElement('div');
-            label.className = 'tray-item-meta';
-            label.textContent = item.filename;
+            const name = document.createElement('span');
+            name.className = 'photo-name';
+            name.textContent = item.filename;
+            name.title = item.filename;
+            
+            const badgeCamera = document.createElement('span');
+            badgeCamera.className = 'photo-badge';
+            badgeCamera.textContent = item.uploader || "Unknown Camera";
+            badgeCamera.title = item.uploader;
+            
+            const badgeSharpness = document.createElement('span');
+            badgeSharpness.className = 'photo-badge';
+            badgeSharpness.innerHTML = `⭐ Sharp: <strong>${item.sharpness}</strong>`;
 
-            el.appendChild(img);
-            el.appendChild(badge);
-            el.appendChild(label);
+            body.appendChild(name);
+            body.appendChild(badgeCamera);
+            body.appendChild(badgeSharpness);
             
-            el.onclick = () => {
-                if (trayType === 'accepted') {
-                    // Move to rejected
-                    const val = acceptedList.splice(index, 1)[0];
-                    val.reason = "Manually rejected by user";
-                    rejectedList.push(val);
+            // Real-Time Curation Guide
+            if (workspaceView === 'accepted' && item.clusterNumber !== undefined) {
+                const guideBadge = document.createElement('span');
+                guideBadge.className = 'photo-badge';
+                guideBadge.style.fontSize = '9px';
+                guideBadge.style.fontWeight = '700';
+                
+                if (item.sharpestOfCluster === item.filename) {
+                    guideBadge.innerHTML = `👑 Keep (Sharpest in Cluster #${item.clusterNumber})`;
+                    guideBadge.style.color = '#2ecc71';
+                    guideBadge.style.borderColor = 'rgba(46, 204, 113, 0.4)';
                 } else {
-                    // Move to accepted
-                    const val = rejectedList.splice(index, 1)[0];
-                    acceptedList.push(val);
+                    guideBadge.innerHTML = `⚠️ Duplicate (Keep ${item.sharpestOfCluster})`;
+                    guideBadge.style.color = '#e74c3c';
+                    guideBadge.style.borderColor = 'rgba(231, 76, 60, 0.4)';
                 }
-                renderTrays();
+                body.appendChild(guideBadge);
+            }
+            
+            // Hover highlights based on pre-computed cluster Number
+            card.onmouseenter = () => {
+                if (item.clusterNumber === undefined) return;
+                const matches = filteredList.filter(x => x.filename !== item.filename && x.clusterNumber === item.clusterNumber);
+                matches.forEach(x => {
+                    const targetEl = document.getElementById(`card-${x.filename.replace(/\./g, '_')}`);
+                    if (targetEl) targetEl.classList.add('similar-highlight');
+                });
             };
+            
+            card.onmouseleave = () => {
+                document.querySelectorAll('.photo-card').forEach(el => el.classList.remove('similar-highlight'));
+            };
+            
+            if (workspaceView === 'rejected') {
+                const reason = document.createElement('span');
+                reason.className = 'photo-reason';
+                reason.textContent = item.reason || "Duplicate photo";
+                body.appendChild(reason);
+                
+                const btn = document.createElement('button');
+                btn.className = 'photo-action-btn btn-include';
+                btn.textContent = '＋ Restore Image';
+                btn.onclick = () => moveItem(item.filename, 'rejected', 'accepted');
+                body.appendChild(btn);
+            } else {
+                const btn = document.createElement('button');
+                btn.className = 'photo-action-btn btn-exclude';
+                btn.textContent = '✕ Exclude';
+                btn.onclick = () => moveItem(item.filename, 'accepted', 'rejected');
+                body.appendChild(btn);
+            }
 
-            return el;
+            card.appendChild(imgContainer);
+            card.appendChild(body);
+            return card;
+        }
+
+        function moveItem(filename, fromType, toType) {
+            const fromList = fromType === 'accepted' ? acceptedList : rejectedList;
+            const toList = toType === 'accepted' ? acceptedList : rejectedList;
+            
+            const index = fromList.findIndex(x => x.filename === filename);
+            if (index !== -1) {
+                const item = fromList.splice(index, 1)[0];
+                if (toType === 'rejected') {
+                    item.reason = "Manually excluded by user";
+                } else {
+                    delete item.reason;
+                }
+                toList.push(item);
+                
+                // Re-sort accepted list alphabetically
+                acceptedList.sort((a,b) => a.filename.localeCompare(b.filename));
+                rejectedList.sort((a,b) => a.filename.localeCompare(b.filename));
+                
+                applyFilters();
+            }
+        }
+
+        function changePage(dir) {
+            const totalPages = Math.ceil(filteredList.length / itemsPerPage);
+            currentPage = Math.max(1, Math.min(totalPages, currentPage + dir));
+            renderGrid();
         }
 
         async function triggerCuration() {
@@ -697,7 +1120,6 @@
                 
                 logBox.innerHTML += `Successfully ingested ${ingestData.ingested_count} files.\nTriggering 5-agent pipeline...\n`;
 
-                // Show pipeline progress bar and start polling
                 document.getElementById('pipeline-progress-container').style.display = 'block';
                 startProgressPolling('pipeline');
 
@@ -758,10 +1180,14 @@
                     if (state && state.total > 0) {
                         const pct = Math.round((state.current / state.total) * 100);
                         fill.style.width = `${pct}%`;
-                        text.textContent = `${pct}% (${state.current}/${state.total})`;
+                        
+                        let elapsedStr = "";
+                        if (state.elapsed > 0) {
+                            elapsedStr = ` • ${state.elapsed.toFixed(1)}s elapsed`;
+                        }
+                        text.textContent = `${pct}% (${state.current}/${state.total})${elapsedStr}`;
                         
                         if (type === 'pipeline' && phaseLabel) {
-                            // Friendly phase titles
                             const phases = {
                                 "moderation": "Phase 1/5: Moderator Safety Verification",
                                 "embedding": "Phase 2/5: Curator Photo Deduplication",
@@ -791,11 +1217,11 @@
             pollingInterval = setInterval(async () => {
                 try {
                     const res = await fetch('/logs');
-                    const logs = await res.json();
+                    const data = await res.json();
+                    const logs = data.logs || [];
                     logBox.innerHTML = logs.join('\n');
                     logBox.scrollTop = logBox.scrollHeight;
                     
-                    // Check if execution complete
                     const lastLog = logs[logs.length - 1] || "";
                     if (lastLog.includes("complete!") || lastLog.includes("CRITICAL ERROR")) {
                         clearInterval(pollingInterval);

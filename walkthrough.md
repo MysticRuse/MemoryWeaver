@@ -91,7 +91,7 @@ This document tracks all changes made to the repository on a day-by-day basis. U
 ### 5. Local Pre-Cleaner & Human-in-the-Loop Review
 * **`pipeline/local_cleaner.py`**:
   * Added edge-variance blur filtering using Pillow's `FIND_EDGES` filter to score image sharpness.
-  * Added difference hash (dHash) deduplication to cluster and drop identical burst shots locally.
+  * ReplacedDifference Hash (dHash) with local **CLIP semantic embeddings** and **DBSCAN cosine clustering** to group near-duplicates and bursts accurately.
   * Extracted EXIF camera metadata to dynamically register uploader identities in the Memory Bank.
 * **FastAPI Router (`app/fast_api_app.py`)**:
   * Added `/api/select-folder` to trigger a native macOS Finder directory selector (via AppleScript `osascript` to prevent thread crashes in FastAPI).
@@ -100,8 +100,9 @@ This document tracks all changes made to the repository on a day-by-day basis. U
   * Added `/api/confirm-ingest` to copy user-selected images to `local_storage/uploads/` and generate thumbnails.
 * **`frontend/upload.html`**:
   * Designed a 3-step ingestion wizard.
-  * Rendered side-by-side **Accepted Set** and **Rejected Set** interactive trays where users can click thumbnails to toggle photos between sets.
+  * Rendered a wide, spacious single-grid review workspace with search and camera filters.
   * Added visual progress bars for Step 2 (Pre-Clean) and Step 3 (Curation Pipeline) that query `/api/progress` every 300ms to show real-time percentage and phase descriptions.
+  * Highlights corresponding duplicate cluster members on hover by reading pre-computed `clusterNumber` tags.
 
 
 

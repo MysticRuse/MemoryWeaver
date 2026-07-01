@@ -25,6 +25,9 @@ dependencies = [
     "qrcode>=8.2",
     "google-api-python-client>=2.100.0",
     "google-auth-oauthlib>=1.0.0",
+    "torch>=2.12.1",
+    "sentence-transformers>=5.6.0",
+    "scikit-learn>=1.9.0",
 ]
 requires-python = ">=3.11,<3.14"
 
