@@ -170,22 +170,20 @@ def select_folder():
     """Opens a native macOS Finder folder selector and returns file count."""
     global selected_folder_path
     try:
-        import tkinter as tk
-        from tkinter import filedialog
+        import subprocess
+        # Run AppleScript to open folder picker natively on macOS
+        cmd = "osascript -e 'POSIX path of (choose folder with prompt \"Select Google Photos Folder\")'"
+        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = proc.communicate()
         
-        root = tk.Tk()
-        root.withdraw()  # Hide main window
-        root.attributes('-topmost', True)  # Bring Finder dialog to the top
-        
-        folder = filedialog.askdirectory(parent=root, title="Select Google Photos Folder")
-        root.destroy()
-        
-        if folder:
-            selected_folder_path = folder
-            files = [f for f in os.listdir(folder) 
-                     if f.lower().endswith(('.jpg', '.jpeg', '.png', '.heic'))]
-            return {"status": "success", "folder": folder, "count": len(files)}
-        return {"status": "error", "message": "No folder selected"}
+        if proc.returncode == 0:
+            folder = stdout.decode('utf-8').strip()
+            if folder and os.path.exists(folder):
+                selected_folder_path = folder
+                files = [f for f in os.listdir(folder) 
+                         if f.lower().endswith(('.jpg', '.jpeg', '.png', '.heic'))]
+                return {"status": "success", "folder": folder, "count": len(files)}
+        return {"status": "error", "message": "No folder selected or canceled"}
     except Exception as e:
         return {"status": "error", "message": f"Folder selector failed: {str(e)}"}
 
