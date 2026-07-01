@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemoryWeaver - Mobile Upload Hub</title>
+    <style>
+        :root {
+            --primary: #0f4c3a;
+            --primary-light: #e8f5e9;
+            --accent: #e59866;
+            --bg: #121814;
+            --card-bg: #1a231e;
+            --border: #2a3b31;
+            --text: #e0e6e3;
+            --text-muted: #8ba395;
+            --danger: #e74c3c;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            padding: 16px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-mark {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        h1 {
+            color: #ffffff;
+            font-size: 26px;
+            margin: 0 0 6px 0;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 13px;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .trip-info {
+            display: inline-block;
+            background-color: #121f17;
+            border: 1px solid var(--border);
+            color: #a3e4d7;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 20px;
+            margin-top: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .input-text {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background-color: #0d1310;
+            color: var(--text);
+            font-size: 15px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-text:focus {
+            border-color: var(--primary);
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: 14px;
+            padding: 30px 16px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+            background-color: #0d1310;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary);
+            background-color: #121f17;
+        }
+
+        .upload-icon {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+
+        .upload-text {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .upload-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        /* Tray layout for chosen photos */
+        .tray-container {
+            margin-top: 16px;
+            text-align: left;
+            display: none;
+        }
+
+        .tray-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .tray-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .badge {
+            background-color: var(--primary);
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .scroll-tray {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding: 8px 4px;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background-color: #0d1310;
+        }
+
+        /* Custom scrollbar */
+        .scroll-tray::-webkit-scrollbar {
+            height: 6px;
+        }
+        .scroll-tray::-webkit-scrollbar-thumb {
+            background-color: var(--border);
+            border-radius: 3px;
+        }
+
+        .tray-item {
+            position: relative;
+            flex: 0 0 80px;
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .tray-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .remove-btn:hover {
+            background-color: var(--danger);
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 16px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(15, 76, 94, 0.2);
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:disabled {
+            background-color: #2b3630;
+            color: var(--text-muted);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn:hover:not(:disabled) {
+            background-color: #125e48;
+        }
+
+        /* Success & Uploaded Gallery Section */
+        .gallery-container {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .gallery-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background-color: #0d1310;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .delete-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(231, 76, 60, 0.85);
+            color: white;
+            text-align: center;
+            padding: 4px 0;
+            font-size: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .gallery-item:hover .delete-overlay {
+            opacity: 1;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 2px solid white;
+            width: 16px;
+            height: 16px;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Minimum touch target optimization */
+        button, input {
+            min-height: 44px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <div class="logo-mark">🏔️</div>
+                <h1>MemoryWeaver</h1>
+                <p class="subtitle">Collect and curate trip memories. Simply drop your photos here to merge them into the group's narrative.</p>
+                <div class="trip-info">📂 Trip Album Size: <span id="total-uploaded-count">0</span> photos</div>
+            </div>
+
+            <!-- Contributor Name -->
+            <div class="form-group">
+                <label for="username">Your Name</label>
+                <input type="text" id="username" class="input-text" placeholder="e.g. John Doe" value="Anonymous">
+            </div>
+
+            <!-- Upload drop area -->
+            <div class="upload-zone" id="drop-zone">
+                <div class="upload-icon">📸</div>
+                <div class="upload-text">Select / Capture Photos</div>
+                <div class="upload-sub">Supports JPEG, PNG, HEIC (Max 20MB)</div>
+                <input type="file" id="file-input" accept="image/*" multiple>
+            </div>
+
+            <!-- Scrollable tray for chosen files before upload -->
+            <div class="tray-container" id="chosen-tray-container">
+                <div class="tray-header">
+                    <span class="tray-title">Photos to Upload</span>
+                    <span class="badge" id="file-count">0</span>
+                </div>
+                <div class="scroll-tray" id="chosen-tray">
+                    <!-- Preview items will insert here dynamically -->
+                </div>
+            </div>
+
+            <!-- Action Button -->
+            <button class="btn" id="upload-btn" disabled>
+                <span class="spinner" id="btn-spinner"></span>
+                <span id="btn-text">Upload to Trip Pool</span>
+            </button>
+        </div>
+
+        <!-- Section: Uploaded Gallery (Client session storage) -->
+        <div class="card gallery-container" id="uploaded-container" style="display: none;">
+            <div class="tray-header">
+                <span class="tray-title">Your Uploaded Memories</span>
+                <span class="badge" id="uploaded-count">0</span>
+            </div>
+            <div class="gallery-grid" id="uploaded-grid">
+                <!-- Uploaded items insert here -->
+            </div>
+        </div>
+
+        <!-- Section: Curate Trip Book -->
+        <div class="card" style="margin-top: 20px; text-align: center;">
+            <div style="font-weight: 700; font-size: 16px; margin-bottom: 8px; color: var(--text);">✨ Ready to compile your Trip?</div>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">
+                Trigger the multi-agent pipeline to moderate safety, deduplicate near-copies, rank photo compositions, and write the narrative.
+            </p>
+            <button id="curate-btn" class="btn" style="background-color: #ff7b00; box-shadow: 0 4px 15px rgba(255, 123, 0, 0.35); max-width: 280px; margin: 0 auto;" onclick="curateTripBook()">
+                Curate & Build Trip Book
+            </button>
+            
+            <!-- Real-time Agent Log Panel -->
+            <div id="console-log-container" style="display: none; margin-top: 16px; text-align: left;">
+                <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; display: flex; justify-content: space-between;">
+                    <span>AGENT EXECUTION TRACKER</span>
+                    <span id="log-status" style="color: var(--primary);">PROCESSING...</span>
+                </div>
+                <div id="log-console" style="background-color: #050806; border: 1px solid var(--border); border-radius: 8px; font-family: monospace; font-size: 11px; color: #a9ffc1; padding: 10px; height: 180px; overflow-y: auto; white-space: pre-wrap; line-height: 1.4;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('file-input');
+        const dropZone = document.getElementById('drop-zone');
+        const chosenTray = document.getElementById('chosen-tray');
+        const trayContainer = document.getElementById('chosen-tray-container');
+        const fileCount = document.getElementById('file-count');
+        const uploadBtn = document.getElementById('upload-btn');
+        const usernameInput = document.getElementById('username');
+        const btnText = document.getElementById('btn-text');
+        const btnSpinner = document.getElementById('btn-spinner');
+
+        const uploadedContainer = document.getElementById('uploaded-container');
+        const uploadedGrid = document.getElementById('uploaded-grid');
+        const uploadedCount = document.getElementById('uploaded-count');
+        const totalUploadedCount = document.getElementById('total-uploaded-count');
+
+        let selectedFiles = [];
+        let uploadedFiles = JSON.parse(localStorage.getItem('uploaded_memories') || '[]');
+
+        // Initialize Uploaded Gallery and stats on Load
+        updateUploadedGallery();
+        fetchTripStats();
+
+        async function fetchTripStats() {
+            try {
+                const response = await fetch('/trip-stats');
+                const data = await response.json();
+                if (data.status === 'success') {
+                    totalUploadedCount.textContent = data.total_uploaded;
+                }
+            } catch (err) {
+                console.error('Failed to fetch trip stats:', err);
+            }
+        }
+
+        // Trigger file input click on zone click
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        // Handle File Selection
+        fileInput.addEventListener('change', handleFiles);
+
+        function handleFiles(e) {
+            const files = Array.from(e.target.files);
+            files.forEach(file => {
+                // Prevent duplicate file references (by name and size)
+                if (!selectedFiles.some(f => f.name === file.name && f.size === file.size)) {
+                    selectedFiles.push(file);
+                }
+            });
+            updateChosenTray();
+            fileInput.value = ''; // Reset input to allow choosing same file
+        }
+
+        function updateChosenTray() {
+            chosenTray.innerHTML = '';
+            fileCount.textContent = selectedFiles.length;
+
+            if (selectedFiles.length > 0) {
+                trayContainer.style.display = 'block';
+                uploadBtn.disabled = false;
+
+                selectedFiles.forEach((file, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'tray-item';
+
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    img.onload = () => URL.revokeObjectURL(img.src); // Clean up memory
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'remove-btn';
+                    removeBtn.innerHTML = '&times;';
+                    removeBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        selectedFiles.splice(index, 1);
+                        updateChosenTray();
+                    };
+
+                    item.appendChild(img);
+                    item.appendChild(removeBtn);
+                    chosenTray.appendChild(item);
+                });
+            } else {
+                trayContainer.style.display = 'none';
+                uploadBtn.disabled = true;
+            }
+        }
+
+        // Handle AJAX upload
+        uploadBtn.addEventListener('click', async () => {
+            if (selectedFiles.length === 0) return;
+
+            uploadBtn.disabled = true;
+            btnSpinner.style.display = 'inline-block';
+            btnText.textContent = 'Uploading...';
+
+            const formData = new FormData();
+            formData.append('contributor_name', usernameInput.value);
+            
+            selectedFiles.forEach(file => {
+                formData.append('photos', file);
+            });
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success' || data.status === 'partial_success') {
+                    // Save uploaded files to browser local storage history
+                    if (data.uploaded) {
+                        data.uploaded.forEach(info => {
+                            uploadedFiles.push(info);
+                        });
+                        localStorage.setItem('uploaded_memories', JSON.stringify(uploadedFiles));
+                    }
+                    
+                    // Clear select tray
+                    selectedFiles = [];
+                    updateChosenTray();
+                    updateUploadedGallery();
+                    fetchTripStats();
+                } else {
+                    console.error('Upload failed: ' + (data.errors ? data.errors.join('\n') : 'Unknown error'));
+                }
+            } catch (err) {
+                alert('Connection error: ' + err.message);
+            } finally {
+                uploadBtn.disabled = selectedFiles.length === 0;
+                btnSpinner.style.display = 'none';
+                btnText.textContent = 'Upload to Trip Pool';
+            }
+        });
+
+        // Update successful upload gallery
+        function updateUploadedGallery() {
+            uploadedGrid.innerHTML = '';
+            uploadedCount.textContent = uploadedFiles.length;
+
+            if (uploadedFiles.length > 0) {
+                uploadedContainer.style.display = 'block';
+                uploadedFiles.forEach((file, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'gallery-item';
+
+                    const img = document.createElement('img');
+                    // Serve from local storage mount or GCS path
+                    const path = file.thumbnail_path || file.gcs_uri;
+                    if (path.startsWith('gs://')) {
+                        img.alt = file.filename;
+                        img.src = 'placeholder_image.png'; // Fallback for GCS mock/raw URI display
+                    } else {
+                        // Clean up absolute path prefix for HTTP rendering
+                        const cleanPath = path.substring(path.indexOf('/local_storage'));
+                        img.src = cleanPath;
+                    }
+
+                    const overlay = document.createElement('div');
+                    overlay.className = 'delete-overlay';
+                    overlay.textContent = 'DELETE';
+                    overlay.onclick = () => deleteUploadedPhoto(file.filename, index);
+
+                    item.appendChild(img);
+                    item.appendChild(overlay);
+                    uploadedGrid.appendChild(item);
+                });
+            } else {
+                uploadedContainer.style.display = 'none';
+            }
+        }
+
+        // Delete photo via API call
+        async function deleteUploadedPhoto(filename, localIndex) {
+            if (!confirm('Are you sure you want to delete this photo from the trip pool?')) return;
+
+            const formData = new FormData();
+            formData.append('filename', filename);
+
+            try {
+                const response = await fetch('/delete', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    uploadedFiles.splice(localIndex, 1);
+                    localStorage.setItem('uploaded_memories', JSON.stringify(uploadedFiles));
+                    updateUploadedGallery();
+                    fetchTripStats();
+                } else {
+                    alert('Delete failed: ' + data.message);
+                }
+            } catch (err) {
+                alert('Connection error: ' + err.message);
+            }
+        }
+
+        async function curateTripBook() {
+            const curateBtn = document.getElementById('curate-btn');
+            const originalText = curateBtn.textContent;
+            curateBtn.disabled = true;
+            curateBtn.textContent = 'Running Curation Pipeline...';
+            
+            // Show log panel and reset console content
+            const consoleContainer = document.getElementById('console-log-container');
+            const logConsole = document.getElementById('log-console');
+            const logStatus = document.getElementById('log-status');
+            
+            consoleContainer.style.display = 'block';
+            logConsole.textContent = 'Initializing agents...\n';
+            logStatus.textContent = 'PROCESSING...';
+            logStatus.style.color = '#ff9f43';
+
+            let logInterval = setInterval(async () => {
+                try {
+                    const logRes = await fetch('/logs');
+                    const logData = await logRes.json();
+                    if (logData.status === 'success') {
+                        logConsole.textContent = logData.logs.join('\n');
+                        logConsole.scrollTop = logConsole.scrollHeight; // Auto-scroll
+                    }
+                } catch (e) {
+                    console.error("Failed fetching pipeline logs:", e);
+                }
+            }, 800);
+            
+            try {
+                const response = await fetch('/generate', { method: 'POST' });
+                const data = await response.json();
+                clearInterval(logInterval);
+                
+                if (data.status === 'success') {
+                    logStatus.textContent = 'COMPLETE';
+                    logStatus.style.color = '#2ecc71';
+                    setTimeout(() => {
+                        window.location.href = '/viewer';
+                    }, 1200);
+                } else {
+                    logStatus.textContent = 'FAILED';
+                    logStatus.style.color = '#e74c3c';
+                    alert('Curation error: ' + (data.message || 'Unknown error'));
+                    curateBtn.disabled = false;
+                    curateBtn.textContent = originalText;
+                }
+            } catch (err) {
+                clearInterval(logInterval);
+                logStatus.textContent = 'ERROR';
+                logStatus.style.color = '#e74c3c';
+                alert('Connection failure triggering pipeline: ' + err);
+                curateBtn.disabled = false;
+                curateBtn.textContent = originalText;
+            }
+        }
+    </script>
+</body>
+</html>
+

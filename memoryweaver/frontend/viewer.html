@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemoryWeaver - Your Trip Journal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,600;0,800;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d0f14;
+            --card-bg: rgba(22, 28, 38, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent: #ff7b00;
+            --accent-grad: linear-gradient(135deg, #ff7b00 0%, #ffae00 100%);
+            --accent-glow: rgba(255, 123, 0, 0.35);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 10% 20%, rgba(255, 123, 0, 0.05) 0px, transparent 50%),
+                radial-gradient(at 90% 80%, rgba(255, 174, 0, 0.05) 0px, transparent 50%);
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            line-height: 1.6;
+            padding: 2rem 1rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            font-weight: 800;
+            background: var(--accent-grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+        }
+
+        .header-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .select-user {
+            padding: 0.6rem 1.2rem;
+            background: rgba(22, 28, 38, 0.9);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 20px;
+            outline: none;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .select-user:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        .nav-btn {
+            display: inline-block;
+            padding: 0.6rem 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-grad);
+            border-color: transparent;
+            box-shadow: 0 4px 15px var(--accent-glow);
+            transform: translateY(-2px);
+        }
+
+        /* Highlights Section */
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--accent);
+            padding-left: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: 'Outfit', sans-serif;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .highlights-container {
+            margin-bottom: 4rem;
+        }
+
+        /* Carousel Styles */
+        .carousel-view {
+            position: relative;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .carousel-track {
+            width: 100%;
+            height: 480px;
+            position: relative;
+            background: #000;
+        }
+
+        .carousel-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .carousel-slide.active {
+            opacity: 1;
+            z-index: 10;
+        }
+
+        .carousel-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .carousel-meta {
+            padding: 1.5rem;
+            width: 100%;
+            text-align: center;
+            background: rgba(13, 15, 20, 0.95);
+            border-top: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .carousel-meta h3 {
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+            text-transform: capitalize;
+        }
+
+        .carousel-meta p {
+            font-size: 1.05rem;
+            font-style: italic;
+            color: var(--text-main);
+        }
+
+        .uploader-tag {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2px 8px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .carousel-control {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(13, 15, 20, 0.7);
+            border: 1px solid var(--border-color);
+            color: #fff;
+            font-size: 1.8rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 20;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .carousel-control:hover {
+            background: var(--accent);
+            border-color: transparent;
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .control-prev { left: 1rem; }
+        .control-next { right: 1rem; }
+
+        /* Main Content Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 3rem;
+            margin-bottom: 4rem;
+        }
+
+        @media (min-width: 900px) {
+            .content-grid {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+
+        /* Journal Card list */
+        .journal-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .journal-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .journal-card.dimmed {
+            opacity: 0.35;
+        }
+
+        @media (min-width: 600px) {
+            .journal-card {
+                grid-template-columns: 180px 1fr;
+            }
+        }
+
+        .journal-thumbs {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .journal-thumbs img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .journal-body {
+            position: relative;
+        }
+
+        .journal-body h3 {
+            color: var(--accent);
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            text-transform: capitalize;
+        }
+
+        .photo-attribution {
+            display: block;
+            margin-top: 8px;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        /* Story Side card */
+        .story-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 2rem;
+            height: fit-content;
+        }
+
+        .story-text {
+            font-size: 1.1rem;
+            color: #d1d5db;
+            line-height: 1.7;
+        }
+
+        .story-text p {
+            margin-bottom: 1.5rem;
+        }
+
+        /* Catch Up Section */
+        .catchup-container {
+            background: linear-gradient(135deg, rgba(255, 123, 0, 0.08) 0%, rgba(22, 28, 38, 0.7) 100%);
+            border: 1px solid rgba(255, 123, 0, 0.2);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 4rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .catchup-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .catchup-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 600px) {
+            .catchup-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            @media (min-width: 900px) {
+                .catchup-grid {
+                    grid-template-columns: repeat(3, 1fr);
+                }
+            }
+        }
+
+        .catchup-item {
+            background: rgba(13, 15, 20, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .catchup-img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+        }
+
+        .catchup-meta {
+            padding: 1rem;
+        }
+
+        .catchup-meta h4 {
+            text-transform: capitalize;
+            color: var(--text-main);
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+
+        .catchup-meta p {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+        }
+
+        .empty-state p {
+            margin-bottom: 1.5rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <p>MEMORYWEAVER PRESENTATION</p>
+            <h1>Your Trip Highlights</h1>
+            <div class="header-controls">
+                <a href="/" class="nav-btn">← Back to Upload Terminal</a>
+                <select id="user-select" class="select-user" style="display: none;" onchange="handleUserChange()">
+                    <option value="all">👥 Full Journal (All Contributors)</option>
+                </select>
+            </div>
+        </header>
+
+        <div id="loading" class="empty-state">
+            <h2>Generating your Journal...</h2>
+            <p>Our agent pipeline is analyzing photos, performing safety moderation, clustering duplicates, and crafting your stories.</p>
+        </div>
+
+        <div id="empty" class="empty-state" style="display: none;">
+            <h2>No Trip Journal Found</h2>
+            <p>You haven't run the curation pipeline yet. Head back to the upload page and click 'Curate & Build Trip Book' to trigger the agents!</p>
+            <a href="/" class="nav-btn">Go to Upload Page</a>
+        </div>
+
+        <div id="content" style="display: none;">
+            <!-- Highlights Carousel -->
+            <div class="highlights-container">
+                <h2 class="section-title">
+                    <span>Daily Highlights Reel</span>
+                    <span class="section-subtitle" id="highlightsSub">Showcasing all memories</span>
+                </h2>
+                <div class="carousel-view">
+                    <button class="carousel-control control-prev" id="prevBtn">&lt;</button>
+                    <button class="carousel-control control-next" id="nextBtn">&gt;</button>
+                    <div class="carousel-track" id="carouselTrack">
+                        <!-- Dynamic slides -->
+                    </div>
+                    <div class="carousel-meta">
+                        <h3 id="slideTitle">Moment</h3>
+                        <p id="slideCaption">Caption</p>
+                        <span class="uploader-tag" id="slideUploader">Uploaded by Contributor</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personalized Catch Up (Moments you missed) -->
+            <div id="catchup-section" class="catchup-container" style="display: none;">
+                <h3 class="catchup-title">🔔 While You Were Away... (Moments You Missed)</h3>
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1.5rem;" id="catchupIntro">
+                    Since you didn't upload photos during these settings, the Memory Agent recommends these top-voted shots to catch up:
+                </p>
+                <div class="catchup-grid" id="catchupGrid">
+                    <!-- Dynamic recommendations -->
+                </div>
+            </div>
+
+            <div class="content-grid">
+                <!-- Day by Day Journal -->
+                <div>
+                    <h2 class="section-title">Day-by-Day Journal</h2>
+                    <div class="journal-list" id="journalList">
+                        <!-- Dynamic entries -->
+                    </div>
+                </div>
+
+                <!-- Sticky Narrative Story -->
+                <div>
+                    <h2 class="section-title">Our Story</h2>
+                    <div class="story-card">
+                        <div class="story-text" id="storyContent">
+                            <!-- Dynamic text paragraphs -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSlideIndex = 0;
+        let slides = [];
+        let globalJournal = [];
+        let globalMemoryBank = null;
+        let contributorNames = {}; // id -> name
+
+        async function fetchTripBook() {
+            try {
+                // Fetch highlights, journal, story and memory bank
+                const resHighlights = await fetch('/local_storage/artefacts/highlights.json');
+                const resJournal = await fetch('/local_storage/artefacts/journal.json');
+                const resStory = await fetch('/local_storage/artefacts/story.txt');
+                const resMemory = await fetch('/local_storage/memory_bank.json');
+
+                if (!resHighlights.ok || !resJournal.ok || !resStory.ok) {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('empty').style.display = 'block';
+                    return;
+                }
+
+                const highlights = await resHighlights.json();
+                globalJournal = await resJournal.json();
+                const story = await resStory.text();
+                
+                if (resMemory.ok) {
+                    globalMemoryBank = await resMemory.json();
+                    populateUserSelector(globalMemoryBank);
+                }
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+
+                renderHighlights(highlights);
+                renderJournal(globalJournal);
+                renderStory(story);
+            } catch (err) {
+                console.error("Error loading trip book:", err);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('empty').style.display = 'block';
+            }
+        }
+
+        function populateUserSelector(memoryBank) {
+            const selector = document.getElementById('user-select');
+            const contributors = memoryBank.contributors || {};
+            
+            // Map contributor hashes to actual names
+            contributorNames = {};
+            
+            let hasUsers = false;
+            for (const [id, prof] of Object.entries(contributors)) {
+                contributorNames[id] = prof.name;
+                
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = `👤 Viewer: ${prof.name}`;
+                selector.appendChild(option);
+                hasUsers = true;
+            }
+            
+            if (hasUsers) {
+                selector.style.display = 'block';
+            }
+        }
+
+        function renderHighlights(items) {
+            const track = document.getElementById('carouselTrack');
+            track.innerHTML = '';
+            slides = items;
+
+            if (items.length === 0) return;
+
+            items.forEach((item, idx) => {
+                const slide = document.createElement('div');
+                slide.className = `carousel-slide ${idx === 0 ? 'active' : ''}`;
+                
+                const img = document.createElement('img');
+                img.src = `/local_storage/uploads/${item.filename}`;
+                img.alt = item.caption;
+
+                slide.appendChild(img);
+                track.appendChild(slide);
+            });
+
+            updateSlideMeta();
+        }
+
+        function updateSlideMeta() {
+            if (slides.length === 0) return;
+            const current = slides[currentSlideIndex];
+            document.getElementById('slideTitle').textContent = current.scene_label.replace(/_/g, ' ');
+            document.getElementById('slideCaption').textContent = current.caption || "A beautiful memory.";
+            
+            const uploaderId = current.contributor_id || "unknown";
+            const uploaderName = contributorNames[uploaderId] || "Contributor";
+            document.getElementById('slideUploader').textContent = `Uploaded by ${uploaderName}`;
+            
+            // Set active class on slides
+            const slideElements = document.querySelectorAll('.carousel-slide');
+            slideElements.forEach((el, idx) => {
+                if (idx === currentSlideIndex) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+        }
+
+        function changeSlide(direction) {
+            if (slides.length === 0) return;
+            currentSlideIndex = (currentSlideIndex + direction + slides.length) % slides.length;
+            updateSlideMeta();
+        }
+
+        document.getElementById('prevBtn').addEventListener('click', () => changeSlide(-1));
+        document.getElementById('nextBtn').addEventListener('click', () => changeSlide(1));
+
+        function renderJournal(entries) {
+            const list = document.getElementById('journalList');
+            list.innerHTML = '';
+
+            entries.forEach(entry => {
+                const card = document.createElement('div');
+                card.className = 'journal-card';
+                card.id = `journal-card-${entry.moment}`;
+
+                const thumbsContainer = document.createElement('div');
+                thumbsContainer.className = 'journal-thumbs';
+
+                entry.photos.forEach(ph => {
+                    const img = document.createElement('img');
+                    img.alt = entry.moment;
+                    img.onerror = function() {
+                        this.onerror = null;
+                        this.src = `/local_storage/uploads/${ph}`;
+                    };
+                    img.src = `/local_storage/thumbs/${ph}`;
+                    thumbsContainer.appendChild(img);
+                });
+
+                const body = document.createElement('div');
+                body.className = 'journal-body';
+
+                const title = document.createElement('h3');
+                title.textContent = entry.moment.replace(/_/g, ' ');
+
+                const txt = document.createElement('p');
+                txt.textContent = entry.entry;
+
+                body.appendChild(title);
+                body.appendChild(txt);
+
+                // Add photo attribution labels in the entry card
+                const uploaders = new Set();
+                entry.photos.forEach(ph => {
+                    const hash = ph.split('_')[0];
+                    if (contributorNames[hash]) {
+                        uploaders.add(contributorNames[hash]);
+                    }
+                });
+                if (uploaders.size > 0) {
+                    const attribution = document.createElement('span');
+                    attribution.className = 'photo-attribution';
+                    attribution.textContent = `Captured by: ${Array.from(uploaders).join(', ')}`;
+                    body.appendChild(attribution);
+                }
+
+                card.appendChild(thumbsContainer);
+                card.appendChild(body);
+                list.appendChild(card);
+            });
+        }
+
+        function renderStory(text) {
+            const container = document.getElementById('storyContent');
+            container.innerHTML = '';
+            
+            const paragraphs = text.split('\n\n');
+            paragraphs.forEach(p => {
+                if (p.trim()) {
+                    const pEl = document.createElement('p');
+                    pEl.textContent = p.trim();
+                    container.appendChild(pEl);
+                }
+            });
+        }
+
+        function handleUserChange() {
+            const selectedUserId = document.getElementById('user-select').value;
+            const highlightsSub = document.getElementById('highlightsSub');
+            
+            if (selectedUserId === 'all' || !globalMemoryBank) {
+                // Reset to default Full view
+                highlightsSub.textContent = "Showcasing all memories";
+                document.getElementById('catchup-section').style.display = 'none';
+                
+                // Reset dimmed states
+                document.querySelectorAll('.journal-card').forEach(card => {
+                    card.classList.remove('dimmed');
+                });
+                return;
+            }
+
+            const userName = contributorNames[selectedUserId] || "User";
+            highlightsSub.textContent = `Emphasizing ${userName}'s uploads`;
+            
+            // 1. Dim journal cards where the selected contributor did NOT upload any photo
+            const contributorMoments = new Set(globalMemoryBank.contributors[selectedUserId].moments_present_in || []);
+            
+            globalJournal.forEach(entry => {
+                const card = document.getElementById(`journal-card-${entry.moment}`);
+                if (card) {
+                    // Check if any photo in this entry belongs to the selected contributor
+                    const userUploadedHere = entry.photos.some(ph => ph.startsWith(selectedUserId));
+                    if (userUploadedHere) {
+                        card.classList.remove('dimmed');
+                    } else {
+                        card.classList.add('dimmed');
+                    }
+                }
+            });
+
+            // 2. Render "Catch-Up" Recommendations (Moments with 0 uploads from selected contributor)
+            const catchupSection = document.getElementById('catchup-section');
+            const catchupGrid = document.getElementById('catchupGrid');
+            const catchupIntro = document.getElementById('catchupIntro');
+            
+            catchupGrid.innerHTML = '';
+            catchupIntro.textContent = `Hey ${userName}, since you didn't upload photos during these settings, the Memory Agent recommends these top-voted shots to catch up:`;
+            
+            let missedCount = 0;
+
+            globalJournal.forEach(entry => {
+                const userUploadedHere = entry.photos.some(ph => ph.startsWith(selectedUserId));
+                if (!userUploadedHere && entry.photos.length > 0) {
+                    // Missed moment! Show the top photo
+                    missedCount++;
+                    const topPhoto = entry.photos[0];
+                    
+                    const item = document.createElement('div');
+                    item.className = 'catchup-item';
+                    
+                    const img = document.createElement('img');
+                    img.className = 'catchup-img';
+                    img.src = `/local_storage/uploads/${topPhoto}`;
+                    img.alt = entry.moment;
+                    
+                    const meta = document.createElement('div');
+                    meta.className = 'catchup-meta';
+                    
+                    const title = document.createElement('h4');
+                    title.textContent = entry.moment.replace(/_/g, ' ');
+                    
+                    const tag = document.createElement('p');
+                    tag.textContent = `Recommended photo from: ${entry.moment.replace(/_/g, ' ')}`;
+                    
+                    meta.appendChild(title);
+                    meta.appendChild(tag);
+                    item.appendChild(img);
+                    item.appendChild(meta);
+                    catchupGrid.appendChild(item);
+                }
+            });
+            
+            if (missedCount > 0) {
+                catchupSection.style.display = 'block';
+            } else {
+                catchupSection.style.display = 'none';
+            }
+        }
+
+        // Initialize
+        fetchTripBook();
+    </script>
+</body>
+</html>
