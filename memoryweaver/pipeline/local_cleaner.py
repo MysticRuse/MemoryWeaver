@@ -68,7 +68,7 @@ def get_exif_metadata(img_path: str) -> dict:
         pass
     return meta
 
-def analyze_directory(source_dir: str, blur_threshold: float = 12.0, dup_threshold: int = 8) -> dict:
+def analyze_directory(source_dir: str, blur_threshold: float = 12.0, dup_threshold: int = 8, progress_callback=None) -> dict:
     """
     Scans source_dir and filters images into accepted and rejected categories.
     No files are modified in the source folder.
@@ -87,7 +87,10 @@ def analyze_directory(source_dir: str, blur_threshold: float = 12.0, dup_thresho
     
     print(f"Analyzing {len(all_files)} images from: {source_dir}")
     
-    for filename in all_files:
+    for i, filename in enumerate(all_files):
+        if progress_callback:
+            progress_callback(i + 1, len(all_files))
+            
         full_path = os.path.join(source_dir, filename)
         sharpness = get_image_sharpness(full_path)
         dhash_str = get_image_dhash(full_path)

@@ -101,6 +101,8 @@ This document tracks all changes made to the repository on a day-by-day basis. U
 * **`frontend/upload.html`**:
   * Designed a 3-step ingestion wizard.
   * Rendered side-by-side **Accepted Set** and **Rejected Set** interactive trays where users can click thumbnails to toggle photos between sets.
+  * Added visual progress bars for Step 2 (Pre-Clean) and Step 3 (Curation Pipeline) that query `/api/progress` every 300ms to show real-time percentage and phase descriptions.
+
 
 
 

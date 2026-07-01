@@ -190,6 +190,40 @@
             align-items: center;
         }
 
+        /* Progress Bar UI */
+        .progress-container {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            margin-top: 12px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .progress-fill {
+            width: 0%;
+            height: 100%;
+            background: var(--accent-grad);
+            transition: width 0.2s ease;
+        }
+
         /* Dual Trays */
         .trays-container {
             display: grid;
@@ -413,6 +447,17 @@
                         <div class="spinner" id="cleanSpinner" style="display: none;"></div>
                     </button>
 
+                    <!-- Pre-Clean Progress Bar -->
+                    <div id="pre-clean-progress-container" class="progress-container" style="display: none;">
+                        <div class="progress-header">
+                            <span>Filtering blurry files & duplicate frames...</span>
+                            <span id="pre-clean-progress-text">0% (0/0)</span>
+                        </div>
+                        <div class="progress-track">
+                            <div id="pre-clean-progress-fill" class="progress-fill"></div>
+                        </div>
+                    </div>
+
                     <!-- Interactive Trays -->
                     <div id="trays" class="trays-container" style="display: none;">
                         <div class="tray">
@@ -447,6 +492,17 @@
                         <span>Confirm & Build Trip Book</span>
                         <div class="spinner" id="buildSpinner" style="display: none;"></div>
                     </button>
+
+                    <!-- Pipeline Progress Bar -->
+                    <div id="pipeline-progress-container" class="progress-container" style="display: none;">
+                        <div class="progress-header">
+                            <span id="pipeline-progress-phase">Running agent processing steps...</span>
+                            <span id="pipeline-progress-text">0% (0/0)</span>
+                        </div>
+                        <div class="progress-track">
+                            <div id="pipeline-progress-fill" class="progress-fill"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -486,6 +542,7 @@
         let acceptedList = [];
         let rejectedList = [];
         let pollingInterval = null;
+        let progressInterval = null;
 
         function switchTab(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -520,6 +577,10 @@
             btn.disabled = true;
             spinner.style.display = 'inline-block';
             btnText.textContent = 'Analyzing Sharpness & Duplicates...';
+            
+            // Show pre-clean progress bar
+            document.getElementById('pre-clean-progress-container').style.display = 'block';
+            startProgressPolling('pre_clean');
 
             try {
                 const res = await fetch('/api/pre-clean', { method: 'POST' });
@@ -540,6 +601,7 @@
                 btn.disabled = false;
                 spinner.style.display = 'none';
                 btnText.textContent = 'Run Pre-Clean Analysis';
+                stopProgressPolling('pre_clean');
             }
         }
 
@@ -635,6 +697,10 @@
                 
                 logBox.innerHTML += `Successfully ingested ${ingestData.ingested_count} files.\nTriggering 5-agent pipeline...\n`;
 
+                // Show pipeline progress bar and start polling
+                document.getElementById('pipeline-progress-container').style.display = 'block';
+                startProgressPolling('pipeline');
+
                 // Step B: Start Agent curation pipeline
                 fetch('/generate', { method: 'POST' });
                 
@@ -676,6 +742,48 @@
             }
         }
 
+        function startProgressPolling(type) {
+            if (progressInterval) clearInterval(progressInterval);
+            
+            const fill = document.getElementById(`${type}-progress-fill`);
+            const text = document.getElementById(`${type}-progress-text`);
+            const phaseLabel = document.getElementById('pipeline-progress-phase');
+
+            progressInterval = setInterval(async () => {
+                try {
+                    const res = await fetch('/api/progress');
+                    const progress = await res.json();
+                    const state = progress[type];
+
+                    if (state && state.total > 0) {
+                        const pct = Math.round((state.current / state.total) * 100);
+                        fill.style.width = `${pct}%`;
+                        text.textContent = `${pct}% (${state.current}/${state.total})`;
+                        
+                        if (type === 'pipeline' && phaseLabel) {
+                            // Friendly phase titles
+                            const phases = {
+                                "moderation": "Phase 1/5: Moderator Safety Verification",
+                                "embedding": "Phase 2/5: Curator Photo Deduplication",
+                                "scoring": "Phase 3/5: Curator Quality Evaluation",
+                                "journaling": "Phase 5/5: Narrator Journal Synthesis",
+                                "initiating": "Initiating agent coordinators..."
+                            };
+                            phaseLabel.textContent = phases[state.phase] || "Processing...";
+                        }
+                    }
+                } catch (err) {
+                    console.error("Progress fetch error:", err);
+                }
+            }, 300);
+        }
+
+        function stopProgressPolling(type) {
+            if (progressInterval) clearInterval(progressInterval);
+            const fill = document.getElementById(`${type}-progress-fill`);
+            if (fill) fill.style.width = '100%';
+        }
+
         function startLogPolling() {
             if (pollingInterval) clearInterval(pollingInterval);
             const logBox = document.getElementById('log-box');
@@ -691,6 +799,7 @@
                     const lastLog = logs[logs.length - 1] || "";
                     if (lastLog.includes("complete!") || lastLog.includes("CRITICAL ERROR")) {
                         clearInterval(pollingInterval);
+                        stopProgressPolling('pipeline');
                         document.getElementById('buildSpinner').style.display = 'none';
                         document.getElementById('btnBuild').disabled = false;
                         document.getElementById('btnViewerLink').style.display = 'inline-block';

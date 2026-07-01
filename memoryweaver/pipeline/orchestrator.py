@@ -1,6 +1,7 @@
 import os
 import json
 import datetime
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from agents.moderator.tools.vision_check import run_vision_moderation
 from agents.curator.tools.score import score_photo_as_judge
@@ -11,11 +12,11 @@ from agents.narrator.tools.story import generate_trip_story
 
 CACHE_FILE = "curation_cache.json"
 
-def execute_trip_pipeline(project_root: str, log=print) -> dict:
+def execute_trip_pipeline(project_root: str, log=print, progress_callback=None) -> dict:
     """
     Runs the sequential 5-agent pipeline on all photos in local_storage/uploads.
     Saves outputs to local_storage/artefacts/ and returns stats.
-    Uses concurrent threads and caching to achieve sub-30s speed and low API cost.
+    Uses concurrent threads, caching, and a progress callback to track states.
     """
     log("Starting MemoryWeaver Optimised Pipeline...")
     
@@ -64,9 +65,19 @@ def execute_trip_pipeline(project_root: str, log=print) -> dict:
     # Run Moderation in Parallel for Uncached Photos
     if uncached_photos:
         log(f"  Processing {len(uncached_photos)} uncached photos for safety...")
+        
+        lock = threading.Lock()
+        progress = {"count": 0}
+        
         def moderate_photo(photo):
             full_path = os.path.join(uploads_dir, photo)
             mod_res = run_vision_moderation(full_path)
+            
+            with lock:
+                progress["count"] += 1
+                if progress_callback:
+                    progress_callback(progress["count"], len(uncached_photos), "moderation")
+                    
             return photo, full_path, mod_res
 
         with ThreadPoolExecutor(max_workers=8) as executor:
@@ -83,6 +94,9 @@ def execute_trip_pipeline(project_root: str, log=print) -> dict:
             else:
                 quarantined.append({"filename": photo, "reason": mod_res["reason"]})
                 log(f"  [QUARANTINED] {photo} - {mod_res['reason']}")
+    else:
+        if progress_callback:
+            progress_callback(100, 100, "moderation")
                 
     if not approved:
         raise ValueError("All photos were quarantined by the Moderator Agent.")
@@ -103,9 +117,19 @@ def execute_trip_pipeline(project_root: str, log=print) -> dict:
             
     if uncached_approved:
         log(f"  Generating embeddings for {len(uncached_approved)} uncached photos...")
+        
+        lock = threading.Lock()
+        progress = {"count": 0}
+        
         def embed_photo(item):
             photo, path = item
             emb = get_image_embedding(path)
+            
+            with lock:
+                progress["count"] += 1
+                if progress_callback:
+                    progress_callback(progress["count"], len(uncached_approved), "embedding")
+                    
             return photo, path, emb
 
         with ThreadPoolExecutor(max_workers=8) as executor:
@@ -116,6 +140,9 @@ def execute_trip_pipeline(project_root: str, log=print) -> dict:
                 cache[photo] = {}
             cache[photo]["embedding"] = emb
             embeddings.append((photo, path, emb))
+    else:
+        if progress_callback:
+            progress_callback(100, 100, "embedding")
             
     # Perform deduplication
     similarity_threshold = 0.92
@@ -146,10 +173,20 @@ def execute_trip_pipeline(project_root: str, log=print) -> dict:
             
     if uncached_unique:
         log(f"  Scoring {len(uncached_unique)} uncached unique photos...")
+        
+        lock = threading.Lock()
+        progress = {"count": 0}
+        
         def score_photo(item):
             photo, path = item
             score_res = score_photo_as_judge(path)
             contributor_id = photo.split("_")[0] if "_" in photo else "unknown"
+            
+            with lock:
+                progress["count"] += 1
+                if progress_callback:
+                    progress_callback(progress["count"], len(uncached_unique), "scoring")
+                    
             return {
                 "filename": photo,
                 "score": score_res["score"],
@@ -171,6 +208,9 @@ def execute_trip_pipeline(project_root: str, log=print) -> dict:
                 cache[photo] = {}
             cache[photo]["scoring"] = s_res
             scored_photos.append(s_res)
+    else:
+        if progress_callback:
+            progress_callback(100, 100, "scoring")
             
     # Save the updated curation cache file
     try:
@@ -228,6 +268,9 @@ def execute_trip_pipeline(project_root: str, log=print) -> dict:
     # Run Narrator Journaling in Parallel
     log("Starting Phase 5: Parallel Narrator Agent synthesis...")
     
+    lock = threading.Lock()
+    progress = {"count": 0}
+    
     def generate_journal_for_moment(moment_items):
         scene, items = moment_items
         items.sort(key=lambda x: x["score"], reverse=True)
@@ -238,6 +281,11 @@ def execute_trip_pipeline(project_root: str, log=print) -> dict:
             photos_info_json=json.dumps(top3_info)
         )
         
+        with lock:
+            progress["count"] += 1
+            if progress_callback:
+                progress_callback(progress["count"], len(moments), "journaling")
+                
         return {
             "moment": scene,
             "entry": entry_text,

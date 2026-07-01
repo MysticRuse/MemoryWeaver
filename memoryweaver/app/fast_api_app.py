@@ -187,19 +187,43 @@ def select_folder():
     except Exception as e:
         return {"status": "error", "message": f"Folder selector failed: {str(e)}"}
 
+progress_state = {
+    "pre_clean": {"current": 0, "total": 0, "status": "idle"},
+    "pipeline": {"current": 0, "total": 0, "status": "idle", "phase": "idle"}
+}
+
+@app.get("/api/progress")
+def get_progress():
+    """Returns the current progress state of long-running operations."""
+    return progress_state
+
 @app.post("/api/pre-clean")
 def run_pre_clean(blur_threshold: float = 12.0, dup_threshold: int = 8):
     """Executes local_cleaner.py to classify photos into accepted/rejected trays."""
-    global selected_folder_path, pre_clean_results
+    global selected_folder_path, pre_clean_results, progress_state
     if not selected_folder_path:
         return {"status": "error", "message": "No folder selected. Please select a folder first."}
     
+    progress_state["pre_clean"] = {"current": 0, "total": 0, "status": "running"}
+    
+    def pre_clean_progress(current, total):
+        progress_state["pre_clean"]["current"] = current
+        progress_state["pre_clean"]["total"] = total
+        if current >= total:
+            progress_state["pre_clean"]["status"] = "complete"
+            
     from pipeline.local_cleaner import analyze_directory
     try:
-        res = analyze_directory(selected_folder_path, blur_threshold, dup_threshold)
+        res = analyze_directory(
+            selected_folder_path, 
+            blur_threshold, 
+            dup_threshold, 
+            progress_callback=pre_clean_progress
+        )
         pre_clean_results = res
         return {"status": "success", "accepted": res["accepted"], "rejected": res["rejected"]}
     except Exception as e:
+        progress_state["pre_clean"]["status"] = "error"
         return {"status": "error", "message": str(e)}
 
 @app.get("/api/serve-raw")
@@ -382,12 +406,29 @@ def run_generation_pipeline():
     """Triggers the full multi-agent moderation, curation, memory and narration pipeline."""
     import time
     start_time = time.time()
+    global progress_state
     try:
         global pipeline_logs
         pipeline_logs.clear()
         
         log_pipeline_step("Initiating pipeline orchestration...")
-        stats = execute_trip_pipeline(project_root, log=log_pipeline_step)
+        
+        progress_state["pipeline"] = {"current": 0, "total": 0, "status": "running", "phase": "initiating"}
+        
+        def pipeline_progress(current, total, phase):
+            progress_state["pipeline"]["current"] = current
+            progress_state["pipeline"]["total"] = total
+            progress_state["pipeline"]["phase"] = phase
+            if current >= total and phase == "journaling":
+                progress_state["pipeline"]["status"] = "complete"
+                
+        stats = execute_trip_pipeline(
+            project_root, 
+            log=log_pipeline_step, 
+            progress_callback=pipeline_progress
+        )
+        
+        progress_state["pipeline"]["status"] = "complete"
         
         # ==========================================
         # ### DEBUG / PERFORMANCE TRACKING SECTION ###
@@ -418,6 +459,7 @@ def run_generation_pipeline():
         
         return {"status": "success", "stats": stats}
     except Exception as e:
+        progress_state["pipeline"]["status"] = "error"
         log_pipeline_step(f"CRITICAL ERROR: {str(e)}")
         return {"status": "error", "message": str(e)}
 
