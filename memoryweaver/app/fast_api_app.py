@@ -216,11 +216,25 @@ def get_progress():
     return resp
 
 def run_pre_clean_background(folder: str, blur_threshold: float, dup_threshold: int):
-    global pre_clean_results, progress_state
+    global pre_clean_results, progress_state, pipeline_logs
+    
+    pipeline_logs.clear()
+    log_pipeline_step(f"Starting Local Pre-Cleaning Analysis on folder: {folder}")
+    
+    import time
+    start_time = time.time()
+    last_log_pct = -5
     
     def pre_clean_progress(current, total):
         progress_state["pre_clean"]["current"] = current
         progress_state["pre_clean"]["total"] = total
+        
+        nonlocal last_log_pct
+        pct = int((current / total) * 100) if total > 0 else 0
+        if pct >= last_log_pct + 5 or current == total:
+            last_log_pct = pct
+            elapsed = time.time() - start_time
+            log_pipeline_step(f"Pre-Clean Progress: {pct}% ({current}/{total}) • {elapsed:.1f}s elapsed")
             
     from pipeline.local_cleaner import analyze_directory
     try:
@@ -231,10 +245,18 @@ def run_pre_clean_background(folder: str, blur_threshold: float, dup_threshold: 
             progress_callback=pre_clean_progress
         )
         pre_clean_results = res
+        total_time = time.time() - start_time
+        progress_state["pre_clean"]["summary"] = {
+            "elapsed_seconds": round(total_time, 1),
+            "accepted_count": len(res['accepted']),
+            "rejected_count": len(res['rejected'])
+        }
         progress_state["pre_clean"]["status"] = "complete"
+        log_pipeline_step(f"Local Pre-Cleaning Analysis complete! Kept {len(res['accepted'])} accepted and excluded {len(res['rejected'])} duplicates/blurry files in {total_time:.1f}s.")
     except Exception as e:
         progress_state["pre_clean"]["status"] = "error"
         progress_state["pre_clean"]["error_msg"] = str(e)
+        log_pipeline_step(f"Pre-Cleaning FAILED: {str(e)}")
 
 @app.post("/api/pre-clean")
 def run_pre_clean(background_tasks: BackgroundTasks, blur_threshold: float = 12.0, dup_threshold: int = 8):
@@ -436,7 +458,7 @@ def get_pipeline_logs():
     return {"status": "success", "logs": pipeline_logs}
 
 
-def run_generation_background():
+def run_generation_background(limit: int):
     """Asynchronous background worker for the 5-agent pipeline."""
     import time
     start_time = time.time()
@@ -454,6 +476,7 @@ def run_generation_background():
                 
         stats = execute_trip_pipeline(
             project_root, 
+            limit=limit,
             log=log_pipeline_step, 
             progress_callback=pipeline_progress
         )
@@ -473,6 +496,14 @@ def run_generation_background():
         est_output_tokens = (uncached_mod * 100) + (uncached_score * 150) + (moments_count * 250)
         est_cost = (est_input_tokens * 0.000075 / 1000) + (est_output_tokens * 0.0003 / 1000)
         
+        progress_state["pipeline"]["summary"] = {
+            "elapsed_seconds": round(elapsed, 1),
+            "uncached_moderated": uncached_mod,
+            "uncached_scored": uncached_score,
+            "estimated_cost": round(est_cost, 4),
+            "moments_count": moments_count
+        }
+        
         log_pipeline_step(f"PERFORMANCE REPORT (UNCACHED RUNS ONLY):")
         log_pipeline_step(f"  - Total Elapsed Time: {elapsed} seconds")
         log_pipeline_step(f"  - Actual API Calls Made (Mod/Score): {uncached_mod}/{uncached_score}")
@@ -486,7 +517,7 @@ def run_generation_background():
         log_pipeline_step(f"CRITICAL ERROR: {str(e)}")
 
 @app.post("/generate")
-def run_generation_pipeline(background_tasks: BackgroundTasks):
+def run_generation_pipeline(background_tasks: BackgroundTasks, limit: int = 50):
     """Triggers the full multi-agent moderation, curation, memory and narration pipeline."""
     global progress_state
     import time
@@ -498,8 +529,8 @@ def run_generation_pipeline(background_tasks: BackgroundTasks):
         "phase": "initiating",
         "start_time": time.time()
     }
-    background_tasks.add_task(run_generation_background)
-    return {"status": "success", "message": "Pipeline started in the background."}
+    background_tasks.add_task(run_generation_background, limit)
+    return {"status": "success", "message": f"Pipeline started with target limit {limit} in the background."}
 
 
 # Main execution

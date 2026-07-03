@@ -103,6 +103,13 @@ This document tracks all changes made to the repository on a day-by-day basis. U
   * Rendered a wide, spacious single-grid review workspace with search and camera filters.
   * Added visual progress bars for Step 2 (Pre-Clean) and Step 3 (Curation Pipeline) that query `/api/progress` every 300ms to show real-time percentage and phase descriptions.
   * Highlights corresponding duplicate cluster members on hover by reading pre-computed `clusterNumber` tags.
+* **`frontend/viewer.html`**:
+  * Constrained `.story-card` with `max-height` and enabled vertical scroll control with a customized scrollbar.
+  * Added dynamic date labels (`📅 Month Day, Year`) adjacent to the daily moment titles in the Day-by-Day view.
+* **`pipeline/orchestrator.py` & `agents/curator/tools/score.py`**:
+  * Extracted photo GPS coordinates and timestamps from EXIF data.
+  * Passed coordinate context to Gemini's Curator score prompt to geolocate landmarks dynamically.
+  * Sorted daily journal moments chronologically based on earliest photo timestamps.
 
 
 

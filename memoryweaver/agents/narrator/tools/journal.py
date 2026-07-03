@@ -1,6 +1,5 @@
 import json
 import os
-import re
 from google import genai
 from google.genai import types
 
@@ -10,36 +9,49 @@ def get_gemini_client():
         raise ValueError("GEMINI_API_KEY environment variable is not set.")
     return genai.Client(api_key=api_key)
 
-def generate_moment_journal(scene_label: str, photos_info_json: str, voice_note_text: str = "") -> str:
+def generate_all_moments_journal(moments_list: list) -> dict:
     """
-    Generates a warm, personal 2-3 sentence journal entry for a specific travel moment.
+    Generates factual, location-specific journal entries for all travel moments 
+    in a single, unified Gemini API call.
     """
     client = get_gemini_client()
 
-    # ==========================================
-    # TODO (USER): Refine this system prompt to adjust the narration tone
-    # (e.g. funny, nostalgic, or kid-friendly family writing style).
-    # ==========================================
-    narration_prompt = (
-        f"You are the family archivist writing a day-by-day travel journal for a family trip.\n"
-        f"Moment Setting: {scene_label}\n"
-        f"Photo Details (captions and scores): {photos_info_json}\n"
-    )
-    if voice_note_text:
-        narration_prompt += f"Voice note transcript from participant: \"{voice_note_text}\"\n"
-
-    narration_prompt += (
-        "\nWrite a warm, nostalgic, and personal journal entry (exactly 2-3 sentences) in the first-person plural (we/our).\n"
-        "Weave together details visible in the photos and any thoughts from the voice note. Do not mention scores or file names.\n"
-        "Narrative Entry:"
+    prompt = (
+        "You are the family archivist writing a day-by-day travel journal for a family trip.\n"
+        "Here is the chronological list of daily moments/scenes along with details of the top photos captured:\n\n"
+        f"{json.dumps(moments_list, indent=2)}\n\n"
+        "Generate a factual, personal journal entry for each moment in the first-person plural (we/our).\n"
+        "CRITICAL INSTRUCTIONS:\n"
+        "- Respond with a JSON array of objects. Each object in the array must contain exactly these two keys:\n"
+        "  * 'moment': (string matching the input moment key exactly)\n"
+        "  * 'entry': (string, exactly 2-3 sentences long describing the moment)\n"
+        "- Do NOT use generic travel clichés or fluffy/flowery filler sentences (e.g. 'creating memories to last a lifetime', 'captivated by the beauty', 'a sight to behold').\n"
+        "- Do refer to specific names of places, buildings, landmarks, or objects visible in the photo details (e.g. Manaus City Palace, Teatro Amazonas, Panama, jungle lodge).\n"
+        "- Keep the narrative grounded, factual, and interesting.\n"
+        "- Respond ONLY with a raw JSON array matching the schema."
     )
 
     try:
         response = client.models.generate_content(
             model="gemini-2.5-flash",
-            contents=narration_prompt
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+            )
         )
-        return response.text.strip()
+        
+        # Clean any markdown wrapper if present
+        clean_text = response.text.strip()
+        if clean_text.startswith("```json"):
+            clean_text = clean_text[7:]
+        if clean_text.endswith("```"):
+            clean_text = clean_text[:-3]
+        clean_text = clean_text.strip()
+        
+        entries = json.loads(clean_text)
+        # Convert list to dict mapping moment -> entry
+        return {item["moment"]: item["entry"] for item in entries if "moment" in item and "entry" in item}
     except Exception as e:
-        print(f"Error during journal narration: {e}")
-        return f"We spent some time at the {scene_label.replace('_', ' ')} capturing beautiful memories together."
+        print(f"Error during batched journal narration: {e}")
+        # Fallback mapping
+        return {}

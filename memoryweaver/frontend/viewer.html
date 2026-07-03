@@ -263,11 +263,11 @@
         .journal-card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 1.5rem;
+            border-radius: 20px;
+            padding: 1.8rem;
             backdrop-filter: blur(10px);
-            display: grid;
-            grid-template-columns: 1fr;
+            display: flex;
+            flex-direction: column;
             gap: 1.5rem;
             transition: opacity 0.4s ease, transform 0.4s ease;
         }
@@ -276,34 +276,76 @@
             opacity: 0.35;
         }
 
-        @media (min-width: 600px) {
-            .journal-card {
-                grid-template-columns: 180px 1fr;
-            }
-        }
-
         .journal-thumbs {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
+            width: 100%;
         }
 
-        .journal-thumbs img {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 8px;
+        /* Collage 1 (Hero - 1 Photo) */
+        .journal-thumbs.collage-1 {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            width: 100%;
+        }
+        .journal-thumbs.collage-1 img {
+            max-width: 100%;
+            height: auto;
+            max-height: 520px;
+            object-fit: contain;
+            border-radius: 12px;
             border: 1px solid var(--border-color);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+        }
+
+        /* Collage 2 (Split - 2 Photos) */
+        .journal-thumbs.collage-2 {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: flex-start;
+        }
+        .journal-thumbs.collage-2 img {
+            height: 340px;
+            width: auto;
+            max-width: 100%;
+            object-fit: contain;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+        }
+
+        /* Collage 3+ (Flow - 3+ Photos) */
+        .journal-thumbs.collage-3 {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: flex-start;
+        }
+        .journal-thumbs.collage-3 img {
+            height: 260px;
+            width: auto;
+            max-width: 100%;
+            object-fit: contain;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+        }
+        
+        .journal-thumbs img:hover {
+            transform: scale(1.02);
+            border-color: var(--accent);
         }
 
         .journal-body {
             position: relative;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 1.2rem;
         }
 
         .journal-body h3 {
             color: var(--accent);
-            font-size: 1.3rem;
-            margin-bottom: 0.5rem;
+            font-size: 1.25rem;
+            margin-bottom: 0.6rem;
             text-transform: capitalize;
         }
 
@@ -324,7 +366,23 @@
             backdrop-filter: blur(10px);
             position: sticky;
             top: 2rem;
-            height: fit-content;
+            max-height: calc(100vh - 6rem);
+            overflow-y: auto;
+        }
+
+        .story-card::-webkit-scrollbar {
+            width: 6px;
+        }
+        .story-card::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+        }
+        .story-card::-webkit-scrollbar-thumb {
+            background: rgba(255, 123, 0, 0.3);
+            border-radius: 10px;
+        }
+        .story-card::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
         }
 
         .story-text {
@@ -418,9 +476,75 @@
             margin-bottom: 1.5rem;
             color: var(--text-muted);
         }
+
+        /* Lightbox Modal styles */
+        .lightbox-modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            padding-top: 40px;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(10, 12, 18, 0.95);
+            backdrop-filter: blur(12px);
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .lightbox-content {
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 80vh;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+            object-fit: contain;
+            animation: zoom 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes zoom {
+            from {transform: scale(0.95); opacity: 0;}
+            to {transform: scale(1); opacity: 1;}
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 25px;
+            right: 35px;
+            color: #f3f4f6;
+            font-size: 44px;
+            font-weight: 300;
+            transition: 0.2s;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .lightbox-close:hover {
+            color: var(--accent);
+        }
+
+        .lightbox-caption {
+            margin: 15px auto;
+            text-align: center;
+            color: var(--text-main);
+            font-size: 1.2rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            max-width: 80%;
+        }
     </style>
 </head>
 <body>
+    <!-- Lightbox Modal for uncropped fullscreen view -->
+    <div id="lightbox" class="lightbox-modal" onclick="closeLightbox()">
+        <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+        <img class="lightbox-content" id="lightbox-img" onclick="event.stopPropagation()">
+        <div id="lightbox-caption" class="lightbox-caption"></div>
+    </div>
+
     <div class="container">
         <header>
             <p>MEMORYWEAVER PRESENTATION</p>
@@ -578,6 +702,8 @@
                 const img = document.createElement('img');
                 img.src = `/local_storage/uploads/${item.filename}`;
                 img.alt = item.caption;
+                img.style.cursor = 'pointer';
+                img.onclick = () => openLightbox(img.src, item.caption);
 
                 slide.appendChild(img);
                 track.appendChild(slide);
@@ -626,16 +752,18 @@
                 card.id = `journal-card-${entry.moment}`;
 
                 const thumbsContainer = document.createElement('div');
-                thumbsContainer.className = 'journal-thumbs';
+                thumbsContainer.className = `journal-thumbs collage-${Math.min(entry.photos.length, 3)}`;
 
                 entry.photos.forEach(ph => {
                     const img = document.createElement('img');
                     img.alt = entry.moment;
+                    img.style.cursor = 'pointer';
                     img.onerror = function() {
                         this.onerror = null;
                         this.src = `/local_storage/uploads/${ph}`;
                     };
-                    img.src = `/local_storage/thumbs/${ph}`;
+                    img.src = `/local_storage/uploads/${ph}`;
+                    img.onclick = () => openLightbox(img.src, entry.moment);
                     thumbsContainer.appendChild(img);
                 });
 
@@ -643,7 +771,23 @@
                 body.className = 'journal-body';
 
                 const title = document.createElement('h3');
-                title.textContent = entry.moment.replace(/_/g, ' ');
+                title.style.display = 'flex';
+                title.style.justifyContent = 'space-between';
+                title.style.alignItems = 'center';
+                title.style.flexWrap = 'wrap';
+                
+                const titleText = document.createElement('span');
+                titleText.textContent = entry.moment.replace(/_/g, ' ');
+                title.appendChild(titleText);
+                
+                if (entry.date) {
+                    const dateText = document.createElement('span');
+                    dateText.style.fontSize = '12px';
+                    dateText.style.color = 'var(--text-muted)';
+                    dateText.style.fontWeight = 'normal';
+                    dateText.textContent = `📅 ${entry.date}`;
+                    title.appendChild(dateText);
+                }
 
                 const txt = document.createElement('p');
                 txt.textContent = entry.entry;
@@ -769,6 +913,28 @@
                 catchupSection.style.display = 'none';
             }
         }
+
+        // Lightbox controllers
+        window.openLightbox = function(src, caption) {
+            const lightbox = document.getElementById('lightbox');
+            const img = document.getElementById('lightbox-img');
+            const cap = document.getElementById('lightbox-caption');
+            
+            img.src = src;
+            cap.textContent = caption ? caption.replace(/_/g, ' ') : '';
+            lightbox.style.display = 'flex';
+        };
+
+        window.closeLightbox = function() {
+            document.getElementById('lightbox').style.display = 'none';
+        };
+
+        // Close lightbox on escape key
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeLightbox();
+            }
+        });
 
         // Initialize
         fetchTripBook();

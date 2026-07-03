@@ -11,73 +11,94 @@ def get_gemini_client():
         raise ValueError("GEMINI_API_KEY environment variable is not set.")
     return genai.Client(api_key=api_key)
 
-def run_vision_moderation(photo_path: str) -> dict:
+def run_vision_moderation_batch(photo_batch: list) -> list:
     """
-    Sends the photo to Gemini Vision to verify safety, sharpness, and type.
+    Sends a batch of photos (up to 50) to Gemini Vision to verify safety, sharpness, and type.
     """
     client = get_gemini_client()
     
-    # 1. Resize and normalise photo to reduce token usage (max 1024px)
-    try:
-        img = Image.open(photo_path).convert("RGB")
-        img.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
-        
-        import io
-        buf = io.BytesIO()
-        img.save(buf, format="JPEG", quality=85)
-        img_part = types.Part.from_bytes(data=buf.getvalue(), mime_type="image/jpeg")
-    except Exception as ie:
-        return {
-            "usable": False,
-            "appropriate": False,
-            "sharp": False,
-            "real_photo": False,
-            "reason": f"Corrupted or invalid image file: {str(ie)}"
-        }
-
-    # ==========================================
-    # TODO (USER): Refine the prompt below to enforce specific safety,
-    # sharpness, and screenshot filtering rules for group trip photos.
-    # ==========================================
-    moderation_prompt = (
-        "Analyze this uploaded image. Determine if it is:\n"
+    contents = []
+    prompt_intro = (
+        "You are analyzing a batch of uploaded travel images for a family journal.\n"
+        "Analyze each image provided in the contents list. The images are sent in order (the first image corresponds to index 0, the second to index 1, etc.).\n"
+        "Determine if each image is:\n"
         "1. Appropriate and safe to share (no violence, nudity, or offensive content).\n"
         "2. Sharp enough to view (not excessively blurry, completely black, or corrupted).\n"
         "3. A real travel/trip photograph, NOT a meme, document scan, or screenshot.\n\n"
-        "You must respond ONLY with a raw JSON object containing these exact keys:\n"
-        "{\n"
-        '  "appropriate": true/false,\n'
-        '  "sharp": true/false,\n'
-        '  "real_photo": true/false,\n'
-        '  "reason": "Vivid explanation of your decisions, especially if any flag is false"\n'
-        "}"
+        "You must respond ONLY with a raw JSON array of objects (one for each image in order of input):\n"
+        "[\n"
+        "  {\n"
+        '    "index": 0,\n'
+        '    "appropriate": true/false,\n'
+        '    "sharp": true/false,\n'
+        '    "real_photo": true/false,\n'
+        '    "reason": "Vivid explanation of your decisions, especially if any flag is false"\n'
+        "  },\n"
+        "  ...\n"
+        "]"
     )
-
+    
+    # Pack compressed images and labels
+    for idx, item in enumerate(photo_batch):
+        path = item["path"]
+        try:
+            img = Image.open(path).convert("RGB")
+            img.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
+            import io
+            buf = io.BytesIO()
+            img.save(buf, format="JPEG", quality=85)
+            img_part = types.Part.from_bytes(data=buf.getvalue(), mime_type="image/jpeg")
+            
+            # Append label text part before image part
+            contents.append(f"\n--- IMAGE INDEX {idx} ---")
+            contents.append(img_part)
+        except Exception as ie:
+            pass
+            
+    contents.append(prompt_intro)
+    
+    results_map = {}
     try:
-        # Use gemini-2.5-flash for fast and cost-effective multimodal inference
         response = client.models.generate_content(
             model="gemini-2.5-flash",
-            contents=[img_part, moderation_prompt]
+            contents=contents,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json"
+            )
         )
         
-        # Clean markdown codeblocks from response text if present
         raw_text = response.text.strip()
-        clean_json = re.sub(r"^```json\s*|\s*```$", "", raw_text, flags=re.MULTILINE).strip()
+        if raw_text.startswith("```json"):
+            raw_text = raw_text[7:]
+        if raw_text.endswith("```"):
+            raw_text = raw_text[:-3]
+        raw_text = raw_text.strip()
         
-        result = json.loads(clean_json)
-        return {
-            "usable": bool(result.get("appropriate", True) and result.get("sharp", True) and result.get("real_photo", True)),
-            "appropriate": bool(result.get("appropriate", True)),
-            "sharp": bool(result.get("sharp", True)),
-            "real_photo": bool(result.get("real_photo", True)),
-            "reason": str(result.get("reason", "Passed moderation"))
-        }
+        parsed_results = json.loads(raw_text)
+        for res in parsed_results:
+            idx = res.get("index")
+            if idx is not None and idx < len(photo_batch):
+                filename = photo_batch[idx]["filename"]
+                results_map[filename] = {
+                    "usable": bool(res.get("appropriate", True) and res.get("sharp", True) and res.get("real_photo", True)),
+                    "appropriate": bool(res.get("appropriate", True)),
+                    "sharp": bool(res.get("sharp", True)),
+                    "real_photo": bool(res.get("real_photo", True)),
+                    "reason": str(res.get("reason", "Passed moderation"))
+                }
     except Exception as e:
-        print(f"Error during vision moderation: {e}")
-        return {
-            "usable": False,
-            "appropriate": False,
-            "sharp": False,
-            "real_photo": False,
-            "reason": f"Moderation pipeline failure: {str(e)}"
-        }
+        print(f"Error during batched vision moderation: {e}")
+        
+    # Populate fallbacks for any missing items in batch response
+    for item in photo_batch:
+        filename = item["filename"]
+        if filename not in results_map:
+            results_map[filename] = {
+                "usable": False,
+                "appropriate": False,
+                "sharp": False,
+                "real_photo": False,
+                "reason": "Moderation batch request failed or skipped for this file."
+            }
+            
+    return [results_map[item["filename"]] for item in photo_batch]

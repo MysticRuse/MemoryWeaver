@@ -32,10 +32,11 @@ def get_image_sharpness(img_path: str) -> float:
         return 0.0
 
 def get_exif_metadata(img_path: str) -> dict:
-    """Extracts date and camera model info from image EXIF metadata."""
+    """Extracts date, camera model info, and GPS coordinates from image EXIF metadata."""
     meta = {
         "date": "",
-        "uploader": "Unknown Camera"
+        "uploader": "Unknown Camera",
+        "gps": ""
     }
     try:
         with Image.open(img_path) as im:
@@ -47,11 +48,37 @@ def get_exif_metadata(img_path: str) -> dict:
                 date_str = exif_data.get("DateTimeOriginal") or exif_data.get("DateTime")
                 if date_str:
                     try:
-                        # Convert to standard ISO format
-                        dt = datetime.datetime.strptime(date_str, "%Y:%M:%D %H:%M:%S")
+                        # Convert to standard format
+                        dt = datetime.datetime.strptime(str(date_str).strip(), "%Y:%m:%d %H:%M:%S")
                         meta["date"] = dt.strftime("%B %d, %Y at %I:%M %p")
                     except:
                         meta["date"] = str(date_str)
+                
+                # Extract GPSInfo (tag ID 34853)
+                gps_data = exif.get(34853)
+                if gps_data:
+                    from PIL.ExifTags import GPSTAGS
+                    gps_info = {}
+                    for key, val in gps_data.items():
+                        sub_tag = GPSTAGS.get(key, key)
+                        gps_info[sub_tag] = val
+                        
+                    if 'GPSLatitude' in gps_info and 'GPSLongitude' in gps_info:
+                        lat_ref = gps_info.get('GPSLatitudeRef', 'N')
+                        lon_ref = gps_info.get('GPSLongitudeRef', 'E')
+                        lat = gps_info['GPSLatitude']
+                        lon = gps_info['GPSLongitude']
+                        
+                        try:
+                            lat_deg = float(lat[0]) + float(lat[1])/60.0 + float(lat[2])/3600.0
+                            if lat_ref == 'S':
+                                lat_deg = -lat_deg
+                            lon_deg = float(lon[0]) + float(lon[1])/60.0 + float(lon[2])/3600.0
+                            if lon_ref == 'W':
+                                lon_deg = -lon_deg
+                            meta["gps"] = f"lat: {round(lat_deg, 5)}, lon: {round(lon_deg, 5)}"
+                        except:
+                            pass
                 
                 # Extract camera make/model
                 make = str(exif_data.get("Make", "")).strip()
@@ -142,43 +169,94 @@ def analyze_directory(source_dir: str, blur_threshold: float = 12.0, dup_thresho
             "sharpness": round(item["sharpness"], 2)
         })
         
+    # Extract timestamps for temporal clustering
+    for item in valid_candidates:
+        date_str = item["date"]
+        ts = 0.0
+        if date_str:
+            for fmt in ("%B %d, %Y at %I:%M %p", "%Y:%m:%d %H:%M:%S", "%Y:%m:%d %H:%M:%S\u0000"):
+                try:
+                    ts = datetime.datetime.strptime(date_str.strip(), fmt).timestamp()
+                    break
+                except:
+                    pass
+        if ts == 0.0:
+            try:
+                ts = os.path.getmtime(item["path"])
+            except:
+                pass
+        item["timestamp"] = ts
+
+    # Sort valid candidates chronologically
+    valid_candidates.sort(key=lambda x: x["timestamp"])
+
     if len(valid_candidates) > 1:
-        # Extract embeddings matrix
-        embeddings_matrix = np.array([c["embedding"] for c in valid_candidates])
+        # Determine if we have meaningful, varying timestamps in the photo set
+        timestamps = [c["timestamp"] for c in valid_candidates]
+        time_range = max(timestamps) - min(timestamps)
+        has_varying_dates = time_range > 300.0 # spans more than 5 minutes
         
-        # DBSCAN clustering with cosine distance threshold of 0.15 (equivalent to >= 0.85 similarity)
-        db = DBSCAN(eps=0.15, min_samples=2, metric='cosine')
-        labels = db.fit_predict(embeddings_matrix)
+        clusters = []
         
-        # Map labels to candidates
-        for idx, label in enumerate(labels):
-            valid_candidates[idx]["label"] = int(label)
+        if has_varying_dates:
+            # 1. Temporal-Semantic Burst clustering (ideal case with EXIF capture dates)
+            # Group consecutive photos taken within 30 seconds of each other with similarity >= 0.88
+            current_cluster = []
+            for item in valid_candidates:
+                if not current_cluster:
+                    current_cluster.append(item)
+                else:
+                    prev = current_cluster[-1]
+                    time_diff = abs(item["timestamp"] - prev["timestamp"])
+                    
+                    emb1 = item["embedding"]
+                    emb2 = prev["embedding"]
+                    dot = np.dot(emb1, emb2)
+                    norm1 = np.linalg.norm(emb1)
+                    norm2 = np.linalg.norm(emb2)
+                    sim = float(dot / (norm1 * norm2)) if (norm1 > 0 and norm2 > 0) else 0.0
+                    
+                    if time_diff <= 30.0 and sim >= 0.88:
+                        current_cluster.append(item)
+                    else:
+                        if len(current_cluster) > 1:
+                            clusters.append(current_cluster)
+                        current_cluster = [item]
+            if len(current_cluster) > 1:
+                clusters.append(current_cluster)
+        else:
+            # 2. Strict Visual-Only clustering (fallback if EXIF dates are missing/uniform due to bulk copy)
+            # We cluster using DBSCAN but with a very tight threshold (eps=0.06 equivalent to similarity >= 0.94)
+            embeddings_matrix = np.array([c["embedding"] for c in valid_candidates])
+            db = DBSCAN(eps=0.06, min_samples=2, metric='cosine')
+            labels = db.fit_predict(embeddings_matrix)
             
-        # Group by label to find best-shot (sharpest) in each duplicate cluster
-        clusters = {}
-        for item in valid_candidates:
-            lbl = item["label"]
-            if lbl != -1:
-                if lbl not in clusters:
-                    clusters[lbl] = []
-                clusters[lbl].append(item)
+            # Map labels to candidates
+            for idx, label in enumerate(labels):
+                valid_candidates[idx]["label"] = int(label)
                 
-        # Resolve clusters
+            # Group by label to form clusters
+            db_clusters = {}
+            for item in valid_candidates:
+                lbl = item.get("label", -1)
+                if lbl != -1:
+                    if lbl not in db_clusters:
+                        db_clusters[lbl] = []
+                    db_clusters[lbl].append(item)
+            clusters = list(db_clusters.values())
+            
+        # Map cluster labels to resolved duplicates
         resolved_duplicates = {} # filename -> (duplicate_of, cluster_num, sharpest_filename)
-        accepted_clustered = []
         
-        for lbl, group in clusters.items():
+        for idx, group in enumerate(clusters):
+            cluster_num = idx + 1
             # Sort group by sharpness descending
             group.sort(key=lambda x: x["sharpness"], reverse=True)
             sharpest = group[0]
             
-            # Map sharpest as master keep
-            accepted_clustered.append(sharpest)
-            resolved_duplicates[sharpest["filename"]] = (None, lbl + 1, sharpest["filename"])
-            
-            # Map duplicates
+            resolved_duplicates[sharpest["filename"]] = (None, cluster_num, sharpest["filename"])
             for dup in group[1:]:
-                resolved_duplicates[dup["filename"]] = (sharpest["filename"], lbl + 1, sharpest["filename"])
+                resolved_duplicates[dup["filename"]] = (sharpest["filename"], cluster_num, sharpest["filename"])
                 rejected.append({
                     "filename": dup["filename"],
                     "path": dup["path"],
@@ -187,26 +265,16 @@ def analyze_directory(source_dir: str, blur_threshold: float = 12.0, dup_thresho
                     "sharpness": round(dup["sharpness"], 2),
                     "reason": f"Near-duplicate burst shot",
                     "duplicate_of": sharpest["filename"],
-                    "clusterNumber": lbl + 1,
+                    "clusterNumber": cluster_num,
                     "sharpestOfCluster": sharpest["filename"]
                 })
                 
-        # Add clustered keeps and unclustered items to accepted
+        # Fill accepted
         for item in valid_candidates:
             filename = item["filename"]
-            if item["label"] == -1:
-                # Unclustered
-                accepted.append({
-                    "filename": item["filename"],
-                    "path": item["path"],
-                    "uploader": item["uploader"],
-                    "date": item["date"],
-                    "sharpness": round(item["sharpness"], 2)
-                })
-            else:
-                # Part of a cluster, if it's the sharpest keep it
-                dup_info = resolved_duplicates.get(filename)
-                if dup_info and dup_info[0] is None:
+            if filename in resolved_duplicates:
+                dup_info = resolved_duplicates[filename]
+                if dup_info[0] is None: # Only add the sharpest master to accepted
                     accepted.append({
                         "filename": item["filename"],
                         "path": item["path"],
@@ -216,6 +284,14 @@ def analyze_directory(source_dir: str, blur_threshold: float = 12.0, dup_thresho
                         "clusterNumber": dup_info[1],
                         "sharpestOfCluster": dup_info[2]
                     })
+            else:
+                accepted.append({
+                    "filename": item["filename"],
+                    "path": item["path"],
+                    "uploader": item["uploader"],
+                    "date": item["date"],
+                    "sharpness": round(item["sharpness"], 2)
+                })
     else:
         # If 1 or 0 candidates, add all to accepted
         for item in valid_candidates:

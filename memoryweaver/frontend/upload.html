@@ -550,6 +550,14 @@
                         </div>
                     </div>
 
+                    <!-- Pre-Clean Summary Dashboard -->
+                    <div id="pre-clean-summary" class="summary-card" style="display: none; background: rgba(0, 255, 100, 0.04); border: 1px solid rgba(0, 255, 100, 0.15); border-radius: 12px; padding: 1rem 1.5rem; margin-top: 1.5rem; display: none;">
+                        <div style="font-weight: 600; color: #10b981; margin-bottom: 0.5rem; font-size: 1rem;">⚡ Pre-Clean Complete</div>
+                        <div id="pre-clean-summary-details" style="font-size: 0.95rem; color: #d1d5db; display: flex; gap: 2rem;">
+                            <!-- populated dynamically -->
+                        </div>
+                    </div>
+
                     <!-- Spacious HITL Workspace -->
                     <div id="trays" class="workspace" style="display: none;">
                         <div class="workspace-filters">
@@ -596,6 +604,17 @@
                         <span class="step-num">3</span>
                         Trigger Intelligent Agent Pipeline
                     </div>
+                    <div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <label for="curation-limit" style="font-weight: 600; color: var(--text-main); font-size: 1rem;">Target Journal Size:</label>
+                        <select id="curation-limit" style="padding: 10px 20px; background: rgba(22, 28, 38, 0.9); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 20px; outline: none; font-weight: 600; cursor: pointer; font-family: 'Outfit', sans-serif;">
+                            <option value="20">20 Photos (Compact Diverse Summary)</option>
+                            <option value="30">30 Photos (Standard Balanced Journal)</option>
+                            <option value="50" selected>50 Photos (Detailed Extended Trip Book)</option>
+                            <option value="100">100 Photos (Comprehensive Archive)</option>
+                            <option value="0">Show All Photos</option>
+                        </select>
+                        <span style="font-size: 0.9rem; color: var(--text-muted);">(Applies diversity sampling to maximize coverage of places, food, and people)</span>
+                    </div>
                     <button class="btn btn-primary" id="btnBuild" onclick="triggerCuration()" style="padding: 14px 30px; font-size: 1.1rem;">
                         <span>Confirm & Build Trip Book</span>
                         <div class="spinner" id="buildSpinner" style="display: none;"></div>
@@ -609,6 +628,16 @@
                         </div>
                         <div class="progress-track">
                             <div id="pipeline-progress-fill" class="progress-fill"></div>
+                        </div>
+                    </div>
+
+                    <!-- Pipeline Summary Dashboard -->
+                    <div id="pipeline-summary" class="summary-card" style="display: none; background: rgba(255, 123, 0, 0.05); border: 1px solid rgba(255, 123, 0, 0.2); border-radius: 12px; padding: 1.5rem; margin-top: 1.5rem;">
+                        <div style="font-weight: 600; color: var(--accent); margin-bottom: 1rem; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                            <span>✨ Curation Pipeline Complete!</span>
+                        </div>
+                        <div id="pipeline-summary-details" style="font-size: 0.95rem; color: #d1d5db; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+                            <!-- populated dynamically -->
                         </div>
                     </div>
                 </div>
@@ -675,6 +704,7 @@
                 // If pre-clean is already running on the server
                 if (progress.pre_clean && progress.pre_clean.status === 'running') {
                     document.getElementById('pre-clean-progress-container').style.display = 'block';
+                    document.getElementById('console-area').style.display = 'block';
                     
                     const btn = document.getElementById('btnPreClean');
                     const spinner = document.getElementById('cleanSpinner');
@@ -685,6 +715,7 @@
                     btnText.textContent = 'Analyzing Sharpness & Duplicates...';
                     
                     startProgressPolling('pre_clean');
+                    startLogPolling();
                     
                     const checkCompletion = setInterval(async () => {
                         const progRes = await fetch('/api/progress');
@@ -704,6 +735,7 @@
                             populateCameraFilter();
                             applyFilters();
                             
+                            document.getElementById('pre-clean-progress-container').style.display = 'none';
                             document.getElementById('trays').style.display = 'block';
                             document.getElementById('step-curation').style.display = 'block';
                             btn.disabled = false;
@@ -731,8 +763,19 @@
                         applyFilters();
                         
                         document.getElementById('step-clean').style.display = 'block';
+                        document.getElementById('pre-clean-progress-container').style.display = 'none';
                         document.getElementById('trays').style.display = 'block';
                         document.getElementById('step-curation').style.display = 'block';
+                        
+                        if (progress.pre_clean.summary) {
+                            const summ = progress.pre_clean.summary;
+                            document.getElementById('pre-clean-summary').style.display = 'block';
+                            document.getElementById('pre-clean-summary-details').innerHTML = `
+                                <div><strong>⏱️ Duration:</strong> ${summ.elapsed_seconds}s</div>
+                                <div><strong>🟢 Accepted:</strong> ${summ.accepted_count} photos</div>
+                                <div><strong>🔴 Excluded (Blurry/Duplicate):</strong> ${summ.rejected_count} photos</div>
+                            `;
+                        }
                     }
                 }
                 
@@ -751,27 +794,38 @@
                         startProgressPolling('pipeline');
                         startLogPolling();
                     } else if (progress.pipeline.status === 'complete') {
-                        document.getElementById('pipeline-progress-container').style.display = 'block';
-                        document.getElementById('console-area').style.display = 'block';
-                        document.getElementById('btnViewerLink').style.display = 'inline-block';
+                        document.getElementById('pipeline-progress-container').style.display = 'none';
+                        document.getElementById('console-area').style.display = 'none'; 
                         
-                        const fill = document.getElementById('pipeline-progress-fill');
-                        if (fill) fill.style.width = '100%';
-                        const text = document.getElementById('pipeline-progress-text');
-                        if (text) text.textContent = `100% (${progress.pipeline.current}/${progress.pipeline.total})`;
-                        const phase = document.getElementById('pipeline-progress-phase');
-                        if (phase) phase.textContent = "Phase 5/5: Narrator Journal Synthesis";
+                        document.getElementById('btnBuild').disabled = false;
+                        document.getElementById('buildSpinner').style.display = 'none';
                         
-                        // Fetch final logs once
-                        const logBox = document.getElementById('log-box');
-                        try {
-                            const logRes = await fetch('/logs');
-                            const logData = await logRes.json();
-                            const logs = logData.logs || [];
-                            logBox.innerHTML = logs.join('\n');
-                            logBox.scrollTop = logBox.scrollHeight;
-                        } catch (e) {
-                            console.error("Failed to load final logs:", e);
+                        // Show pipeline summary card and large viewer button
+                        const summ = progress.pipeline.summary;
+                        if (summ) {
+                            document.getElementById('pipeline-summary').style.display = 'block';
+                            document.getElementById('pipeline-summary-details').innerHTML = `
+                                <div>⏱️ <strong>Curation Duration:</strong> ${summ.elapsed_seconds}s</div>
+                                <div>📸 <strong>API Calls (Uncached):</strong> ${summ.uncached_moderated} moderation / ${summ.uncached_scored} scoring</div>
+                                <div>📖 <strong>Generated Journal:</strong> ${summ.moments_count} Daily Moments</div>
+                                <div>💰 <strong>Estimated cost:</strong> $${summ.estimated_cost.toFixed(4)}</div>
+                            `;
+                            
+                            // Insert a beautiful viewer link directly below or inside the card
+                            const summaryDiv = document.getElementById('pipeline-summary');
+                            if (!document.getElementById('summary-viewer-btn')) {
+                                const btnContainer = document.createElement('div');
+                                btnContainer.style.marginTop = '1.5rem';
+                                btnContainer.style.textAlign = 'center';
+                                btnContainer.innerHTML = `
+                                    <a href="/viewer" id="summary-viewer-btn" class="btn btn-primary" style="padding: 12px 30px; font-size: 1.1rem; box-shadow: 0 0 15px rgba(255, 123, 0, 0.4); text-decoration: none; border-radius: 8px;">📖 Open Curation Viewer</a>
+                                `;
+                                summaryDiv.appendChild(btnContainer);
+                            }
+                        } else {
+                            // Fallback if summary metrics aren't populated yet
+                            document.getElementById('btnViewerLink').style.display = 'inline-block';
+                            document.getElementById('console-area').style.display = 'block';
                         }
                     }
                 }
@@ -815,7 +869,9 @@
             btnText.textContent = 'Analyzing Sharpness & Duplicates...';
             
             document.getElementById('pre-clean-progress-container').style.display = 'block';
+            document.getElementById('console-area').style.display = 'block';
             startProgressPolling('pre_clean');
+            startLogPolling();
 
             try {
                 // Starts background task
@@ -845,6 +901,16 @@
                         currentPage = 1;
                         populateCameraFilter();
                         applyFilters();
+                        
+                        document.getElementById('pre-clean-progress-container').style.display = 'none';
+                        if (state.summary) {
+                            document.getElementById('pre-clean-summary').style.display = 'block';
+                            document.getElementById('pre-clean-summary-details').innerHTML = `
+                                <div><strong>⏱️ Duration:</strong> ${state.summary.elapsed_seconds}s</div>
+                                <div><strong>🟢 Accepted:</strong> ${state.summary.accepted_count} photos</div>
+                                <div><strong>🔴 Excluded (Blurry/Duplicate):</strong> ${state.summary.rejected_count} photos</div>
+                            `;
+                        }
                         
                         document.getElementById('trays').style.display = 'block';
                         document.getElementById('step-curation').style.display = 'block';
@@ -1124,7 +1190,8 @@
                 startProgressPolling('pipeline');
 
                 // Step B: Start Agent curation pipeline
-                fetch('/generate', { method: 'POST' });
+                const limitVal = document.getElementById('curation-limit').value;
+                fetch(`/generate?limit=${limitVal}`, { method: 'POST' });
                 
                 // Poll logs
                 startLogPolling();
@@ -1167,8 +1234,9 @@
         function startProgressPolling(type) {
             if (progressInterval) clearInterval(progressInterval);
             
-            const fill = document.getElementById(`${type}-progress-fill`);
-            const text = document.getElementById(`${type}-progress-text`);
+            const htmlId = type.replace('_', '-');
+            const fill = document.getElementById(`${htmlId}-progress-fill`);
+            const text = document.getElementById(`${htmlId}-progress-text`);
             const phaseLabel = document.getElementById('pipeline-progress-phase');
 
             progressInterval = setInterval(async () => {
@@ -1206,7 +1274,8 @@
 
         function stopProgressPolling(type) {
             if (progressInterval) clearInterval(progressInterval);
-            const fill = document.getElementById(`${type}-progress-fill`);
+            const htmlId = type.replace('_', '-');
+            const fill = document.getElementById(`${htmlId}-progress-fill`);
             if (fill) fill.style.width = '100%';
         }
 
@@ -1222,16 +1291,48 @@
                     logBox.innerHTML = logs.join('\n');
                     logBox.scrollTop = logBox.scrollHeight;
                     
-                    const lastLog = logs[logs.length - 1] || "";
-                    if (lastLog.includes("complete!") || lastLog.includes("CRITICAL ERROR")) {
+                    const progRes = await fetch('/api/progress');
+                    const progress = await progRes.json();
+                    
+                    if (progress.pipeline && (progress.pipeline.status === 'complete' || progress.pipeline.status === 'error')) {
                         clearInterval(pollingInterval);
                         stopProgressPolling('pipeline');
                         document.getElementById('buildSpinner').style.display = 'none';
                         document.getElementById('btnBuild').disabled = false;
-                        document.getElementById('btnViewerLink').style.display = 'inline-block';
+                        
+                        if (progress.pipeline.status === 'complete') {
+                            document.getElementById('pipeline-progress-container').style.display = 'none';
+                            document.getElementById('console-area').style.display = 'none';
+                            
+                            const summ = progress.pipeline.summary;
+                            if (summ) {
+                                document.getElementById('pipeline-summary').style.display = 'block';
+                                document.getElementById('pipeline-summary-details').innerHTML = `
+                                    <div>⏱️ <strong>Curation Duration:</strong> ${summ.elapsed_seconds}s</div>
+                                    <div>📸 <strong>API Calls (Uncached):</strong> ${summ.uncached_moderated} moderation / ${summ.uncached_scored} scoring</div>
+                                    <div>📖 <strong>Generated Journal:</strong> ${summ.moments_count} Daily Moments</div>
+                                    <div>💰 <strong>Estimated cost:</strong> $${summ.estimated_cost.toFixed(4)}</div>
+                                `;
+                                
+                                const summaryDiv = document.getElementById('pipeline-summary');
+                                if (!document.getElementById('summary-viewer-btn')) {
+                                    const btnContainer = document.createElement('div');
+                                    btnContainer.style.marginTop = '1.5rem';
+                                    btnContainer.style.textAlign = 'center';
+                                    btnContainer.innerHTML = `
+                                        <a href="/viewer" id="summary-viewer-btn" class="btn btn-primary" style="padding: 12px 30px; font-size: 1.1rem; box-shadow: 0 0 15px rgba(255, 123, 0, 0.4); text-decoration: none; border-radius: 8px;">📖 Open Curation Viewer</a>
+                                    `;
+                                    summaryDiv.appendChild(btnContainer);
+                                }
+                            } else {
+                                document.getElementById('btnViewerLink').style.display = 'inline-block';
+                            }
+                        } else {
+                            alert("Curation pipeline encountered an error.");
+                        }
                     }
                 } catch (err) {
-                    console.error("Log fetch error:", err);
+                    console.error("Log/Progress polling error:", err);
                 }
             }, 1000);
         }
