@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>MemoryWeaver — Paraguay vs Australia</title>
+  <title>MemoryWeaver — {{ team1 }} vs {{ team2 }}</title>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -1140,7 +1140,7 @@
     }
 
     function initShareTools() {
-      const shareUrl = window.location.origin + '/';
+      const shareUrl = window.location.origin + '/{{ g.session_id }}/';
       
       const qrImg = document.getElementById('qr-code-img');
       const qrPlaceholder = document.getElementById('qr-placeholder');
@@ -1195,8 +1195,8 @@
     const OVERRIDE_SCORE = "{{ override_score }}";
     const OVERRIDE_TIMESTAMP = "{{ override_timestamp }}";
 
-    const KICKOFF_TIME = new Date("2026-06-25T19:00:00-07:00");
-    const END_TIME = new Date("2026-06-25T21:00:00-07:00");
+    const KICKOFF_TIME = new Date("{{ metadata.kickoff }}");
+    const END_TIME = new Date("{{ metadata.end }}");
 
     function getMatchScore(now) {
       let ms = now.getTime();
@@ -1222,7 +1222,7 @@
       if (OVERRIDE_SCORE) {
         const parts = OVERRIDE_SCORE.split('-');
         if (parts.length === 2) {
-          return { paraguay: parseInt(parts[0]), australia: parseInt(parts[1]), status: status };
+          return { team1: parseInt(parts[0]), team2: parseInt(parts[1]), status: status };
         }
       }
       
@@ -1236,7 +1236,7 @@
       
       const now = new Date();
       const scoreObj = getMatchScore(now);
-      const scoreStr = `${scoreObj.paraguay} - ${scoreObj.australia}`;
+      const scoreStr = `${scoreObj.team1} - ${scoreObj.team2}`;
       
       if (scoreObj.hidden) {
         if (vsCircle) vsCircle.textContent = 'VS';
@@ -1400,7 +1400,7 @@
     }
 
     function pollAlbumCount() {
-      fetch('/album-count')
+      fetch('/{{ g.session_id }}/album-count')
         .then(response => response.json())
         .then(data => {
           const count = data.count;
@@ -1512,7 +1512,7 @@
         }
       }
       
-      fetch('/album-classified')
+      fetch('/{{ g.session_id }}/album-classified')
         .then(response => response.json())
         .then(data => {
           const preMatch = data['pre-match'] || [];
@@ -1555,10 +1555,10 @@
             { id: 'kickoff', start: 1782439200 - 300, end: 1782439200 + 300 }, // 19:00 PST (18:55 - 19:05)
             { id: 'goal-aus', start: 1782440640 - 240, end: 1782440640 + 240 }, // 19:24 PST (19:20 - 19:28)
             { id: 'corner-py', start: 1782441480 - 240, end: 1782441480 + 240 }, // 19:38 PST (19:34 - 19:42)
-            { id: 'halftime', start: 1782441900 - 120, end: 1782441900 + 900 }, // 19:45 PST (19:43 - 20:00)
+            { id: 'halftime', start: {{ metadata.quest_45 }} - 120, end: {{ metadata.quest_45 }} + 900 },
             { id: 'goal-py', start: 1782444120 - 240, end: 1782444120 + 240 }, // 20:22 PST (20:18 - 20:26)
             { id: 'yellow-card', start: 1782444780 - 240, end: 1782444780 + 240 }, // 20:33 PST (20:29 - 20:37)
-            { id: 'fulltime', start: 1782445800 - 120, end: 1782445800 + 1800 } // 20:45 PST (20:43 - 21:15)
+            { id: 'fulltime', start: {{ metadata.quest_90 }} - 120, end: {{ metadata.quest_90 }} + 1800 }
           ];
           
           const myUploadObjects = allFiles.filter(item => myUploads.includes(item.filename));
@@ -1591,13 +1591,13 @@
               files.forEach(filename => {
                 const isVideo = filename.toLowerCase().endsWith('.mov') || filename.toLowerCase().endsWith('.mp4');
                 const mediaTag = isVideo 
-                  ? `<video src="/uploads/${filename}" style="width:100%; height:100%; object-fit:cover;" autoplay loop muted playsinline></video>`
-                  : `<img src="/thumbs/${filename}" alt="Memory">`;
+                  ? `<video src="/{{ g.session_id }}/uploads/${filename}" style="width:100%; height:100%; object-fit:cover;" autoplay loop muted playsinline></video>`
+                  : `<img src="/{{ g.session_id }}/thumbs/${filename}" alt="Memory">`;
                 sectHtml += `
                   <div class="memory-card">
                     ${mediaTag}
                     <span class="moment-badge">${key}</span>
-                    <a href="/delete/${filename}" class="delete-btn" title="Delete Memory" onclick="return handleDeleteClick(event, '${filename}')">&times;</a>
+                    <a href="/{{ g.session_id }}/delete/${filename}" class="delete-btn" title="Delete Memory" onclick="return handleDeleteClick(event, '${filename}')">&times;</a>
                   </div>`;
               });
               sectHtml += `</div></div>`;
@@ -1708,13 +1708,13 @@
         <span class="live-status" id="album-status-span">
           <span class="pulse-dot"></span> Fan Album Active
         </span>
-        <span class="tournament-badge">FIFA World Cup 2026</span>
+        <span class="tournament-badge">{{ g.session_id | replace('_', ' ') | title }}</span>
       </div>
       
       <div class="scoreboard-teams">
         <div class="team-node">
-          <span class="team-flag">🇵🇾</span>
-          <span class="team-name">PARAGUAY</span>
+          <span class="team-flag">{{ metadata.flag1 }}</span>
+          <span class="team-name">{{ team1 | upper }}</span>
         </div>
         
         <div class="scoreboard-vs">
@@ -1722,8 +1722,8 @@
         </div>
         
         <div class="team-node">
-          <span class="team-flag">🇦🇺</span>
-          <span class="team-name">AUSTRALIA</span>
+          <span class="team-flag">{{ metadata.flag2 }}</span>
+          <span class="team-name">{{ team2 | upper }}</span>
         </div>
       </div>
       
@@ -1731,15 +1731,15 @@
       <div id="match-clock" class="digital-clock">⏱️ Calculating...</div>
       
       <div class="meta-capsules">
-        <div class="meta-capsule">🏟️ <strong>Levi's Stadium</strong>, CA</div>
-        <div class="meta-capsule">📅 <strong>June 25, 2026</strong></div>
-        <div class="meta-capsule">⏰ <strong>7:00 PM - 9:00 PM PST</strong></div>
+        <div class="meta-capsule">🏟️ <strong>{{ metadata.stadium_name }}</strong>, {{ metadata.stadium_location }}</div>
+        <div class="meta-capsule">📅 <strong>{{ metadata.short_date }}</strong></div>
+        <div class="meta-capsule" id="meta-time-capsule">⏰ <strong>{{ metadata.time_str }}</strong></div>
       </div>
     </div>
 
     <!-- Main Card -->
     <div class="card">
-      <form action="/upload" method="POST" enctype="multipart/form-data" onsubmit="return handleUploadSubmit(event)">
+      <form action="/{{ g.session_id }}/upload" method="POST" enctype="multipart/form-data" onsubmit="return handleUploadSubmit(event)">
         <input type="hidden" name="quest_timestamp" id="quest-timestamp-input">
         <div class="file-upload-zone">
           <div class="viewfinder-corner corner-tl"></div>
@@ -1803,7 +1803,7 @@
       
       {% if story_ready %}
       <div style="margin-top: 16px;">
-        <a href="/results" class="btn" style="background: linear-gradient(135deg, var(--accent) 0%, #2563eb 100%); color: white; box-shadow: 0 4px 15px rgba(29, 78, 216, 0.2);">
+        <a href="/{{ g.session_id }}/results" class="btn" style="background: linear-gradient(135deg, var(--accent) 0%, #2563eb 100%); color: white; box-shadow: 0 4px 15px rgba(29, 78, 216, 0.2);">
           <span>🎉 View Memory Artifacts</span>
         </a>
       </div>
@@ -1859,9 +1859,9 @@
               <div class="memory-grid">
                 {% for item in uploaded_files_classified['pre-match'] %}
                   <div class="memory-card">
-                    <img src="/thumbs/{{ item.filename }}" alt="Memory">
+                    <img src="/{{ g.session_id }}/thumbs/{{ item.filename }}" alt="Memory">
                     <span class="moment-badge">pre-match</span>
-                    <a href="/delete/{{ item.filename }}" class="delete-btn" title="Delete Memory" onclick="return handleDeleteClick(event, '{{ item.filename }}')">&times;</a>
+                    <a href="/{{ g.session_id }}/delete/{{ item.filename }}" class="delete-btn" title="Delete Memory" onclick="return handleDeleteClick(event, '{{ item.filename }}')">&times;</a>
                   </div>
                 {% endfor %}
               </div>
@@ -1874,9 +1874,9 @@
               <div class="memory-grid">
                 {% for item in uploaded_files_classified['in-match'] %}
                   <div class="memory-card">
-                    <img src="/thumbs/{{ item.filename }}" alt="Memory">
+                    <img src="/{{ g.session_id }}/thumbs/{{ item.filename }}" alt="Memory">
                     <span class="moment-badge">in-match</span>
-                    <a href="/delete/{{ item.filename }}" class="delete-btn" title="Delete Memory" onclick="return handleDeleteClick(event, '{{ item.filename }}')">&times;</a>
+                    <a href="/{{ g.session_id }}/delete/{{ item.filename }}" class="delete-btn" title="Delete Memory" onclick="return handleDeleteClick(event, '{{ item.filename }}')">&times;</a>
                   </div>
                 {% endfor %}
               </div>
@@ -1889,9 +1889,9 @@
               <div class="memory-grid">
                 {% for item in uploaded_files_classified['post-match'] %}
                   <div class="memory-card">
-                    <img src="/thumbs/{{ item.filename }}" alt="Memory">
+                    <img src="/{{ g.session_id }}/thumbs/{{ item.filename }}" alt="Memory">
                     <span class="moment-badge">post-match</span>
-                    <a href="/delete/{{ item.filename }}" class="delete-btn" title="Delete Memory" onclick="return handleDeleteClick(event, '{{ item.filename }}')">&times;</a>
+                    <a href="/{{ g.session_id }}/delete/{{ item.filename }}" class="delete-btn" title="Delete Memory" onclick="return handleDeleteClick(event, '{{ item.filename }}')">&times;</a>
                   </div>
                 {% endfor %}
               </div>
@@ -1902,8 +1902,8 @@
           <div class="memory-grid">
             {% for filename in uploaded_files %}
               <div class="memory-card">
-                <img src="/thumbs/{{ filename }}" alt="Memory">
-                <a href="/delete/{{ filename }}" class="delete-btn" title="Delete Memory" onclick="return handleDeleteClick(event, '{{ filename }}')">&times;</a>
+                <img src="/{{ g.session_id }}/thumbs/{{ filename }}" alt="Memory">
+                <a href="/{{ g.session_id }}/delete/{{ filename }}" class="delete-btn" title="Delete Memory" onclick="return handleDeleteClick(event, '{{ filename }}')">&times;</a>
               </div>
             {% endfor %}
           </div>
@@ -1988,8 +1988,8 @@
         We need stadium photos from these exact match milestones! Help MemoryWeaver capture these key moments.
       </p>
       
+      
       <div class="timeline-quests">
-        
         <!-- Kickoff 1' -->
         <div class="timeline-item" id="quest-kickoff">
           <div class="timeline-time-badge">1'</div>
@@ -1998,23 +1998,23 @@
               <span class="timeline-event-name">⏱️ Kickoff Whistle</span>
               <span class="timeline-status-badge status-seeking" id="badge-quest-kickoff">📡 Seeking</span>
             </div>
-            <p class="timeline-req-desc">Upload stadium kickoff formations, starting lineup huddles, or the stadium clock at 7:00 PM PST!</p>
-            <button type="button" class="timeline-upload-btn" onclick="triggerQuestUpload(1782439200)">
+            <p class="timeline-req-desc">Upload stadium kickoff formations, starting lineup huddles, or the stadium clock at the start! <br><small class="dynamic-quest-time" data-ts="{{ metadata.quest_kickoff }}"></small></p>
+            <button type="button" class="timeline-upload-btn" onclick="triggerQuestUpload({{ metadata.quest_kickoff }})">
               📷 Upload Photo
             </button>
           </div>
         </div>
         
-        <!-- Goal Australia 24' -->
+        <!-- Action 24' -->
         <div class="timeline-item" id="quest-goal-aus">
           <div class="timeline-time-badge">24'</div>
           <div class="timeline-content">
             <div class="timeline-title-row">
-              <span class="timeline-event-name">⚽ Goal Australia (Goodwin)</span>
+              <span class="timeline-event-name">⚽ First Half Action</span>
               <span class="timeline-status-badge status-seeking" id="badge-quest-goal-aus">📡 Seeking</span>
             </div>
-            <p class="timeline-req-desc">Upload Craig Goodwin's corner flag celebration, or Australian fans erupting in your section (approx. 7:24 PM PST)!</p>
-            <button type="button" class="timeline-upload-btn" onclick="triggerQuestUpload(1782440640)">
+            <p class="timeline-req-desc">Upload {{ team1 }} or {{ team2 }} highlights, near misses, or fans erupting in your section! <br><small class="dynamic-quest-time" data-ts="{{ metadata.quest_24 }}"></small></p>
+            <button type="button" class="timeline-upload-btn" onclick="triggerQuestUpload({{ metadata.quest_24 }})">
               📷 Upload Photo
             </button>
           </div>
@@ -2028,8 +2028,8 @@
               <span class="timeline-event-name">📐 Corner Pressure</span>
               <span class="timeline-status-badge status-seeking" id="badge-quest-corner-py">📡 Seeking</span>
             </div>
-            <p class="timeline-req-desc">Upload Paraguay corners near the net, goalkeeper Ryan organizing the defense, or fan scarf waves (approx. 7:38 PM PST)!</p>
-            <button type="button" class="timeline-upload-btn" onclick="triggerQuestUpload(1782441480)">
+            <p class="timeline-req-desc">Upload corner kicks near the net, goalkeeper organizing the defense, or fan scarf waves! <br><small class="dynamic-quest-time" data-ts="{{ metadata.quest_38 }}"></small></p>
+            <button type="button" class="timeline-upload-btn" onclick="triggerQuestUpload({{ metadata.quest_38 }})">
               📷 Upload Photo
             </button>
           </div>
@@ -2043,8 +2043,8 @@
               <span class="timeline-event-name">⏸️ Halftime Scoreboard</span>
               <span class="timeline-status-badge status-seeking" id="badge-quest-halftime">📡 Seeking</span>
             </div>
-            <p class="timeline-req-desc">Upload photos of the scoreboard showing Paraguay 0 - 1 Australia, snacks run, or tailgating highlights (approx. 7:45 - 8:00 PM PST)!</p>
-            <button type="button" class="timeline-upload-btn" onclick="triggerQuestUpload(1782441900)">
+            <p class="timeline-req-desc">Upload photos of the scoreboard, snacks run, or tailgating highlights! <br><small class="dynamic-quest-time" data-ts="{{ metadata.quest_45 }}"></small></p>
+            <button type="button" class="timeline-upload-btn" onclick="triggerQuestUpload({{ metadata.quest_45 }})">
               📷 Upload Photo
             </button>
           </div>
@@ -2055,11 +2055,11 @@
           <div class="timeline-time-badge">67'</div>
           <div class="timeline-content">
             <div class="timeline-title-row">
-              <span class="timeline-event-name">⚽ Goal Paraguay (Almirón)</span>
+              <span class="timeline-event-name">⚽ Second Half Action</span>
               <span class="timeline-status-badge status-seeking" id="badge-quest-goal-py">📡 Seeking</span>
             </div>
-            <p class="timeline-req-desc">Upload Miguel Almirón's equalizer celebration, or Paraguayan flags and fans celebrating in section 120 (approx. 8:22 PM PST)!</p>
-            <button type="button" class="timeline-upload-btn" onclick="triggerQuestUpload(1782444120)">
+            <p class="timeline-req-desc">Upload {{ team1 }} vs {{ team2 }} celebrations, flags and fans celebrating in your section! <br><small class="dynamic-quest-time" data-ts="{{ metadata.quest_67 }}"></small></p>
+            <button type="button" class="timeline-upload-btn" onclick="triggerQuestUpload({{ metadata.quest_67 }})">
               📷 Upload Photo
             </button>
           </div>
@@ -2070,11 +2070,11 @@
           <div class="timeline-time-badge">78'</div>
           <div class="timeline-content">
             <div class="timeline-title-row">
-              <span class="timeline-event-name">🟨 Irvine Yellow Card</span>
+              <span class="timeline-event-name">🟨 Tense Moments</span>
               <span class="timeline-status-badge status-seeking" id="badge-quest-yellow-card">📡 Seeking</span>
             </div>
-            <p class="timeline-req-desc">Upload the referee displaying the card to Jackson Irvine, team captain discussions, or crowd reactions (approx. 8:33 PM PST)!</p>
-            <button type="button" class="timeline-upload-btn" onclick="triggerQuestUpload(1782444780)">
+            <p class="timeline-req-desc">Upload the referee displaying cards, team captain discussions, or crowd reactions! <br><small class="dynamic-quest-time" data-ts="{{ metadata.quest_78 }}"></small></p>
+            <button type="button" class="timeline-upload-btn" onclick="triggerQuestUpload({{ metadata.quest_78 }})">
               📷 Upload Photo
             </button>
           </div>
@@ -2088,13 +2088,12 @@
               <span class="timeline-event-name">🏁 Full-Time Whistle</span>
               <span class="timeline-status-badge status-seeking" id="badge-quest-fulltime">📡 Seeking</span>
             </div>
-            <p class="timeline-req-desc">Upload the final 1-1 scoreboard, player handshakes, sad/happy fan faces, or leaving the stadium (approx. 8:45 PM PST onwards)!</p>
-            <button type="button" class="timeline-upload-btn" onclick="triggerQuestUpload(1782445800)">
+            <p class="timeline-req-desc">Upload the final scoreboard, player handshakes, sad/happy fan faces, or leaving the stadium! <br><small class="dynamic-quest-time" data-ts="{{ metadata.quest_90 }}"></small></p>
+            <button type="button" class="timeline-upload-btn" onclick="triggerQuestUpload({{ metadata.quest_90 }})">
               📷 Upload Photo
             </button>
           </div>
         </div>
-
       </div>
     </div>
 
@@ -2106,21 +2105,21 @@
       </summary>
       <div style="display: flex; gap: 24px; margin-top: 20px; flex-wrap: wrap;">
         <div class="squad-column">
-          <h3>🇵🇾 Paraguay</h3>
+          <h3>{{ metadata.flag1 }} {{ metadata.team1_name }}</h3>
           <ul class="player-list">
-            <li><span class="pos-badge pos-gk">GK</span> G. Fernández, O. Gill, G. Olveira</li>
-            <li><span class="pos-badge pos-df">DF</span> G. Gómez (C), J. Alonso, F. Balbuena, O. Alderete, J. Cáceres, G. Velázquez, J. Canale, A. Maidana</li>
-            <li><span class="pos-badge pos-mf">MF</span> M. Almirón, Kaku, A. Cubas, R. Sosa, Diego Gómez, D. Bobadilla, B. Ojeda, M. Galarza, Maurício</li>
-            <li><span class="pos-badge pos-fw">FW</span> A. Sanabria, Julio Enciso, G. Ávalos, Á. Arce, I. Pitta</li>
+            <li><span class="pos-badge pos-gk">GK</span> {{ metadata.squad1.GK }}</li>
+            <li><span class="pos-badge pos-df">DF</span> {{ metadata.squad1.DF }}</li>
+            <li><span class="pos-badge pos-mf">MF</span> {{ metadata.squad1.MF }}</li>
+            <li><span class="pos-badge pos-fw">FW</span> {{ metadata.squad1.FW }}</li>
           </ul>
         </div>
         <div class="squad-column">
-          <h3>🇦🇺 Australia</h3>
+          <h3>{{ metadata.flag2 }} {{ metadata.team2_name }}</h3>
           <ul class="player-list">
-            <li><span class="pos-badge pos-gk">GK</span> Mathew Ryan, Paul Izzo, Patrick Beach</li>
-            <li><span class="pos-badge pos-df">DF</span> A. Behich, Jordan Bos, C. Burgess, A. Circati, M. Degenek, J. Geria, L. Herrington, H. Souttar, K. Trewin</li>
-            <li><span class="pos-badge pos-mf">MF</span> Jackson Irvine, N. Irankunda, C. Volpato, M. Balard, C. Metcalfe, A. O'Neill, K. Baccus</li>
-            <li><span class="pos-badge pos-fw">FW</span> M. Touré, Tete Yengi, Mitch Duke, B. Borrello, K. Yeboah, A. Goodwin</li>
+            <li><span class="pos-badge pos-gk">GK</span> {{ metadata.squad2.GK }}</li>
+            <li><span class="pos-badge pos-df">DF</span> {{ metadata.squad2.DF }}</li>
+            <li><span class="pos-badge pos-mf">MF</span> {{ metadata.squad2.MF }}</li>
+            <li><span class="pos-badge pos-fw">FW</span> {{ metadata.squad2.FW }}</li>
           </ul>
         </div>
       </div>

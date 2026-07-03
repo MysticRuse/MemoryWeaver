@@ -45,7 +45,7 @@
         </button>
 
         {% if story_ready %}
-          <a href="/results" class="btn btn-secondary" style="margin-top: 4px; border: 1.5px solid var(--accent); color: var(--accent);">
+          <a href="/{{ g.session_id }}/results" class="btn btn-secondary" style="margin-top: 4px; border: 1.5px solid var(--accent); color: var(--accent);">
             <span>🎉 View Current Story</span>
           </a>
         {% endif %}

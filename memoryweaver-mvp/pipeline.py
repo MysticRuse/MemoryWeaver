@@ -57,9 +57,18 @@ def _uploads_fingerprint(upload_dir):
     )
     return hashlib.md5(json.dumps(entries).encode()).hexdigest()
 
-# PRODUCTION TODO: Move match context (teams, venue, date) to a config file or
-# database so MemoryWeaver can support any match without code changes.
-MATCH_CONTEXT = "FIFA World Cup 2026 Group D, Levi's Stadium, San Francisco, June 25 2026"
+def get_match_context(session_id, metadata=None):
+    if metadata:
+        team1 = metadata.get('team1_name', '')
+        team2 = metadata.get('team2_name', '')
+        stadium = metadata.get('stadium_name', '')
+        city = metadata.get('city', '')
+        return f"FIFA World Cup 2026, {team1} vs {team2}, {stadium}, {city}"
+        
+    if session_id in ("FIFA26", "FIFA26_PARAGUAY_AUSTRALIA"):
+        return "FIFA World Cup 2026 Group D, Levi's Stadium, San Francisco, June 25 2026"
+    match_name = session_id.replace("_", " ").title()
+    return f"FIFA World Cup 2026, {match_name} match"
 
 
 GEMINI_MAX_PX = 1024  # Gemini needs ~1MP to recognize tiny players on the pitch from fan photos
@@ -177,15 +186,15 @@ def _generate_with_retry(contents, name="API Call", max_retries=5, response_mime
 #         return {"usable": False, "reason": str(e)}
 
 
-def classify_by_metadata_only(upload_dir, filename):
+def classify_by_metadata_only(upload_dir, filename, kickoff_ts=1782439200.0, fulltime_ts=1782446400.0):
     import os, re
     from PIL import Image
     from PIL.ExifTags import TAGS
     from datetime import datetime
     
     filepath = os.path.join(upload_dir, filename)
-    KICKOFF_TS = 1782439200.0
-    FULLTIME_TS = 1782446400.0
+    KICKOFF_TS = float(kickoff_ts)
+    FULLTIME_TS = float(fulltime_ts)
     
     capture_ts = None
     ts_source = None
@@ -270,7 +279,7 @@ def classify_moment(upload_dir, filename, ai_moment):
     return ai_moment
 
 
-def get_current_score(latest_ts=None):
+def get_current_score(session_id, latest_ts=None):
     import time, os
     override_score = os.getenv('OVERRIDE_SCORE')
     if override_score:
@@ -287,6 +296,9 @@ def get_current_score(latest_ts=None):
     else:
         now_ts = latest_ts if latest_ts else time.time()
         
+    if session_id not in ('FIFA26', 'FIFA26_PARAGUAY_AUSTRALIA'):
+        return "Unknown", "The live score for this match is not strictly tracked in this prototype. Focus on the fan atmosphere and energy in the photos rather than hallucinating specific goals or scorers."
+        
     if now_ts < 1782439200:
         return "0-0", "No goals have been scored yet by either team. Both teams are at 0-0."
     elif now_ts < 1782440640:
@@ -297,7 +309,7 @@ def get_current_score(latest_ts=None):
         return "1-1", "The match ended or is tied at 1-1. Craig Goodwin scored for Australia at 24', and Miguel Almirón scored the equalizer for Paraguay at 67'."
 
 
-def score_and_group_photos(session_id, log=print, limit=10, consider_limit=100, include_videos=True):
+def score_and_group_photos(session_id, log=print, limit=10, consider_limit=100, include_videos=True, metadata=None):
     """
     Score and moderate all media (photos and videos) in a single batched API call.
     """
@@ -432,9 +444,9 @@ def score_and_group_photos(session_id, log=print, limit=10, consider_limit=100, 
             if ts > max_ts:
                 max_ts = ts
                 
-        score_str, score_details = get_current_score(latest_ts=max_ts if max_ts > 0 else None)
+        score_str, score_details = get_current_score(session_id, latest_ts=max_ts if max_ts > 0 else None)
         parts.append(
-            f'These are {len(valid_files)} fan photos and videos from {MATCH_CONTEXT}. '
+            f'These are {len(valid_files)} fan photos and videos from {get_match_context(session_id, metadata)}. '
             'This is a fan memory app — media files (photos/videos) taken by fans attending the match are the heart of this experience. '
             f'CRITICAL GUARDRAIL: The current live score of the match is {score_str}. Details: {score_details} '
             'You MUST NOT describe or mention any goals, goal celebrations, or scorers in your captions or moments '
@@ -557,7 +569,7 @@ def score_and_group_photos(session_id, log=print, limit=10, consider_limit=100, 
     return final_selection
 
 
-def generate_artefacts(session_id, scored, detected_score='0-0', log=print):
+def generate_artefacts(session_id, scored, detected_score='0-0', log=print, metadata=None):
     """
     Generate match story + fan stats in a single API call.
 
@@ -574,12 +586,12 @@ def generate_artefacts(session_id, scored, detected_score='0-0', log=print):
         p for photo in scored for p in photo.get('players_visible', []) if p
     ))
 
-    score_str, score_details = get_current_score()
+    score_str, score_details = get_current_score(session_id)
     final_score = detected_score
     if score_str == '0-0':
         final_score = '0-0'
 
-    combined_prompt = f'''You are a passionate football fan who attended {MATCH_CONTEXT} with a group of friends.
+    combined_prompt = f'''You are a passionate football fan who attended {get_match_context(session_id, metadata)} with a group of friends.
 
 Using ONLY these photo captions and player data, write:
 1. A vivid 2-paragraph match story in first-person plural (we/our), excited and warm tone.
@@ -634,7 +646,7 @@ Return JSON only conforming to the schema.'''
     return story, stats
 
 
-def run_pipeline(session_id='FIFA26', log=print, limit=10, consider_limit=100, include_videos=True):
+def run_pipeline(session_id='FIFA26', log=print, limit=10, consider_limit=100, include_videos=True, metadata=None):
     global api_calls_log
     api_calls_log = []
     
@@ -667,7 +679,7 @@ def run_pipeline(session_id='FIFA26', log=print, limit=10, consider_limit=100, i
             log('Uploads or limit have changed — re-scoring photos')
 
     if scored is None:
-        scored = score_and_group_photos(session_id, log=log, limit=limit, consider_limit=consider_limit, include_videos=include_videos)
+        scored = score_and_group_photos(session_id, log=log, limit=limit, consider_limit=consider_limit, include_videos=include_videos, metadata=metadata)
 
     if not scored:
         raise ValueError('No usable photos after moderation — ask contributors to upload clearer match photos.')
@@ -681,7 +693,7 @@ def run_pipeline(session_id='FIFA26', log=print, limit=10, consider_limit=100, i
                 detected_score = cache.get('detected_score', '0-0')
         except Exception:
             pass
-    generate_artefacts(session_id, scored, detected_score=detected_score, log=log)
+    generate_artefacts(session_id, scored, detected_score=detected_score, log=log, metadata=metadata)
     
     # Save the accumulated cost data
     total_prompt = sum(x["prompt_tokens"] for x in api_calls_log)

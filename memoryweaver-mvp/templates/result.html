@@ -841,12 +841,12 @@
   <div class="container">
     <!-- Print Cover Page -->
     <div class="print-cover">
-      <div class="print-cover-sport">FIFA World Cup 2026</div>
-      <h1 class="print-cover-title">🇵🇾 Paraguay vs Australia 🇦🇺</h1>
+      <div class="print-cover-sport">{{ g.session_id | replace('_', ' ') | title }}</div>
+      <h1 class="print-cover-title">{{ metadata.flag1 }} {{ team1 }} vs {{ team2 }} {{ metadata.flag2 }}</h1>
       <div class="print-cover-subtitle">Official Commemorative Crowd Narrative & Fan Highlights</div>
       <div class="print-cover-meta">
-        <p>🏟️ Levi's Stadium, Santa Clara, CA</p>
-        <p>📅 Thursday, June 25, 2026 &bull; 7:00 PM - 9:00 PM PST</p>
+        <p>🏟️ {{ metadata.stadium_name }}, {{ metadata.stadium_location }}</p>
+        <p>📅 {{ metadata.date_str }} &bull; {{ metadata.time_str }}</p>
         <p style="margin-top: 60px; font-size: 14px; font-style: italic; font-weight: 500; color: #555;">Created on-site by MemoryWeaver Fan Crowd</p>
       </div>
     </div>
@@ -856,8 +856,8 @@
       <span class="badge">Match Narrative</span>
       <h1>⚽ Highlights &amp; Fan Story</h1>
       <p style="font-size: 13.5px; color: var(--text-muted); margin-top: 8px; line-height: 1.5; text-align: center;">
-        🏟️ Levi's Stadium, Santa Clara, CA<br>
-        📅 Thursday, June 25, 2026 &bull; 7:00 PM - 9:00 PM PST
+        🏟️ {{ metadata.stadium_name }}, {{ metadata.stadium_location }}<br>
+        📅 {{ metadata.date_str }} &bull; {{ metadata.time_str }}
       </p>
     </div>
 
@@ -987,9 +987,9 @@
                 </div>
                 <div class="highlight-img-wrap">
                   {% if h.filename.lower().endswith(('.mov', '.mp4')) %}
-                    <video src="/uploads/{{ h.filename }}" controls playsinline style="width: 100%; max-height: 320px; object-fit: cover; display: block;"></video>
+                    <video src="/{{ g.session_id }}/uploads/{{ h.filename }}" controls playsinline style="width: 100%; max-height: 320px; object-fit: cover; display: block;"></video>
                   {% else %}
-                    <img src="/thumbs/{{ h.filename }}" alt="Fan Highlight Photo">
+                    <img src="/{{ g.session_id }}/thumbs/{{ h.filename }}" alt="Fan Highlight Photo">
                   {% endif %}
                 </div>
                 <div class="caption">💬 {{ h.caption }}</div>
@@ -1016,9 +1016,9 @@
                 </div>
                 <div class="highlight-img-wrap">
                   {% if h.filename.lower().endswith(('.mov', '.mp4')) %}
-                    <video src="/uploads/{{ h.filename }}" controls playsinline style="width: 100%; max-height: 320px; object-fit: cover; display: block;"></video>
+                    <video src="/{{ g.session_id }}/uploads/{{ h.filename }}" controls playsinline style="width: 100%; max-height: 320px; object-fit: cover; display: block;"></video>
                   {% else %}
-                    <img src="/thumbs/{{ h.filename }}" alt="Fan Highlight Photo">
+                    <img src="/{{ g.session_id }}/thumbs/{{ h.filename }}" alt="Fan Highlight Photo">
                   {% endif %}
                 </div>
                 <div class="caption">💬 {{ h.caption }}</div>
@@ -1045,9 +1045,9 @@
                 </div>
                 <div class="highlight-img-wrap">
                   {% if h.filename.lower().endswith(('.mov', '.mp4')) %}
-                    <video src="/uploads/{{ h.filename }}" controls playsinline style="width: 100%; max-height: 320px; object-fit: cover; display: block;"></video>
+                    <video src="/{{ g.session_id }}/uploads/{{ h.filename }}" controls playsinline style="width: 100%; max-height: 320px; object-fit: cover; display: block;"></video>
                   {% else %}
-                    <img src="/thumbs/{{ h.filename }}" alt="Fan Highlight Photo">
+                    <img src="/{{ g.session_id }}/thumbs/{{ h.filename }}" alt="Fan Highlight Photo">
                   {% endif %}
                 </div>
                 <div class="caption">💬 {{ h.caption }}</div>
@@ -1068,21 +1068,21 @@
       </summary>
       <div style="display: flex; gap: 24px; margin-top: 20px; flex-wrap: wrap;">
         <div class="squad-column">
-          <h3>🇵🇾 Paraguay</h3>
+          <h3>{{ metadata.flag1 }} {{ metadata.team1_name }}</h3>
           <ul class="player-list">
-            <li><span class="pos-badge pos-gk">GK</span> G. Fernández, O. Gill, G. Olveira</li>
-            <li><span class="pos-badge pos-df">DF</span> J. Gómez (C), J. Alonso, Fabián Balbuena, O. Alderete, J. Cáceres, G. Velázquez, J. Canale, A. Maidana</li>
-            <li><span class="pos-badge pos-mf">MF</span> M. Almirón, Kaku, A. Cubas, R. Sosa, Diego Gómez, D. Bobadilla, B. Ojeda, M. Galarza, Maurício</li>
-            <li><span class="pos-badge pos-fw">FW</span> Antonio Sanabria, Julio Enciso, G. Ávalos, Álex Arce, Isidro Pitta</li>
+            <li><span class="pos-badge pos-gk">GK</span> {{ metadata.squad1.GK }}</li>
+            <li><span class="pos-badge pos-df">DF</span> {{ metadata.squad1.DF }}</li>
+            <li><span class="pos-badge pos-mf">MF</span> {{ metadata.squad1.MF }}</li>
+            <li><span class="pos-badge pos-fw">FW</span> {{ metadata.squad1.FW }}</li>
           </ul>
         </div>
         <div class="squad-column">
-          <h3>🇦🇺 Australia</h3>
+          <h3>{{ metadata.flag2 }} {{ metadata.team2_name }}</h3>
           <ul class="player-list">
-            <li><span class="pos-badge pos-gk">GK</span> Mathew Ryan, Paul Izzo, Patrick Beach</li>
-            <li><span class="pos-badge pos-df">DF</span> A. Behich, Jordan Bos, C. Burgess, A. Circati, M. Degenek, J. Geria, L. Herrington, H. Souttar, K. Trewin</li>
-            <li><span class="pos-badge pos-mf">MF</span> Jackson Irvine, N. Irankunda, C. Volpato, M. Balard, C. Metcalfe, A. O'Neill, K. Baccus</li>
-            <li><span class="pos-badge pos-fw">FW</span> M. Touré, Tete Yengi, Mitch Duke, B. Borrello, K. Yeboah, A. Goodwin</li>
+            <li><span class="pos-badge pos-gk">GK</span> {{ metadata.squad2.GK }}</li>
+            <li><span class="pos-badge pos-df">DF</span> {{ metadata.squad2.DF }}</li>
+            <li><span class="pos-badge pos-mf">MF</span> {{ metadata.squad2.MF }}</li>
+            <li><span class="pos-badge pos-fw">FW</span> {{ metadata.squad2.FW }}</li>
           </ul>
         </div>
       </div>
@@ -1092,7 +1092,7 @@
     {% if not story %}
       <div class="card" style="text-align:center">
         <p style="color:var(--text-muted);margin-bottom:16px">No story generated yet for this session.</p>
-        <a href="/generate" class="btn">✨ Generate Story Now</a>
+        <a href="/{{ g.session_id }}/generate" class="btn">✨ Generate Story Now</a>
       </div>
     {% endif %}
     END COMMENT --> #}
@@ -1102,9 +1102,9 @@
       <div class="card consent-card no-print" style="border: 1px solid rgba(245, 158, 11, 0.3); background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(255, 255, 255, 0.8) 100%);">
         <h2>🔒 Public Sharing Consent Required</h2>
         <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.6; font-weight: 500;">
-          To share these highlights or generate public sharing links and QR codes, you must confirm that no personal identifying information (e.g. real names, addresses, or unconsented minors) is visible in the photos or generated text, in compliance with the FIFA 26 Playbook.
+          To share these highlights or generate public sharing links and QR codes, you must confirm that no personal identifying information (e.g. real names, addresses, or unconsented minors) is visible in the photos or generated text, in compliance with the {{ g.session_id | replace('_', ' ') | title }} Playbook.
         </p>
-        <form action="/share-consent" method="POST" style="display: flex; flex-direction: column; gap: 10px;">
+        <form action="/{{ g.session_id }}/share-consent" method="POST" style="display: flex; flex-direction: column; gap: 10px;">
           <button type="submit" name="consent_choice" value="CONFIRMED" class="btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 14px; font-size: 14.5px; font-weight: 700;">
             ✅ Confirm Public Consent &amp; Unlock Sharing
           </button>
@@ -1177,13 +1177,13 @@
       {% if story %}
         <button onclick="window.print()" class="btn btn-pdf">📄 Save as PDF / Share</button>
       {% endif %}
-      <a href="/" class="btn btn-outline" style="margin-top: 0;">📸 Back to Photo Album</a>
+      <a href="/{{ g.session_id }}/" class="btn btn-outline" style="margin-top: 0;">📸 Back to Photo Album</a>
     </div>
   </div>
 
   <script>
     function initShareTools() {
-      const shareUrl = window.location.origin + '/results';
+      const shareUrl = window.location.origin + '/{{ g.session_id }}/results';
       
       const qrImg = document.getElementById('qr-code-img');
       const qrPlaceholder = document.getElementById('qr-placeholder');

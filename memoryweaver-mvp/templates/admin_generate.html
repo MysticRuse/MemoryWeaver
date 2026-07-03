@@ -271,7 +271,7 @@
         </div>
       </div>
 
-      <form action="/generate" method="POST" style="display: flex; flex-direction: column; gap: 20px;">
+      <form action="/{{ g.session_id }}/generate" method="POST" style="display: flex; flex-direction: column; gap: 20px;">
         
         <div class="toggle-group">
           <label for="include_videos">Consider Videos in Report</label>

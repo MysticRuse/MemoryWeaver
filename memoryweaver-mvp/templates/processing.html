@@ -354,7 +354,7 @@
     }
 
     function poll() {
-      fetch('/status?t=' + Date.now())
+      fetch('/{{ g.session_id }}/status?t=' + Date.now())
         .then(function(response) {
           if (!response.ok) throw new Error('Network response error');
           return response.json();
@@ -403,7 +403,7 @@
             document.getElementById('error-msg').textContent = d.error;
           } else if (d.done && !d.running) {
             clearTimeout(pollTimer);
-            window.location.replace('/results?t=' + Date.now());
+            window.location.replace('/{{ g.session_id }}/results?t=' + Date.now());
           } else {
             pollTimer = setTimeout(poll, 3000);
           }
@@ -458,8 +458,8 @@
         <strong>Pipeline synthesis failed</strong>
         <span id="error-msg"></span>
         <div style="margin-top:16px">
-          <a href="/generate" class="btn">Retry</a>
-          <a href="/" class="btn btn-grey">Back to Uploads</a>
+          <a href="/{{ g.session_id }}/generate" class="btn">Retry</a>
+          <a href="/{{ g.session_id }}/" class="btn btn-grey">Back to Uploads</a>
         </div>
       </div>
     </div>

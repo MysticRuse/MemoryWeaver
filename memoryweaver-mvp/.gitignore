@@ -4,3 +4,8 @@ __pycache__/
 venv/
 .agents/
 .DS_Store
+
+outputs/
+uploads/
+app.log
+*.bak
