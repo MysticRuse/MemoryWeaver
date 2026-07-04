@@ -16,6 +16,14 @@ def generate_all_moments_journal(moments_list: list) -> dict:
     """
     client = get_gemini_client()
 
+    # Filenames inside moments_list are user-controlled uploads; sanitize them
+    # before they're embedded in the prompt (prompt-injection guard).
+    from pipeline.prompt_safety import sanitize_for_prompt
+    for moment in moments_list:
+        for photo in moment.get("top_photos", []):
+            if "filename" in photo:
+                photo["filename"] = sanitize_for_prompt(photo["filename"])
+
     prompt = (
         "You are the family archivist writing a day-by-day travel journal for a family trip.\n"
         "Here is the chronological list of daily moments/scenes along with details of the top photos captured:\n\n"

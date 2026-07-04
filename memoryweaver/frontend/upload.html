@@ -727,6 +727,25 @@
             return '/viewer?session=' + encodeURIComponent(getSessionId());
         }
 
+        // ---- Admin token (only needed when the server sets MW_ADMIN_TOKEN) ----
+        // Destructive/billable endpoints require an X-MW-Token header in secured
+        // deployments. The token can be supplied once via ?token=<value> in the
+        // URL (persisted to localStorage) - local dev needs none.
+        function authHeaders(extra) {
+            const urlTok = new URLSearchParams(window.location.search).get('token');
+            if (urlTok) localStorage.setItem('mw_token', urlTok);
+            const tok = localStorage.getItem('mw_token');
+            return Object.assign({}, extra || {}, tok ? { 'X-MW-Token': tok } : {});
+        }
+
+        function handleAuthFailure(res) {
+            if (res.status === 401) {
+                alert('This server requires an admin token. Re-open the page with ?token=<your MW_ADMIN_TOKEN> appended to the URL.');
+                return true;
+            }
+            return false;
+        }
+
         async function loadSessionBar() {
             try {
                 const res = await fetch('/api/sessions');
@@ -779,9 +798,10 @@
             try {
                 const res = await fetch('/api/sessions', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: authHeaders({ 'Content-Type': 'application/json' }),
                     body: JSON.stringify({ name: name, event_type: eventType })
                 });
+                if (handleAuthFailure(res)) { status.textContent = 'Admin token required.'; return; }
                 const data = await res.json();
                 if (data.status === 'success') {
                     localStorage.setItem('mw_session_id', data.session.session_id);
@@ -966,7 +986,7 @@
 
         async function selectLocalFolder() {
             try {
-                const res = await fetch(withSession('/api/select-folder'), { method: 'POST' });
+                const res = await fetch(withSession('/api/select-folder'), { method: 'POST', headers: authHeaders() });
                 const data = await res.json();
                 if (data.status === 'success') {
                     currentFolder = data.folder;
@@ -998,7 +1018,7 @@
 
             try {
                 // Starts background task
-                const res = await fetch(withSession('/api/pre-clean'), { method: 'POST' });
+                const res = await fetch(withSession('/api/pre-clean'), { method: 'POST', headers: authHeaders() });
                 const data = await res.json();
                 if (data.status !== 'success') {
                     throw new Error(data.message || "Failed to start pre-cleaning");
@@ -1298,9 +1318,10 @@
                 const filenames = acceptedList.map(item => item.filename);
                 const ingestRes = await fetch('/api/confirm-ingest', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: authHeaders({ 'Content-Type': 'application/json' }),
                     body: JSON.stringify({ filenames: filenames, session_id: getSessionId() })
                 });
+                if (handleAuthFailure(ingestRes)) throw new Error('Admin token required.');
                 
                 const ingestData = await ingestRes.json();
                 if (ingestData.status !== 'success') {
@@ -1314,7 +1335,7 @@
 
                 // Step B: Start Agent curation pipeline
                 const limitVal = document.getElementById('curation-limit').value;
-                fetch(withSession(`/generate?limit=${limitVal}`), { method: 'POST' });
+                fetch(withSession(`/generate?limit=${limitVal}`), { method: 'POST', headers: authHeaders() });
                 
                 // Poll logs
                 startLogPolling();

@@ -24,10 +24,13 @@ def score_photos_as_judge_batch(photo_batch: list, others_summary: str = "") -> 
     # 1. Compress images and compile metadata contexts
     from pipeline.local_cleaner import get_exif_metadata
     
+    from pipeline.prompt_safety import sanitize_for_prompt
+
     for idx, item in enumerate(photo_batch):
-        filename = item["filename"]
+        # Filenames are user-controlled; sanitize before prompt interpolation
+        filename = sanitize_for_prompt(item["filename"])
         path = item["path"]
-        
+
         meta = get_exif_metadata(path)
         meta_str = f"Image Index {idx} ({filename}): "
         if meta.get("gps"):

@@ -30,9 +30,8 @@ from a2a.utils.constants import (
     AGENT_CARD_WELL_KNOWN_PATH,
     EXTENDED_AGENT_CARD_PATH,
 )
-from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, Depends, Header, HTTPException
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from google.adk.a2a.executor.a2a_agent_executor import A2aAgentExecutor
 from google.adk.a2a.utils.agent_card_builder import AgentCardBuilder
 from google.adk.artifacts import GcsArtifactService, InMemoryArtifactService
@@ -128,11 +127,110 @@ os.makedirs(os.path.join(local_storage_dir, "artefacts"), exist_ok=True)
 # GET /api/sessions works immediately for pre-existing single-session installs.
 SessionStore()
 
-# Serve local storage files so the frontend can retrieve thumbnails.
-# Session-scoped files live under local_storage/sessions/<id>/..., and the
-# 'default' session's files live at the original flat paths - both are
-# reachable under this one mount since StaticFiles serves nested directories.
-app.mount("/local_storage", StaticFiles(directory=local_storage_dir), name="local_storage")
+# ------------------------------------------------------------------
+# Access control (STRIDE: spoofing/tampering - see CONTEXT.md)
+#
+# Destructive or billable endpoints (/delete, /generate, pre-clean/ingest,
+# session creation) require a shared admin token when MW_ADMIN_TOKEN is set
+# in the environment. When it is unset (local development, demo on a trusted
+# machine) the check is a no-op so the app stays frictionless. Deployments
+# MUST set MW_ADMIN_TOKEN - the Terraform/Cloud Run docs call this out.
+# The token is accepted via the X-MW-Token header.
+# ------------------------------------------------------------------
+def require_admin_token(x_mw_token: str | None = Header(None)):
+    expected = os.environ.get("MW_ADMIN_TOKEN")
+    if expected and x_mw_token != expected:
+        raise HTTPException(status_code=401, detail="Missing or invalid X-MW-Token header.")
+
+
+# NOTE (STRIDE: information disclosure - see CONTEXT.md): raw uploads are
+# deliberately NOT static-mounted. Originals keep their EXIF (exact GPS,
+# device ids); serving them verbatim would leak location data to anyone with
+# a URL. The frontend gets imagery only through /media below, which re-encodes
+# to JPEG and drops all metadata. Artifacts (journal/story/highlights JSON)
+# are served through /api/trip-book rather than a directory mount so the
+# curation cache and memory bank internals aren't browsable either.
+
+
+@app.get("/media")
+def serve_media(filename: str, session_id: str = "default"):
+    """Serves a curated photo as a metadata-free JPEG (max 1600px long edge).
+
+    Re-encoding through PIL drops EXIF entirely (GPS, device serials), which is
+    what makes this safe to expose while the raw uploads directory stays private.
+    """
+    from PIL import Image
+    import io
+
+    safe_filename = os.path.basename(filename)  # path-traversal guard
+    session_storage = StorageHelper(session_id=session_id)
+    full_path = os.path.join(session_storage.local_base, "uploads", safe_filename)
+    if not os.path.exists(full_path):
+        raise HTTPException(status_code=404, detail="Photo not found")
+
+    try:
+        with Image.open(full_path) as im:
+            im = im.convert("RGB")
+            im.thumbnail((1600, 1600), Image.Resampling.LANCZOS)
+            buf = io.BytesIO()
+            im.save(buf, format="JPEG", quality=85)  # PIL save without exif= drops metadata
+        return Response(
+            content=buf.getvalue(),
+            media_type="image/jpeg",
+            headers={"Cache-Control": "private, max-age=3600"},
+        )
+    except Exception:
+        raise HTTPException(status_code=415, detail="Could not decode image")
+
+
+@app.get("/api/trip-book")
+def get_trip_book(session_id: str = "default"):
+    """Returns all generated artifacts for one session in a single response.
+
+    Replaces direct static access to artefacts/*.json and memory_bank.json so
+    only the curated outputs (not caches or raw storage) are reachable.
+    """
+    session_storage = StorageHelper(session_id=session_id)
+    artefacts_dir = os.path.join(session_storage.local_base, "artefacts")
+
+    def read_json(path):
+        try:
+            with open(path) as f:
+                import json as _json
+                return _json.load(f)
+        except Exception:
+            return None
+
+    highlights = read_json(os.path.join(artefacts_dir, "highlights.json"))
+    journal = read_json(os.path.join(artefacts_dir, "journal.json"))
+    story = None
+    story_path = os.path.join(artefacts_dir, "story.txt")
+    if os.path.exists(story_path):
+        with open(story_path) as f:
+            story = f.read()
+
+    if highlights is None or journal is None or story is None:
+        return {"status": "empty", "message": "Curation pipeline has not been run for this session."}
+
+    # Contributor names are needed for the viewer's per-person filter; expose
+    # only name/upload_count/moments - never raw EXIF or storage paths.
+    memory = read_json(os.path.join(session_storage.local_base, "memory_bank.json")) or {}
+    contributors = {
+        cid: {
+            "name": prof.get("name"),
+            "upload_count": prof.get("upload_count", 0),
+            "moments_present_in": prof.get("moments_present_in", []),
+        }
+        for cid, prof in (memory.get("contributors") or {}).items()
+    }
+
+    return {
+        "status": "success",
+        "highlights": highlights,
+        "journal": journal,
+        "story": story,
+        "memory_bank": {"contributors": contributors, "trip_context": memory.get("trip_context", {})},
+    }
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -144,7 +242,7 @@ async def serve_upload_page():
     return HTMLResponse(content="<h1>Upload page not found</h1>", status_code=404)
 
 
-@app.post("/delete")
+@app.post("/delete", dependencies=[Depends(require_admin_token)])
 def delete_photo(filename: str = Form(...), session_id: str = Form("default")):
     """Deletes the original photo and its thumbnail from one session's storage."""
     try:
@@ -215,7 +313,7 @@ class CreateSessionRequest(BaseModel):
     event_type: str = "trip"
 
 
-@app.post("/api/sessions")
+@app.post("/api/sessions", dependencies=[Depends(require_admin_token)])
 def create_session(req: CreateSessionRequest):
     """Creates a new, fully isolated event session (own uploads/thumbs/artefacts/memory)."""
     store = SessionStore()
@@ -239,7 +337,7 @@ def get_session(session_id: str):
     return {"status": "success", "session": session}
 
 
-@app.post("/api/select-folder")
+@app.post("/api/select-folder", dependencies=[Depends(require_admin_token)])
 def select_folder(session_id: str = "default"):
     """Opens a native macOS Finder folder selector and returns file count.
 
@@ -265,7 +363,7 @@ def select_folder(session_id: str = "default"):
     except Exception as e:
         return {"status": "error", "message": f"Folder selector failed: {str(e)}"}
 
-@app.post("/api/set-folder")
+@app.post("/api/set-folder", dependencies=[Depends(require_admin_token)])
 def set_folder(folder: str, session_id: str = "default"):
     selected_folder_paths[session_id] = folder
     return {"status": "success", "folder": folder}
@@ -329,7 +427,7 @@ def run_pre_clean_background(session_id: str, folder: str, blur_threshold: float
         state["pre_clean"]["error_msg"] = str(e)
         log_pipeline_step(session_id, f"Pre-Cleaning FAILED: {str(e)}")
 
-@app.post("/api/pre-clean")
+@app.post("/api/pre-clean", dependencies=[Depends(require_admin_token)])
 def run_pre_clean(background_tasks: BackgroundTasks, session_id: str = "default", blur_threshold: float = 12.0, dup_threshold: int = 8):
     """Triggers the local_cleaner.py analysis in the background for a session's selected folder."""
     folder = selected_folder_paths.get(session_id)
@@ -384,7 +482,7 @@ def serve_raw_file(filename: str, session_id: str = "default"):
         return FileResponse(full_path)
     return {"status": "error", "message": "File not found"}
 
-@app.post("/api/confirm-ingest")
+@app.post("/api/confirm-ingest", dependencies=[Depends(require_admin_token)])
 def confirm_ingest(req: IngestRequest):
     """Copies the approved accepted photo list into one session's uploads/ storage."""
     folder = selected_folder_paths.get(req.session_id)
@@ -581,7 +679,7 @@ def run_generation_background(session_id: str, limit: int):
         state["pipeline"]["status"] = "error"
         log_pipeline_step(session_id, f"CRITICAL ERROR: {str(e)}")
 
-@app.post("/generate")
+@app.post("/generate", dependencies=[Depends(require_admin_token)])
 def run_generation_pipeline(background_tasks: BackgroundTasks, session_id: str = "default", limit: int = 50):
     """Triggers the full multi-agent moderation, curation, memory and narration pipeline for one session."""
     import time
