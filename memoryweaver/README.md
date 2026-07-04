@@ -1,94 +1,188 @@
-# memoryweaver
+# MemoryWeaver 🧵📸
 
-ReAct agent with A2A protocol [experimental]
-Agent generated with `agents-cli` version `0.5.0`
+**Turn a family's chaotic post-event photo dump into a curated, narrated keepsake journal — automatically, with a team of AI agents.**
 
-## Project Structure
+After every trip, birthday, or wedding, the photos scatter: hundreds on Mom's phone, more on Dad's, a few gems on Grandma's. Someone (usually a busy parent) is supposed to collect them all, delete the blurry ones, pick the best, and make something worth keeping. Nobody ever does.
 
-```
-memoryweaver/
-├── app/         # Core agent code
-│   ├── agent.py               # Main agent logic
-│   ├── fast_api_app.py        # FastAPI Backend server
-│   └── app_utils/             # App utilities and helpers
-├── tests/                     # Unit, integration, and load tests
-├── GEMINI.md                  # AI-assisted development guide
-└── pyproject.toml             # Project dependencies
-```
+MemoryWeaver does. Family members upload photos through a shareable link — no accounts, no app installs. A five-agent pipeline moderates, de-duplicates, scores, and narrates them into a journal with per-moment entries, accurate landmark names, and a flowing trip story. Every event (a weekend trip, a soccer final, a wedding) lives in its own isolated session.
 
-> 💡 **Tip:** Use [Gemini CLI](https://github.com/google-gemini/gemini-cli) for AI-assisted development - project context is pre-configured in `GEMINI.md`.
-
-## Requirements
-
-Before you begin, ensure you have:
-- **uv**: Python package manager (used for all dependency management in this project) - [Install](https://docs.astral.sh/uv/getting-started/installation/) ([add packages](https://docs.astral.sh/uv/concepts/dependencies/) with `uv add <package>`)
-- **agents-cli**: Agents CLI - Install with `uv tool install google-agents-cli`
-- **Google Cloud SDK**: For GCP services - [Install](https://cloud.google.com/sdk/docs/install)
-
-
-## Quick Start
-
-Install `agents-cli` and its skills if not already installed:
-
-```bash
-uvx google-agents-cli setup
-```
-
-Install required packages:
-
-```bash
-agents-cli install
-```
-
-Test the agent with a local web server:
-
-```bash
-agents-cli playground
-```
-
-You can also use features from the [ADK](https://adk.dev/) CLI with `uv run adk`.
-
-## Commands
-
-| Command              | Description                                                                                 |
-| -------------------- | ------------------------------------------------------------------------------------------- |
-| `agents-cli install` | Install dependencies using uv                                                         |
-| `agents-cli playground` | Launch local development environment                                                  |
-| `agents-cli lint`    | Run code quality checks                                                               |
-| `agents-cli eval`    | Evaluate agent behavior (generate, grade, analyze, and more — see `agents-cli eval --help`) |
-| `uv run pytest tests/unit tests/integration` | Run unit and integration tests                                                        |
-| `agents-cli deploy`  | Deploy agent to Cloud Run                                                                   |
-| [A2A Inspector](https://github.com/a2aproject/a2a-inspector) | Launch A2A Protocol Inspector                                                        |
-
-## 🛠️ Project Management
-
-| Command | What It Does |
-|---------|--------------|
-| `agents-cli scaffold enhance` | Add CI/CD pipelines and Terraform infrastructure |
-| `agents-cli infra cicd` | One-command setup of entire CI/CD pipeline + infrastructure |
-| `agents-cli scaffold upgrade` | Auto-upgrade to latest version while preserving customizations |
+Built for the [Kaggle AI Agents: Intensive Vibe Coding Capstone](https://www.kaggle.com/competitions/vibecoding-agents-capstone-project) — **Concierge Agents track**.
 
 ---
 
-## Development
+## Architecture
 
-Edit your agent logic in `app/agent.py` and test with `agents-cli playground` - it auto-reloads on save.
+```mermaid
+flowchart TD
+    subgraph Contributors["👨‍👩‍👧 Contributors (shareable link /join/<event>?code=...)"]
+        C1[Phone camera roll<br/>or desktop folder upload]
+    end
+
+    subgraph Admin["🎛️ Curator Hub ( / )"]
+        A1[Create events · share QR<br/>run pipeline · view logs]
+    end
+
+    subgraph Agents["🤖 Five-agent system (Google ADK)"]
+        COL[Collector<br/>EXIF, contributor IDs, QR]
+        MOD[Moderator<br/>Gemini vision safety screen]
+        CUR[Curator<br/>CLIP dedup + LLM-as-judge scoring]
+        MEM[Memory<br/>contributor profiles, missed moments]
+        NAR[Narrator<br/>per-moment journal + trip story]
+        COL --> MOD --> CUR --> MEM --> NAR
+    end
+
+    CONC[🎩 memoryweaver_concierge<br/>root ADK agent · A2A endpoint<br/>5 specialists as sub-agents]
+    MCP[🔌 MCP server<br/>4 read-only tools over stdio]
+    STORE[(Per-event isolated storage<br/>photos · memory bank · artifacts)]
+    VIEW[📖 Journal Viewer /viewer]
+
+    C1 -->|POST /upload + share_code| STORE
+    A1 -->|POST /generate + admin token| Agents
+    Agents --> STORE
+    STORE --> VIEW
+    CONC -.tools.-> Agents
+    CONC -.-> STORE
+    MCP -.-> STORE
+```
+
+**Two ways to drive the same system:**
+- The **web product**: contributors upload via the share link; the admin runs the pipeline from the Curator Hub; everyone reads the result in the viewer.
+- The **agent layer**: the `memoryweaver_concierge` (served over A2A, or via `agents-cli playground`) manages events, launches the pipeline, and discusses results conversationally — with the five specialists attached as sub-agents for fine-grained follow-ups ("who missed the beach day?"). An MCP server exposes the same memory bank to any MCP client (e.g. Claude Desktop).
+
+**Design note — why the pipeline is deterministic:** the heavy per-photo work (vision moderation, LLM-as-judge scoring, batched journaling) runs as orchestrated Python that calls the agents' Gemini-powered tools in batches, rather than routing every photo through LLM tool-calling. For a 200-photo dump this is the difference between ~15 batched API calls and hundreds of agent turns — same quality, fraction of the cost and latency. The concierge agent operates at the *task* level, where reasoning actually adds value.
+
+### Pipeline phases
+
+| Phase | Agent | What happens |
+|---|---|---|
+| 1. Moderation | Moderator | Gemini vision screens batches of 50: safety, sharpness, real-photo-vs-screenshot |
+| 2. Deduplication | Curator | CLIP embeddings + cosine similarity drop burst duplicates |
+| 3. Scoring | Curator | LLM-as-judge rates sharpness/composition/uniqueness/human-presence, names landmarks from GPS + vision, writes captions (batches of 15) |
+| 4. Memory | Memory | Updates per-contributor profiles: who was present at which moments |
+| 5. Narration | Narrator | One batched call writes every moment's journal entry, then the trip story |
+
+Results are cached per photo, so re-runs are near-free.
+
+---
+
+## Key concepts demonstrated (capstone rubric)
+
+| Concept | Where |
+|---|---|
+| **Agent / Multi-agent system (ADK)** | [`app/agent.py`](app/agent.py) — root concierge with 6 tools + 5 sub-agents; specialists in [`agents/*/agent.py`](agents/); A2A card exposes 23 skills |
+| **MCP server** | [`mcp_server.py`](mcp_server.py) — 4 read-only tools over stdio, deliberately unable to bypass the web auth layer |
+| **Security features** | Admin-token gate on destructive/billable endpoints; per-event `share_code` upload credential; EXIF-stripping `/media` endpoint (raw GPS never leaves the server); prompt-injection sanitizer ([`pipeline/prompt_safety.py`](pipeline/prompt_safety.py)); STRIDE notes in [`CONTEXT.md`](../CONTEXT.md) |
+| **Agent skills (Agents CLI)** | Project scaffolded and driven with `agents-cli` (see [`agents-cli-manifest.yaml`](agents-cli-manifest.yaml)); `agents-cli playground` runs the concierge |
+| **Deployability** | [`Dockerfile`](Dockerfile) + [`deployment/terraform/`](deployment/terraform/) + `agents-cli deploy` (Cloud Run); see [Deployment](#deployment) |
+
+---
+
+## Quick start
+
+**Prerequisites:** Python 3.12+, [uv](https://docs.astral.sh/uv/), a [Google AI Studio API key](https://aistudio.google.com/apikey) (free tier works).
+
+```bash
+git clone <this-repo> && cd MemoryWeaver/memoryweaver
+
+# Install dependencies
+uv sync
+
+# Configure
+cp ../.env.example .env      # then edit: set GEMINI_API_KEY=<your key>
+
+# Run the web app
+uv run uvicorn app.fast_api_app:app --port 8000
+```
+
+Open **http://localhost:8000** — the Curator Hub, with a default event ready.
+
+### The full loop (5 minutes)
+
+1. **Create an event** in the session bar (name + type: trip / birthday / wedding / sports match / reunion).
+2. **Share & Collect** — copy the contributor link or let family scan the QR. They open it on their phones: name, pick photos, done. Desktop contributors can upload a whole folder at once.
+3. When photos are in, click **▶ Curate & Narrate Now** and watch the live agent logs.
+4. Open the **viewer** — highlights carousel, per-moment journal with captions and dates, the full trip story, and a per-contributor filter. Contributors' share page automatically shows a *"journal is ready"* link.
+
+*(Running the server on your Mac? A bulk local-folder wizard also appears, with free on-device CLIP pre-cleaning that filters blur/duplicates before any API spend.)*
+
+### Talk to the agent
+
+```bash
+uv run adk web          # pick "app" — or: agents-cli playground
+```
+
+Try: *"What events do I have?"* → *"Create an event called Summer Soccer Final, it's a sports match"* → *"Run the curation pipeline on it"* → *"Read me the story."* The concierge shares state with the web app — events created in either place appear in both.
+
+### MCP server (Claude Desktop, etc.)
+
+```json
+{
+  "mcpServers": {
+    "memoryweaver": {
+      "command": "uv",
+      "args": ["run", "--directory", "/path/to/MemoryWeaver/memoryweaver", "python", "mcp_server.py"]
+    }
+  }
+}
+```
+
+Then ask your MCP client: *"Who contributed photos to my default event, and which moments did they miss?"*
+
+---
+
+## Security model
+
+| Tier | Who | Credential |
+|---|---|---|
+| Admin (`/generate`, `/delete`, ingest, event creation) | Event organizer | `MW_ADMIN_TOKEN` env var → `X-MW-Token` header (open in local dev when unset; **required for any shared deployment**) |
+| Upload (`POST /upload`) | Family with the link | Per-event `share_code`, embedded in the `/join` link — no accounts needed |
+| Read-only (viewer, `/media`, `/api/trip-book`) | Everyone with a link | Open, but photos are re-encoded with **all EXIF stripped** (GPS, device IDs), and only curated artifacts are reachable — never raw storage |
+
+Also: filenames are sanitized before entering Gemini prompts (injection guard), upload validation (20MB cap, type allowlist, path-traversal-safe), and contributor IDs are hashes rather than raw names in filenames and logs.
+
+## Project structure
+
+```
+memoryweaver/
+├── app/
+│   ├── agent.py            # memoryweaver_concierge (root ADK agent, A2A)
+│   ├── fast_api_app.py     # Web app: Curator Hub, contributor page, pipeline API
+│   └── app_utils/          # SessionStore, session-scoped StorageHelper
+├── agents/                 # The five specialists (agent.py + tools/ each)
+│   ├── collector/  moderator/  curator/  memory/  narrator/
+├── pipeline/
+│   ├── orchestrator.py     # 5-phase batched pipeline (the workhorse)
+│   ├── local_cleaner.py    # On-device CLIP pre-cleaning (bulk import)
+│   └── prompt_safety.py    # Prompt-injection sanitizer
+├── mcp_server.py           # MCP stdio server (4 read-only tools)
+├── frontend/               # upload.html (admin) · contribute.html · viewer.html
+├── tests/                  # Unit (security) + integration (agent stream)
+└── deployment/terraform/   # Cloud Run infrastructure
+```
 
 ## Deployment
+
+Judging doesn't require a live endpoint; to reproduce a Cloud Run deployment:
 
 ```bash
 gcloud config set project <your-project-id>
 agents-cli deploy
 ```
 
-To add CI/CD and Terraform, run `agents-cli scaffold enhance`.
-To set up your production infrastructure, run `agents-cli infra cicd`.
+The Terraform under `deployment/terraform/` provisions Cloud Run, GCS buckets, and telemetry (Cloud Trace / BigQuery logs). For any non-local deployment, set:
 
-## Observability
+- `GEMINI_API_KEY` — model access
+- `MW_ADMIN_TOKEN` — **mandatory**; gates all destructive/billable endpoints
+- `APP_URL` — public base URL, so share links and QR codes are absolute
+- `GCS_BUCKET_NAME` / `GOOGLE_CLOUD_PROJECT` — switches storage from local disk to GCS
 
-Built-in telemetry exports to Cloud Trace, BigQuery, and Cloud Logging.
+## Known limitations
 
-## A2A Inspector
+- **Photos only** — videos are filtered out at upload; video moderation/curation is roadmap.
+- Pipeline progress/log state is in-memory per process — fine for a family-scale single instance, needs Redis/Firestore for multi-instance serving.
+- The `share_code` travels in the URL query string — the right trade-off for "grandma scans a QR" (vs. accounts/OAuth), but links should be shared as privately as the photos themselves.
+- Bulk folder import (with free local pre-cleaning) requires running the server locally on macOS; the UI hides it elsewhere.
 
-This agent supports the [A2A Protocol](https://a2a-protocol.org/). Use the [A2A Inspector](https://github.com/a2aproject/a2a-inspector) to test interoperability.
-See the [A2A Inspector docs](https://github.com/a2aproject/a2a-inspector) for details.
+## Roadmap
+
+Event-type-aware narration (a soccer final shouldn't read like a travel diary), video support, face-aware people naming with an opt-in roster, and per-contributor "you missed this moment" digest emails.

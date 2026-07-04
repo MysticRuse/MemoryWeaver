@@ -248,7 +248,7 @@ async def serve_upload_page():
 #
 # Family members get a /join/<event>?code=<share_code> link (or QR). The
 # share_code is the upload credential - no accounts, no admin token. The
-# admin-facing Curation Hub stays on "/" and never appears on this page.
+# admin-facing Curator Hub stays on "/" and never appears on this page.
 # ------------------------------------------------------------------
 
 @app.get("/join/{session_id}", response_class=HTMLResponse)
