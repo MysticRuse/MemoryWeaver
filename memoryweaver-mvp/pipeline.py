@@ -296,6 +296,16 @@ def get_current_score(session_id, latest_ts=None):
     else:
         now_ts = latest_ts if latest_ts else time.time()
         
+    if session_id.upper() == 'FIFA26_USA_BOSNIA-HERZEGOVINA':
+        if now_ts < 1782950400:
+            return "0-0", "No goals have been scored yet by either team. Both teams are at 0-0."
+        elif now_ts < 1782952500:
+            return "0-0", "No goals have been scored yet by either team. Both teams are at 0-0."
+        elif now_ts < 1782954900:
+            return "1-0", "USA is leading 1-0. Christian Pulisic scored for USA at 35'. Bosnia Herzegovina has not scored any goals yet."
+        else:
+            return "2-0", "The match ended or USA is leading 2-0. Christian Pulisic scored for USA at 35', and Folarin Balogun scored the second for USA at 75'."
+
     if session_id not in ('FIFA26', 'FIFA26_PARAGUAY_AUSTRALIA'):
         return "Unknown", "The live score for this match is not strictly tracked in this prototype. Focus on the fan atmosphere and energy in the photos rather than hallucinating specific goals or scorers."
         

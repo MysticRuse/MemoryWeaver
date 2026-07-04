@@ -199,7 +199,7 @@ def get_match_metadata(team1, team2):
         'stadium_location': "Santa Clara, CA",
         'date_str': "Thursday, June 25, 2026",
         'short_date': "June 25, 2026",
-        'time_str': "7:00 PM - 9:00 PM PST"
+        'time_str': "7:00 PM - 9:00 PM PDT"
     }
     
     metadata['squad1'] = {
@@ -241,6 +241,29 @@ def get_match_metadata(team1, team2):
             'MF': 'Ismaël Bennacer, Ramiz Zerrouki, Houssem Aouar, Nabil Bentaleb, Sofiane Feghouli (C), Hicham Boudaoui, Farès Chaïbi',
             'FW': 'Riyad Mahrez, Islam Slimani, Baghdad Bounedjah, Amine Gouiri, Saïd Benrahma, Youssef Belaïli, Mohamed Amoura'
         }        
+    elif team1.lower() == 'usa' and team2.lower() == 'bosnia herzegovina':
+        metadata['kickoff'] = '2026-07-01T17:00:00-07:00'
+        metadata['end'] = '2026-07-01T19:00:00-07:00'
+        metadata['flag1'] = '🇺🇸'
+        metadata['flag2'] = '🇧🇦'
+        metadata['kickoff_ts'] = 1782950400
+        metadata['stadium_name'] = "Levi's Stadium"
+        metadata['stadium_location'] = "Santa Clara, CA"
+        metadata['date_str'] = "Wednesday, July 1, 2026"
+        metadata['short_date'] = "July 1, 2026"
+        metadata['time_str'] = "5:00 PM - 7:00 PM PDT"
+        metadata['squad1'] = {
+            'GK': 'Matt Turner, Ethan Horvath, Sean Johnson',
+            'DF': 'Antonee Robinson, Chris Richards, C. Carter-Vickers, Sergiño Dest, Joe Scally, Tim Ream',
+            'MF': 'Tyler Adams (C), Weston McKennie, Yunus Musah, Gio Reyna, Malik Tillman, Johnny Cardoso',
+            'FW': 'Christian Pulisic, Folarin Balogun, Timothy Weah, Ricardo Pepi, Brenden Aaronson'
+        }
+        metadata['squad2'] = {
+            'GK': 'Nikola Vasilj, Kenan Pirić, Martin Zlomislić',
+            'DF': 'Anel Ahmedhodžić, Sead Kolašinac, Amar Dedić, Dennis Hadžikadunić, Jusuf Gazibegović',
+            'MF': 'Rade Krunić, Benjamin Tahirović, Amir Hadžiahmetović, Haris Hajradinović, Gojko Cimirot',
+            'FW': 'Edin Džeko (C), Ermedin Demirović, Haris Tabaković, Smail Prevljak'
+        }
     # Calculate quest timestamps based on kickoff
     kts = metadata['kickoff_ts']
     metadata['quest_kickoff'] = kts
