@@ -2,6 +2,7 @@ import os
 import re
 import json
 import uuid
+import secrets
 import datetime
 from google.cloud import storage as gcs_storage
 
@@ -49,6 +50,7 @@ class SessionStore:
 
         self.data = self._load()
         self._ensure_default_session()
+        self._backfill_share_codes()
 
     def _load(self) -> dict:
         if self.use_gcs:
@@ -92,6 +94,19 @@ class SessionStore:
             }
             self._save()
 
+    def _backfill_share_codes(self):
+        """Adds a share_code to sessions created before contributor links existed.
+        The code is the upload credential embedded in the shareable /join link -
+        it gates POST /upload so strangers can't dump photos into an event by
+        guessing its session_id."""
+        changed = False
+        for session in self.data["sessions"].values():
+            if not session.get("share_code"):
+                session["share_code"] = secrets.token_urlsafe(6)
+                changed = True
+        if changed:
+            self._save()
+
     def create_session(self, name: str, event_type: str = "trip") -> dict:
         """Creates a new, fully isolated session and provisions its storage folders."""
         if event_type not in self.EVENT_TYPES:
@@ -103,6 +118,8 @@ class SessionStore:
             "name": name.strip() or session_id,
             "event_type": event_type,
             "created_at": datetime.datetime.utcnow().isoformat(),
+            # Upload credential for the shareable contributor link (see /join)
+            "share_code": secrets.token_urlsafe(6),
         }
         self.data["sessions"][session_id] = session
         self._save()

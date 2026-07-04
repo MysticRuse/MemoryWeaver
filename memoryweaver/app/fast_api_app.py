@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import sys
 import datetime
 from dotenv import load_dotenv
 # Resolve parent directory to locate the .env file in project root
@@ -242,6 +243,80 @@ async def serve_upload_page():
     return HTMLResponse(content="<h1>Upload page not found</h1>", status_code=404)
 
 
+# ------------------------------------------------------------------
+# Contributor persona: shareable upload page
+#
+# Family members get a /join/<event>?code=<share_code> link (or QR). The
+# share_code is the upload credential - no accounts, no admin token. The
+# admin-facing Curation Hub stays on "/" and never appears on this page.
+# ------------------------------------------------------------------
+
+@app.get("/join/{session_id}", response_class=HTMLResponse)
+async def serve_contribute_page(session_id: str):
+    store = SessionStore()
+    if not store.get_session(session_id):
+        return HTMLResponse(content="<h1>Event not found</h1><p>Check the link you were sent.</p>", status_code=404)
+    html_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "contribute.html"))
+    if os.path.exists(html_path):
+        with open(html_path) as f:
+            return HTMLResponse(content=f.read(), status_code=200)
+    return HTMLResponse(content="<h1>Contribute page not found</h1>", status_code=404)
+
+
+@app.get("/api/session-public/{session_id}")
+def get_session_public(session_id: str, code: str = ""):
+    """Event info for the contributor page: name/type, photo count, and whether
+    the journal is ready (so the page can show a viewer link once generated).
+    Requires the share code - this endpoint deliberately reveals nothing
+    without the link credential."""
+    store = SessionStore()
+    session = store.get_session(session_id)
+    if not session or code != session.get("share_code"):
+        raise HTTPException(status_code=403, detail="Invalid or missing share code")
+
+    storage = StorageHelper(session_id=session_id)
+    uploads_dir = os.path.join(storage.local_base, "uploads")
+    photo_count = len([f for f in os.listdir(uploads_dir) if not f.startswith(".")]) if os.path.isdir(uploads_dir) else 0
+    journal_ready = os.path.exists(os.path.join(storage.local_base, "artefacts", "journal.json"))
+
+    return {
+        "status": "success",
+        "name": session["name"],
+        "event_type": session["event_type"],
+        "photo_count": photo_count,
+        "journal_ready": journal_ready,
+        "viewer_url": f"/viewer?session={session_id}" if journal_ready else None,
+    }
+
+
+@app.get("/api/share-info", dependencies=[Depends(require_admin_token)])
+def get_share_info(session_id: str = "default"):
+    """Admin-only: the shareable contributor link + QR code for one event."""
+    store = SessionStore()
+    session = store.get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    base = os.getenv("APP_URL", "").rstrip("/")  # deployed URL; falls back to relative
+    share_path = f"/join/{session_id}?code={session['share_code']}"
+    share_url = f"{base}{share_path}" if base else share_path
+
+    # Inline QR as a data URI so the admin card needs no extra storage round-trip
+    qr_data_uri = None
+    try:
+        import base64
+        import io as _io
+        import qrcode
+        img = qrcode.make(share_url if base else f"http://localhost:8000{share_path}")
+        buf = _io.BytesIO()
+        img.save(buf, format="PNG")
+        qr_data_uri = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+    except Exception as e:
+        print(f"QR generation failed: {e}")
+
+    return {"status": "success", "share_url": share_url, "share_path": share_path, "qr_data_uri": qr_data_uri}
+
+
 @app.post("/delete", dependencies=[Depends(require_admin_token)])
 def delete_photo(filename: str = Form(...), session_id: str = Form("default")):
     """Deletes the original photo and its thumbnail from one session's storage."""
@@ -383,6 +458,9 @@ def get_progress(session_id: str = "default"):
             resp[key]["elapsed"] = 0.0
     resp["folder"] = selected_folder_paths.get(session_id)
     resp["session_id"] = session_id
+    # Capability flag: the bulk local-folder wizard shells out to the macOS
+    # Finder picker, so the admin UI hides that tab anywhere it can't work.
+    resp["is_local"] = sys.platform == "darwin" and not os.environ.get("K_SERVICE")
     return resp
 
 def run_pre_clean_background(session_id: str, folder: str, blur_threshold: float, dup_threshold: int):
@@ -522,9 +600,13 @@ def confirm_ingest(req: IngestRequest):
             # Map name in Memory Bank
             store.upsert_contributor(contributor_id, uploader_name, [], 0)
             
-            # Copy file with hashing prefix
-            timestamp_prefix = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-            unique_name = f"{contributor_id}_{timestamp_prefix}_{filename}"
+            # Copy file with a STABLE name: contributor hash + original filename.
+            # Names must be deterministic across re-ingests - the journal,
+            # highlights, and curation cache all reference photos by filename,
+            # so the previous wall-clock timestamp prefix orphaned every
+            # generated artifact (and invalidated the paid-for scoring cache)
+            # whenever ingest was re-run.
+            unique_name = f"{contributor_id}_{filename}"
             dest_path = os.path.join(upload_dir, unique_name)
             
             shutil.copy2(src_path, dest_path)
@@ -563,7 +645,15 @@ def get_trip_stats(session_id: str = "default"):
 
 
 @app.post("/upload")
-async def handle_photo_upload(photos: list[UploadFile] = File(...), contributor_name: str = Form("Anonymous"), session_id: str = Form("default")):
+async def handle_photo_upload(photos: list[UploadFile] = File(...), contributor_name: str = Form("Anonymous"), session_id: str = Form("default"), share_code: str = Form("")):
+    # Uploads are credentialed by the event's share_code (embedded in the /join
+    # link) rather than the admin token - family members need zero setup, but
+    # strangers can't push photos into an event by guessing its session_id.
+    store_check = SessionStore()
+    session = store_check.get_session(session_id)
+    if not session or share_code != session.get("share_code"):
+        raise HTTPException(status_code=403, detail="Invalid or missing share code for this event.")
+
     results = []
     errors = []
 

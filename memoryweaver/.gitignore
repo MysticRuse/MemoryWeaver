@@ -203,9 +203,10 @@ my_env.tfvars
 # A2A Inspector
 tools/a2a-inspector/
 
-# Local Storage (media, caches, artifacts)
+# Local Storage (media, caches, artifacts) and reset backups
 local_storage/
 **/local_storage/
+local_storage.backup-*/
 
 # Google OAuth API keys
 credentials.json

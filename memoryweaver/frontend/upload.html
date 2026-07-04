@@ -529,14 +529,33 @@
             </div>
         </div>
 
+        <!-- Share & Collect: the contributor persona lives on a separate
+             /join/<event> page reached via this link/QR - family members
+             upload from their phones with zero setup. Admin-only info. -->
+        <div class="card" id="share-card" style="margin-bottom: 20px; padding: 18px 20px;">
+            <div style="font-weight: 700; margin-bottom: 6px;">📨 Share & Collect Photos</div>
+            <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 12px 0;">
+                Send this link (or QR) to everyone on the trip - they upload straight from their phones.
+                Photos land in the active event above.
+            </p>
+            <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 240px;">
+                    <input type="text" id="share-url" class="input-text" readonly style="width: 100%; padding: 8px 10px; font-size: 12px;" value="Loading share link...">
+                    <button class="btn btn-primary" style="margin-top: 8px; padding: 8px 16px;" onclick="copyShareLink()">📋 Copy Link</button>
+                    <span id="share-copy-status" style="margin-left: 8px; font-size: 12px; color: var(--success);"></span>
+                </div>
+                <img id="share-qr" alt="QR code for the contributor upload link" style="display: none; width: 120px; height: 120px; border-radius: 8px; background: #fff; padding: 4px;">
+            </div>
+        </div>
+
         <div class="card">
-            <div class="tabs-header">
-                <button class="tab-btn active" onclick="switchTab('bulk-tab', this)">📁 Bulk Local Ingestion (Option A)</button>
-                <button class="tab-btn" onclick="switchTab('upload-tab', this)">📱 Browser Uploader (Alternative)</button>
+            <div class="tabs-header" id="bulk-tab-header" style="display: none;">
+                <button class="tab-btn active">📁 Bulk Local Ingestion (this machine)</button>
             </div>
 
-            <!-- Tab 1: Bulk Ingest -->
-            <div id="bulk-tab" class="tab-content active">
+            <!-- Bulk Ingest wizard: shown only when the server runs locally on
+                 macOS (is_local flag) - the Finder picker can't work deployed. -->
+            <div id="bulk-tab" class="tab-content active" style="display: none;">
                 <!-- Step 1: Selection -->
                 <div class="wizard-step">
                     <div class="step-title">
@@ -645,8 +664,12 @@
                         </select>
                         <span style="font-size: 0.9rem; color: var(--text-muted);">(Applies diversity sampling to maximize coverage of places, food, and people)</span>
                     </div>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
+                        ⚠️ This copies the accepted folder files into the active event, <strong>replacing its current photo pool</strong>, then runs the pipeline.
+                        To curate photos already uploaded to this event, use "Run Agent Pipeline" below instead.
+                    </p>
                     <button class="btn btn-primary" id="btnBuild" onclick="triggerCuration()" style="padding: 14px 30px; font-size: 1.1rem;">
-                        <span>Confirm & Build Trip Book</span>
+                        <span>Ingest Folder & Build Trip Book</span>
                         <div class="spinner" id="buildSpinner" style="display: none;"></div>
                     </button>
 
@@ -673,19 +696,22 @@
                 </div>
             </div>
 
-            <!-- Tab 2: Upload Files -->
-            <div id="upload-tab" class="tab-content">
-                <div class="form-group">
-                    <label>Contributor Name</label>
-                    <input type="text" id="contributor-name" class="input-text" placeholder="Enter your name (e.g. M R)" value="Anonymous">
+            <!-- Always-visible pipeline runner: curates whatever photos are
+                 already in the ACTIVE EVENT (contributor uploads or a folder
+                 ingest), without the destructive folder re-ingest above. -->
+            <div style="margin-top: 20px; padding: 16px 20px; border: 1px solid var(--border-color); border-radius: 12px;">
+                <div style="font-weight: 700; margin-bottom: 6px;">⚡ Run Agent Pipeline on This Event</div>
+                <p id="pipeline-only-count" style="font-size: 13px; color: var(--text-muted); margin: 0 0 12px 0;">Checking photo count...</p>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <select id="pipeline-only-limit" class="input-text" style="padding: 8px 12px;">
+                        <option value="20">20 Photos (Compact)</option>
+                        <option value="30">30 Photos (Standard)</option>
+                        <option value="50" selected>50 Photos (Detailed)</option>
+                        <option value="100">100 Photos (Comprehensive)</option>
+                        <option value="0">All Photos</option>
+                    </select>
+                    <button class="btn btn-primary" id="btnRunPipelineOnly" onclick="runPipelineOnly()" style="padding: 10px 24px;">▶ Curate & Narrate Now</button>
                 </div>
-                <div class="upload-zone" onclick="document.getElementById('browser-file-input').click()">
-                    <div style="font-size: 2.5rem; margin-bottom: 8px;">📤</div>
-                    <div style="font-weight: 600;">Choose Images to Upload</div>
-                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">JPEG, PNG, HEIC formats supported</div>
-                    <input type="file" id="browser-file-input" multiple style="display: none;" onchange="handleBrowserUpload(this.files)">
-                </div>
-                <div id="upload-status" style="margin-top: 12px; font-size: 14px; font-weight: 600;"></div>
             </div>
 
             <!-- Live Logger console -->
@@ -744,6 +770,41 @@
                 return true;
             }
             return false;
+        }
+
+        // ---- Pipeline-only runner (no folder re-ingest) ----
+        // Curates the photos already in the active event. This is the right
+        // button after a Browser Uploader session, or to re-run curation with
+        // a different journal size. Step 3's "Ingest Folder & Build" is only
+        // for the bulk local-folder path (and REPLACES the event's photos).
+        async function refreshPipelineOnlyCount() {
+            try {
+                const res = await fetch(withSession('/trip-stats'));
+                const data = await res.json();
+                const count = data.total_uploaded || 0;
+                document.getElementById('pipeline-only-count').textContent = count > 0
+                    ? `${count} photo(s) currently in this event's pool.`
+                    : 'No photos in this event yet — share the link above with contributors, or use the folder import.';
+                document.getElementById('btnRunPipelineOnly').disabled = count === 0;
+            } catch (e) { /* leave placeholder text */ }
+        }
+
+        async function runPipelineOnly() {
+            const logBox = document.getElementById('log-box');
+            document.getElementById('console-area').style.display = 'block';
+            logBox.innerHTML = 'Starting agent pipeline on the photos already in this event...\n';
+
+            const limitVal = document.getElementById('pipeline-only-limit').value;
+            try {
+                const res = await fetch(withSession(`/generate?limit=${limitVal}`), { method: 'POST', headers: authHeaders() });
+                if (handleAuthFailure(res)) return;
+                const data = await res.json();
+                if (data.status !== 'success') throw new Error(data.message || 'Failed to start pipeline');
+                startProgressPolling('pipeline');
+                startLogPolling();
+            } catch (err) {
+                logBox.innerHTML += `ERROR: ${err.message}\n`;
+            }
         }
 
         async function loadSessionBar() {
@@ -829,6 +890,9 @@
         // Auto-detect and sync with active backend tasks on page load/refresh
         window.addEventListener('DOMContentLoaded', async () => {
             loadSessionBar();
+            refreshPipelineOnlyCount();
+            loadShareCard();
+            applyLocalCapability();
             // Point the static viewer link at the active session
             const viewerLink = document.getElementById('btnViewerLink');
             if (viewerLink) viewerLink.href = viewerHref();
@@ -976,13 +1040,6 @@
                 console.error("Error auto-syncing progress on load:", err);
             }
         });
-
-        function switchTab(tabId, btn) {
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            btn.classList.add('active');
-        }
 
         async function selectLocalFolder() {
             try {
@@ -1347,33 +1404,49 @@
             }
         }
 
-        async function handleBrowserUpload(files) {
-            if (files.length === 0) return;
-            const statusDiv = document.getElementById('upload-status');
-            statusDiv.textContent = 'Uploading files...';
-            statusDiv.style.color = 'var(--accent)';
-
-            const formData = new FormData();
-            formData.append('contributor_name', document.getElementById('contributor-name').value);
-            formData.append('session_id', getSessionId());
-            for (let i = 0; i < files.length; i++) {
-                formData.append('photos', files[i]);
-            }
-
+        // ---- Share & Collect (contributor persona lives on /join/<event>) ----
+        async function loadShareCard() {
             try {
-                const res = await fetch('/upload', { method: 'POST', body: formData });
-                const data = await res.json();
-                if (data.status === 'success') {
-                    statusDiv.textContent = `Successfully uploaded ${files.length} photos! Click 'Confirm & Build' under the bulk tab to run curation.`;
-                    statusDiv.style.color = 'var(--success)';
-                } else {
-                    statusDiv.textContent = 'Upload failed: ' + data.message;
-                    statusDiv.style.color = 'var(--danger)';
+                const res = await fetch(withSession('/api/share-info'), { headers: authHeaders() });
+                if (res.status === 401) {
+                    document.getElementById('share-url').value = 'Admin token required to reveal the share link.';
+                    return;
                 }
-            } catch (err) {
-                statusDiv.textContent = 'Error: ' + err.message;
-                statusDiv.style.color = 'var(--danger)';
+                const data = await res.json();
+                if (data.status !== 'success') return;
+                // Show an absolute URL so it's copy-paste ready
+                const abs = data.share_url.startsWith('http') ? data.share_url : window.location.origin + data.share_url;
+                document.getElementById('share-url').value = abs;
+                if (data.qr_data_uri) {
+                    const qr = document.getElementById('share-qr');
+                    qr.src = data.qr_data_uri;
+                    qr.style.display = 'block';
+                }
+            } catch (e) {
+                document.getElementById('share-url').value = 'Could not load share link.';
             }
+        }
+
+        function copyShareLink() {
+            const input = document.getElementById('share-url');
+            navigator.clipboard.writeText(input.value).then(() => {
+                const s = document.getElementById('share-copy-status');
+                s.textContent = 'Copied!';
+                setTimeout(() => { s.textContent = ''; }, 2000);
+            });
+        }
+
+        // The bulk local-folder wizard only works when the server runs on this
+        // Mac (Finder picker + local filesystem) - hide it everywhere else.
+        async function applyLocalCapability() {
+            try {
+                const res = await fetch(withSession('/api/progress'));
+                const data = await res.json();
+                if (data.is_local) {
+                    document.getElementById('bulk-tab-header').style.display = '';
+                    document.getElementById('bulk-tab').style.display = '';
+                }
+            } catch (e) { /* stay hidden */ }
         }
 
         function startProgressPolling(type) {
