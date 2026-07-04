@@ -48,7 +48,11 @@ from agents.curator.agent import curator_agent
 from agents.memory.agent import memory_agent
 from agents.moderator.agent import moderator_agent
 from agents.narrator.agent import narrator_agent
-from app.app_utils.sessions import SessionStore
+# public_view strips share_code (the upload credential) from session dicts.
+# The concierge is reachable over unauthenticated A2A, so its tool outputs
+# must never contain codes - the eval suite caught the agent happily reading
+# them out in chat before this filter existed.
+from app.app_utils.sessions import SessionStore, public_view
 from app.app_utils.storage import StorageHelper
 
 # Project root (the directory containing app/, agents/, pipeline/,
@@ -69,7 +73,7 @@ def list_event_sessions() -> str:
     """
     store = SessionStore()
     return json.dumps({
-        "sessions": store.list_sessions(),
+        "sessions": [public_view(s) for s in store.list_sessions()],
         "supported_event_types": list(SessionStore.EVENT_TYPES),
     })
 
@@ -87,7 +91,7 @@ def create_event_session(name: str, event_type: str) -> str:
     """
     store = SessionStore()
     session = store.create_session(name, event_type)
-    return json.dumps(session)
+    return json.dumps(public_view(session))
 
 
 def get_event_status(session_id: str) -> str:
@@ -118,7 +122,7 @@ def get_event_status(session_id: str) -> str:
         ])
 
     return json.dumps({
-        "session": session,
+        "session": public_view(session),
         "uploaded_photos": photo_count,
         "artifacts": {
             "journal": os.path.exists(os.path.join(artefacts_dir, "journal.json")),
@@ -249,13 +253,16 @@ root_agent = Agent(
     ],
     # The five specialists stay addressable for A2A discovery and for LLM-driven
     # transfer when a request needs one agent's tools directly rather than the
-    # whole batched pipeline.
+    # whole batched pipeline. clone() gives this tree its own instances: ADK
+    # allows one parent per agent instance, and tooling that imports the module
+    # under two identities (e.g. the eval harness's module discovery) would
+    # otherwise fail with "already has a parent agent".
     sub_agents=[
-        collector_agent,
-        moderator_agent,
-        curator_agent,
-        memory_agent,
-        narrator_agent,
+        collector_agent.clone(),
+        moderator_agent.clone(),
+        curator_agent.clone(),
+        memory_agent.clone(),
+        narrator_agent.clone(),
     ],
 )
 

@@ -46,7 +46,7 @@ from pipeline.orchestrator import execute_trip_pipeline
 from app.agent import app as adk_app
 from app.app_utils.telemetry import setup_telemetry
 from app.app_utils.typing import Feedback
-from app.app_utils.sessions import SessionStore
+from app.app_utils.sessions import SessionStore, public_view
 from app.app_utils.storage import StorageHelper
 
 setup_telemetry()
@@ -390,17 +390,26 @@ class CreateSessionRequest(BaseModel):
 
 @app.post("/api/sessions", dependencies=[Depends(require_admin_token)])
 def create_session(req: CreateSessionRequest):
-    """Creates a new, fully isolated event session (own uploads/thumbs/artefacts/memory)."""
+    """Creates a new, fully isolated event session (own uploads/thumbs/artefacts/memory).
+
+    share_code is stripped from the response: the sanctioned way to obtain it
+    is /api/share-info (the UI fetches it there right after creating)."""
     store = SessionStore()
     session = store.create_session(req.name, req.event_type)
-    return {"status": "success", "session": session}
+    return {"status": "success", "session": public_view(session)}
 
 
 @app.get("/api/sessions")
 def list_sessions():
-    """Lists every saved event session, most recent first."""
+    """Lists every saved event session, most recent first. share_code excluded -
+    this endpoint is unauthenticated, and leaking codes here would let anyone
+    who can list events also upload into them."""
     store = SessionStore()
-    return {"status": "success", "sessions": store.list_sessions(), "event_types": list(SessionStore.EVENT_TYPES)}
+    return {
+        "status": "success",
+        "sessions": [public_view(s) for s in store.list_sessions()],
+        "event_types": list(SessionStore.EVENT_TYPES),
+    }
 
 
 @app.get("/api/sessions/{session_id}")
@@ -409,7 +418,7 @@ def get_session(session_id: str):
     session = store.get_session(session_id)
     if not session:
         return {"status": "error", "message": "Session not found"}
-    return {"status": "success", "session": session}
+    return {"status": "success", "session": public_view(session)}
 
 
 @app.post("/api/select-folder", dependencies=[Depends(require_admin_token)])

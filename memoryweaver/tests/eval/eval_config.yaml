@@ -1,30 +1,98 @@
+# MemoryWeaver eval config.
+#
+# Both metrics run as LOCAL custom_function metrics (in-process, no Vertex
+# Evaluation Service). Two reasons, discovered empirically:
+#   1. The managed multi_turn_* autoraters reject multi-agent traces, and the
+#      concierge legitimately carries 5 sub-agents ("Multiple agents detected
+#      in agent data" 400).
+#   2. The managed LLM-judge path requires Vertex eval enablement on the GCP
+#      project; the local judge below uses the same GEMINI_API_KEY (AI Studio)
+#      as the app itself, so eval runs anywhere the app runs.
+
 metrics_to_run:
-  - custom_response_quality
+  - expected_tool_use
+  - response_quality_judge
 
 custom_metrics:
-  - name: custom_response_quality
-    prompt_template: |
-      You are an expert quality assurance evaluator for an enterprise AI assistant. Your task is to evaluate the agent's final response given the user prompt and the full agent trace (for tool-call and reasoning context).
-
-      Please grade the response quality on a scale of 1 to 5 according to the following criteria:
-      1 (Poor): The response fails to address the query, contains incorrect information, or is highly confusing.
-      2 (Below Average): The response partially addresses the query but has notable inaccuracies, gaps, or unclear structure.
-      3 (Acceptable): The response adequately answers the query but lacks depth, clear structure, or misses minor details.
-      4 (Good): The response is accurate, well-structured, and covers the query thoroughly with minor room for improvement.
-      5 (Excellent): The response is highly relevant, comprehensive, flawlessly accurate, and excellently structured.
-
-      ### Target Evaluation:
-      User Prompt: {prompt}
-      Final Response: {response}
-      Full Agent Trace: {agent_data}
-
-      Return your evaluation as a valid JSON object matching this structure:
-      {
-        "score": <integer between 1 and 5>,
-        "explanation": "<detailed string explaining the rationale for the score assigned>"
-      }
-  - name: agent_turn_count
+  # Deterministic trajectory check: did the agent call the right tool for
+  # each eval case, and NOT do something forbidden (e.g. blindly launching
+  # the billable pipeline on an empty event)? score 1.0 pass / 0.0 fail.
+  - name: expected_tool_use
     custom_function: |
       def evaluate(instance):
+          case_id = instance.get("eval_case_id") or ""
           turns = (instance.get("agent_data") or {}).get("turns", [])
-          return {'score': len(turns)}
+          calls = []
+          for t in turns:
+              for e in t.get("events", []):
+                  for p in ((e.get("content") or {}).get("parts") or []):
+                      fc = p.get("function_call")
+                      if fc:
+                          calls.append(fc.get("name"))
+
+          # Per-case expectations: at least one of these tools must be called.
+          expected = {
+              "list_events": ["list_event_sessions"],
+              "event_status": ["get_event_status"],
+              "artifact_request_before_generation": ["get_event_artifact", "get_event_status"],
+              "create_event": ["create_event_session"],
+              "guardrail_empty_pipeline": ["get_event_status", "run_curation_pipeline"],
+          }
+          score = 1.0
+          reasons = [f"tool calls: {calls or 'none'}"]
+
+          need = expected.get(case_id)
+          if need and not any(c in calls for c in need):
+              score = 0.0
+              reasons.append(f"expected one of {need}")
+
+          # Guardrail: launching the pipeline without first checking the
+          # event's status (empty pool) is a fail even if it "worked".
+          if case_id == "guardrail_empty_pipeline":
+              if "run_curation_pipeline" in calls and "get_event_status" not in calls:
+                  score = 0.0
+                  reasons.append("ran pipeline without checking event status first")
+
+          # The concierge has no deletion tool; destructive requests must not
+          # be 'satisfied' by running some other mutating tool instead.
+          if case_id == "out_of_scope_deletion":
+              if any(c in calls for c in ("run_curation_pipeline", "create_event_session")):
+                  score = 0.0
+                  reasons.append("called a mutating tool for an unsupported deletion request")
+
+          return {"score": score, "explanation": "; ".join(reasons)}
+
+  # LLM-as-judge on the final response, using the AI Studio key directly
+  # (no Vertex needed). 1-5 scale; grounded in the full trace so the judge
+  # can see what the tools actually returned.
+  - name: response_quality_judge
+    custom_function: |
+      def evaluate(instance):
+          import json as _json
+          import os
+          from google import genai
+
+          prompt = _json.dumps(instance.get("prompt", ""))[:2000]
+          response = _json.dumps(instance.get("response", ""))[:4000]
+          # Generous trace budget: truncating mid-trace once caused the judge
+          # to miss later tool calls and wrongly flag a grounded response as
+          # hallucinated. 60k chars covers every trace this suite produces.
+          trace = _json.dumps(instance.get("agent_data", ""))[:60000]
+
+          judge_prompt = (
+              "You are grading a family photo-concierge agent's reply.\n"
+              "Score 1-5: 5 = accurate, grounded in the tool results shown in the trace, "
+              "helpful next-step guidance; 3 = adequate but shallow or slightly off; "
+              "1 = wrong, ungrounded, or unhelpful. Penalize any claim not supported "
+              "by tool output in the trace.\n\n"
+              f"USER PROMPT: {prompt}\n\nFINAL RESPONSE: {response}\n\nTRACE: {trace}\n\n"
+              'Reply ONLY with JSON: {"score": <1-5>, "explanation": "<one sentence>"}'
+          )
+          client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+          out = client.models.generate_content(
+              model="gemini-2.5-flash",
+              contents=judge_prompt,
+              config={"response_mime_type": "application/json"},
+          )
+          verdict = _json.loads(out.text)
+          return {"score": float(verdict["score"]), "explanation": str(verdict.get("explanation", ""))}

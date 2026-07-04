@@ -208,6 +208,9 @@ local_storage/
 **/local_storage/
 local_storage.backup-*/
 
+# Eval outputs (generated traces + grade results; traces embed live session data)
+artifacts/
+
 # Google OAuth API keys
 credentials.json
 token.json

@@ -36,7 +36,7 @@ from mcp.server.fastmcp import FastMCP
 
 from agents.memory.tools.memory_bank import MemoryBankStore
 from agents.memory.tools.memory_helpers import recommend_missed_moments as _recommend
-from app.app_utils.sessions import SessionStore
+from app.app_utils.sessions import SessionStore, public_view
 from app.app_utils.storage import StorageHelper
 
 mcp = FastMCP("memoryweaver")
@@ -48,8 +48,10 @@ def list_event_sessions() -> str:
     with its session_id, name, event type, and creation date. Use the
     session_id with the other tools."""
     store = SessionStore()
+    # public_view strips share_code - MCP clients get event metadata,
+    # never the upload credential.
     return json.dumps({
-        "sessions": store.list_sessions(),
+        "sessions": [public_view(s) for s in store.list_sessions()],
         "supported_event_types": list(SessionStore.EVENT_TYPES),
     }, indent=2)
 

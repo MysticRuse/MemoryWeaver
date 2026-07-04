@@ -10,6 +10,18 @@ SESSIONS_INDEX_FILE = "sessions_index.json"
 DEFAULT_SESSION_ID = "default"
 
 
+def public_view(session: dict) -> dict:
+    """Session dict without the share_code upload credential.
+
+    share_code is a bearer credential - the only sanctioned way to obtain it is
+    the admin-token-gated /api/share-info endpoint. Every other surface that
+    lists or returns sessions (open web APIs, the concierge agent's tools, the
+    MCP server) must go through this filter, otherwise anyone who can list
+    events can also upload into them.
+    """
+    return {k: v for k, v in session.items() if k != "share_code"}
+
+
 def _slugify(name: str) -> str:
     """Turns an event name into a URL/path-safe slug for the session id prefix."""
     slug = re.sub(r"[^a-z0-9]+", "-", name.strip().lower()).strip("-")
