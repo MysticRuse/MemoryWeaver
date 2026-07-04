@@ -6,7 +6,7 @@ from google.adk.models import Gemini
 from google.genai import types
 
 from agents.curator.tools.embed import get_image_embedding, calculate_cosine_similarity
-from agents.curator.tools.score import score_photo_as_judge
+from agents.curator.tools.score import score_photos_as_judge_batch
 
 curator_agent = Agent(
     name="curator_agent",
@@ -18,12 +18,13 @@ curator_agent = Agent(
     instruction=(
         "You are the Curator Agent. Your responsibility is to analyze a pool of approved trip photos. "
         "Use your get_image_embedding tool to detect and discard near-duplicate burst shots, and use your "
-        "score_photo_as_judge tool to rate composition, sharpness, and candid value. "
+        "score_photos_as_judge_batch tool (a list of {filename, path} dicts) to rate composition, "
+        "sharpness, uniqueness, and candid value. "
         "Produce a structured photo shortlist JSON manifest for the final trip narrative."
     ),
     tools=[
         get_image_embedding,
         calculate_cosine_similarity,
-        score_photo_as_judge,
+        score_photos_as_judge_batch,
     ],
 )

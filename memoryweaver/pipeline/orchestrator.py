@@ -9,6 +9,7 @@ from agents.curator.tools.embed import get_image_embedding, calculate_cosine_sim
 from agents.memory.tools.memory_bank import MemoryBankStore
 from agents.narrator.tools.journal import generate_all_moments_journal
 from agents.narrator.tools.story import generate_trip_story
+from app.app_utils.storage import StorageHelper
 
 CACHE_FILE = "curation_cache.json"
 
@@ -37,16 +38,19 @@ def get_photo_date_info(path: str) -> tuple[float, str]:
     except:
         return 0.0, "Unknown Date"
 
-def execute_trip_pipeline(project_root: str, limit: int = 50, log=print, progress_callback=None) -> dict:
+def execute_trip_pipeline(project_root: str, session_id: str = "default", limit: int = 50, log=print, progress_callback=None) -> dict:
     """
-    Runs the sequential 5-agent pipeline on all photos in local_storage/uploads.
-    Saves outputs to local_storage/artefacts/ and returns stats.
-    Uses concurrent threads, caching, and a progress callback to track states.
+    Runs the sequential 5-agent pipeline on all photos uploaded to one event session.
+    session_id selects the isolated storage namespace (see StorageHelper) so multiple
+    events can be curated independently. Saves outputs to that session's artefacts/
+    and returns stats. Uses concurrent threads, caching, and a progress callback to
+    track states.
     """
     log("Starting MemoryWeaver Optimised Pipeline...")
-    
-    uploads_dir = os.path.join(project_root, "local_storage", "uploads")
-    artefacts_dir = os.path.join(project_root, "local_storage", "artefacts")
+
+    session_storage = StorageHelper(session_id=session_id)
+    uploads_dir = os.path.join(session_storage.local_base, "uploads")
+    artefacts_dir = os.path.join(session_storage.local_base, "artefacts")
     os.makedirs(artefacts_dir, exist_ok=True)
     
     cache_path = os.path.join(artefacts_dir, CACHE_FILE)
@@ -290,10 +294,9 @@ def execute_trip_pipeline(project_root: str, limit: int = 50, log=print, progres
         
     # --- Agent 4: Memory ---
     log("Starting Phase 4: Memory Agent profile indexing...")
-    memory_store = MemoryBankStore()
-    
-    # Extract date & timestamp for chronological sorting
-    uploads_dir = os.path.join(project_root, "local_storage", "uploads")
+    memory_store = MemoryBankStore(session_id)
+
+    # Extract date & timestamp for chronological sorting (uploads_dir computed above)
     for p in scored_photos:
         p_path = os.path.join(uploads_dir, p["filename"])
         ts, date_str = get_photo_date_info(p_path)

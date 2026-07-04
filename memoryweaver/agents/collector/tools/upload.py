@@ -80,11 +80,12 @@ def extract_exif(image_path) -> dict:
         print(f"Error parsing EXIF: {e}")
     return result
 
-def process_and_save_upload(file_bytes: bytes, original_filename: str, contributor_name: str) -> dict:
+def process_and_save_upload(file_bytes: bytes, original_filename: str, contributor_name: str, session_id: str = "default") -> dict:
     """
     Validates, extracts metadata, saves to GCS (or local storage), and returns
-    a standard photo session object.
-    
+    a standard photo session object. session_id routes the file into the
+    corresponding event's isolated storage namespace (see StorageHelper).
+
     Validates:
     - Max size: 20MB (20 * 1024 * 1024 bytes)
     - File extension: jpg, jpeg, png, heic
@@ -118,8 +119,8 @@ def process_and_save_upload(file_bytes: bytes, original_filename: str, contribut
     timestamp_prefix = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     unique_filename = f"{contributor_id}_{timestamp_prefix}_{safe_filename}"
     
-    # Save to storage (GCS/Local fallback)
-    storage = StorageHelper()
+    # Save to storage (GCS/Local fallback), scoped to this event's session
+    storage = StorageHelper(session_id=session_id)
     gcs_uri = storage.save_upload(file_bytes, unique_filename)
     
     # Generate and save thumbnail
@@ -139,5 +140,6 @@ def process_and_save_upload(file_bytes: bytes, original_filename: str, contribut
         "thumbnail_path": thumb_path,
         "upload_timestamp": datetime.datetime.utcnow().isoformat(),
         "contributor_id": contributor_id,
+        "session_id": session_id,
         "exif": exif
     }

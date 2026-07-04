@@ -5,7 +5,7 @@ from google.adk.agents import Agent
 from google.adk.models import Gemini
 from google.genai import types
 
-from agents.narrator.tools.journal import generate_moment_journal
+from agents.narrator.tools.journal import generate_all_moments_journal
 from agents.narrator.tools.story import generate_trip_story
 
 narrator_agent = Agent(
@@ -17,11 +17,11 @@ narrator_agent = Agent(
     description="Narrator Agent that synthesizes moments into narrative journals and full trip stories.",
     instruction=(
         "You are the Narrator Agent. Your responsibility is to weave trip highlights, contributor comments, "
-        "and metadata into final artefacts. Use generate_moment_journal to summarize each setting, "
-        "and use generate_trip_story to write the comprehensive flowing trip summary."
+        "and metadata into final artefacts. Use generate_all_moments_journal to write per-moment journal "
+        "entries in one batched call, and use generate_trip_story to write the comprehensive flowing trip summary."
     ),
     tools=[
-        generate_moment_journal,
+        generate_all_moments_journal,
         generate_trip_story
     ],
 )

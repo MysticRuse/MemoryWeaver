@@ -623,19 +623,51 @@
     </div>
 
     <script>
+        // ---- Event session handling (multi-event support) ----
+        // Mirrors upload.html: ?session=<id> URL param wins (and is persisted),
+        // otherwise the last session picked on the upload page is used.
+        // 'default' keeps the original flat local_storage/ layout; any other
+        // session's files live under local_storage/sessions/<id>/.
+        function getSessionId() {
+            const urlSid = new URLSearchParams(window.location.search).get('session');
+            if (urlSid) { localStorage.setItem('mw_session_id', urlSid); return urlSid; }
+            return localStorage.getItem('mw_session_id') || 'default';
+        }
+
+        function storageBase() {
+            const sid = getSessionId();
+            return sid === 'default'
+                ? '/local_storage'
+                : '/local_storage/sessions/' + encodeURIComponent(sid);
+        }
+
         let currentSlideIndex = 0;
         let slides = [];
         let globalJournal = [];
         let globalMemoryBank = null;
         let contributorNames = {}; // id -> name
 
-        async function fetchTripBook() {
+        // Shows the active event's name and type in the header so it's obvious
+        // which session's journal is on screen.
+        async function loadSessionHeader() {
             try {
-                // Fetch highlights, journal, story and memory bank
-                const resHighlights = await fetch('/local_storage/artefacts/highlights.json');
-                const resJournal = await fetch('/local_storage/artefacts/journal.json');
-                const resStory = await fetch('/local_storage/artefacts/story.txt');
-                const resMemory = await fetch('/local_storage/memory_bank.json');
+                const res = await fetch('/api/sessions/' + encodeURIComponent(getSessionId()));
+                const data = await res.json();
+                if (data.status === 'success') {
+                    const emoji = { trip: '🧳', birthday: '🎂', wedding: '💍', sports_match: '⚽', reunion: '🤝', other: '📸' }[data.session.event_type] || '📸';
+                    document.querySelector('header h1').textContent = `${emoji} ${data.session.name}`;
+                }
+            } catch (e) { /* keep the generic title on failure */ }
+        }
+
+        async function fetchTripBook() {
+            loadSessionHeader();
+            try {
+                // Fetch highlights, journal, story and memory bank for the active session
+                const resHighlights = await fetch(storageBase() + '/artefacts/highlights.json');
+                const resJournal = await fetch(storageBase() + '/artefacts/journal.json');
+                const resStory = await fetch(storageBase() + '/artefacts/story.txt');
+                const resMemory = await fetch(storageBase() + '/memory_bank.json');
 
                 if (!resHighlights.ok || !resJournal.ok || !resStory.ok) {
                     document.getElementById('loading').style.display = 'none';
@@ -700,7 +732,7 @@
                 slide.className = `carousel-slide ${idx === 0 ? 'active' : ''}`;
                 
                 const img = document.createElement('img');
-                img.src = `/local_storage/uploads/${item.filename}`;
+                img.src = `${storageBase()}/uploads/${item.filename}`;
                 img.alt = item.caption;
                 img.style.cursor = 'pointer';
                 img.onclick = () => openLightbox(img.src, item.caption);
@@ -760,9 +792,9 @@
                     img.style.cursor = 'pointer';
                     img.onerror = function() {
                         this.onerror = null;
-                        this.src = `/local_storage/uploads/${ph}`;
+                        this.src = `${storageBase()}/uploads/${ph}`;
                     };
-                    img.src = `/local_storage/uploads/${ph}`;
+                    img.src = `${storageBase()}/uploads/${ph}`;
                     img.onclick = () => openLightbox(img.src, entry.moment);
                     thumbsContainer.appendChild(img);
                 });
@@ -887,7 +919,7 @@
                     
                     const img = document.createElement('img');
                     img.className = 'catchup-img';
-                    img.src = `/local_storage/uploads/${topPhoto}`;
+                    img.src = `${storageBase()}/uploads/${topPhoto}`;
                     img.alt = entry.moment;
                     
                     const meta = document.createElement('div');

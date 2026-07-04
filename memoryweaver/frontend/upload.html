@@ -499,6 +499,36 @@
             <h1>Trip Curation Hub</h1>
         </header>
 
+        <!-- Event session bar: pick which event (trip/birthday/wedding/...) you're
+             working on, or create a new one. Every API call below is scoped to
+             the selected session so events stay fully isolated. -->
+        <div class="card" id="session-bar" style="margin-bottom: 20px; padding: 16px 20px;">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <span id="session-emoji" style="font-size: 1.6rem;">🧳</span>
+                <div style="flex: 1; min-width: 220px;">
+                    <label style="display:block; font-size: 11px; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 4px;">ACTIVE EVENT</label>
+                    <select id="session-select" class="input-text" style="width: 100%; padding: 8px 10px;" onchange="onSessionSwitched(this)"></select>
+                </div>
+                <button class="btn btn-primary" style="padding: 8px 16px;" onclick="toggleCreateEvent(true)">➕ New Event</button>
+            </div>
+            <!-- Inline create form, hidden until "New Event" is clicked -->
+            <div id="create-event-form" style="display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
+                    <div style="flex: 2; min-width: 180px;">
+                        <label style="display:block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Event name</label>
+                        <input type="text" id="new-event-name" class="input-text" style="width: 100%; padding: 8px 10px;" placeholder="e.g. Bali Family Trip, Ari's 8th Birthday">
+                    </div>
+                    <div style="flex: 1; min-width: 140px;">
+                        <label style="display:block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Event type</label>
+                        <select id="new-event-type" class="input-text" style="width: 100%; padding: 8px 10px;"></select>
+                    </div>
+                    <button class="btn btn-primary" style="padding: 8px 16px;" onclick="createEventSession()">Create</button>
+                    <button class="btn" style="padding: 8px 16px;" onclick="toggleCreateEvent(false)">Cancel</button>
+                </div>
+                <div id="create-event-status" style="margin-top: 8px; font-size: 12px; color: var(--text-muted);"></div>
+            </div>
+        </div>
+
         <div class="card">
             <div class="tabs-header">
                 <button class="tab-btn active" onclick="switchTab('bulk-tab', this)">📁 Bulk Local Ingestion (Option A)</button>
@@ -675,6 +705,95 @@
     </div>
 
     <script>
+        // ---- Event session handling (multi-event support) ----
+        // The active session id lives in localStorage so it survives reloads and
+        // is shared with the viewer page. A ?session=<id> URL param overrides it
+        // (and is persisted), so links can deep-link into a specific event.
+        // 'default' is the original single-event data pool.
+        const EVENT_EMOJI = { trip: '🧳', birthday: '🎂', wedding: '💍', sports_match: '⚽', reunion: '🤝', other: '📸' };
+
+        function getSessionId() {
+            const urlSid = new URLSearchParams(window.location.search).get('session');
+            if (urlSid) { localStorage.setItem('mw_session_id', urlSid); return urlSid; }
+            return localStorage.getItem('mw_session_id') || 'default';
+        }
+
+        // Appends the active session_id to an API URL (handles existing query strings).
+        function withSession(url) {
+            return url + (url.includes('?') ? '&' : '?') + 'session_id=' + encodeURIComponent(getSessionId());
+        }
+
+        function viewerHref() {
+            return '/viewer?session=' + encodeURIComponent(getSessionId());
+        }
+
+        async function loadSessionBar() {
+            try {
+                const res = await fetch('/api/sessions');
+                const data = await res.json();
+                if (data.status !== 'success') return;
+
+                const sel = document.getElementById('session-select');
+                const active = getSessionId();
+                sel.innerHTML = '';
+                let activeType = 'trip';
+                data.sessions.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.session_id;
+                    opt.textContent = `${EVENT_EMOJI[s.event_type] || '📸'} ${s.name} (${s.event_type.replace('_', ' ')})`;
+                    if (s.session_id === active) { opt.selected = true; activeType = s.event_type; }
+                    sel.appendChild(opt);
+                });
+                document.getElementById('session-emoji').textContent = EVENT_EMOJI[activeType] || '📸';
+
+                const typeSel = document.getElementById('new-event-type');
+                typeSel.innerHTML = '';
+                (data.event_types || []).forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t;
+                    opt.textContent = `${EVENT_EMOJI[t] || '📸'} ${t.replace('_', ' ')}`;
+                    typeSel.appendChild(opt);
+                });
+            } catch (e) {
+                console.error('Failed to load sessions:', e);
+            }
+        }
+
+        function onSessionSwitched(sel) {
+            localStorage.setItem('mw_session_id', sel.value);
+            // Full reload so every poller/list rebinds to the new session cleanly
+            window.location.href = '/';
+        }
+
+        function toggleCreateEvent(show) {
+            document.getElementById('create-event-form').style.display = show ? 'block' : 'none';
+            if (show) document.getElementById('new-event-name').focus();
+        }
+
+        async function createEventSession() {
+            const name = document.getElementById('new-event-name').value.trim();
+            const eventType = document.getElementById('new-event-type').value;
+            const status = document.getElementById('create-event-status');
+            if (!name) { status.textContent = 'Please enter an event name.'; return; }
+            status.textContent = 'Creating event...';
+            try {
+                const res = await fetch('/api/sessions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name, event_type: eventType })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    localStorage.setItem('mw_session_id', data.session.session_id);
+                    window.location.href = '/';
+                } else {
+                    status.textContent = 'Failed: ' + (data.message || 'unknown error');
+                }
+            } catch (e) {
+                status.textContent = 'Error: ' + e.message;
+            }
+        }
+
         let currentFolder = "";
         let acceptedList = [];
         let rejectedList = [];
@@ -689,8 +808,12 @@
 
         // Auto-detect and sync with active backend tasks on page load/refresh
         window.addEventListener('DOMContentLoaded', async () => {
+            loadSessionBar();
+            // Point the static viewer link at the active session
+            const viewerLink = document.getElementById('btnViewerLink');
+            if (viewerLink) viewerLink.href = viewerHref();
             try {
-                const res = await fetch('/api/progress');
+                const res = await fetch(withSession('/api/progress'));
                 const progress = await res.json();
                 
                 // Load active folder path if set in backend
@@ -718,7 +841,7 @@
                     startLogPolling();
                     
                     const checkCompletion = setInterval(async () => {
-                        const progRes = await fetch('/api/progress');
+                        const progRes = await fetch(withSession('/api/progress'));
                         const progData = await progRes.json();
                         const state = progData['pre_clean'];
                         
@@ -726,7 +849,7 @@
                             clearInterval(checkCompletion);
                             stopProgressPolling('pre_clean');
                             
-                            const resultRes = await fetch('/api/pre-clean-results');
+                            const resultRes = await fetch(withSession('/api/pre-clean-results'));
                             const results = await resultRes.json();
                             acceptedList = results.accepted || [];
                             rejectedList = results.rejected || [];
@@ -752,7 +875,7 @@
                     }, 500);
                 } else if (progress.pre_clean && progress.pre_clean.status === 'complete') {
                     // Pre-clean is complete, fetch and show results automatically
-                    const resultRes = await fetch('/api/pre-clean-results');
+                    const resultRes = await fetch(withSession('/api/pre-clean-results'));
                     const results = await resultRes.json();
                     if (results && ((results.accepted && results.accepted.length > 0) || (results.rejected && results.rejected.length > 0))) {
                         acceptedList = results.accepted || [];
@@ -818,7 +941,7 @@
                                 btnContainer.style.marginTop = '1.5rem';
                                 btnContainer.style.textAlign = 'center';
                                 btnContainer.innerHTML = `
-                                    <a href="/viewer" id="summary-viewer-btn" class="btn btn-primary" style="padding: 12px 30px; font-size: 1.1rem; box-shadow: 0 0 15px rgba(255, 123, 0, 0.4); text-decoration: none; border-radius: 8px;">📖 Open Curation Viewer</a>
+                                    <a href="${viewerHref()}" id="summary-viewer-btn" class="btn btn-primary" style="padding: 12px 30px; font-size: 1.1rem; box-shadow: 0 0 15px rgba(255, 123, 0, 0.4); text-decoration: none; border-radius: 8px;">📖 Open Curation Viewer</a>
                                 `;
                                 summaryDiv.appendChild(btnContainer);
                             }
@@ -843,7 +966,7 @@
 
         async function selectLocalFolder() {
             try {
-                const res = await fetch('/api/select-folder', { method: 'POST' });
+                const res = await fetch(withSession('/api/select-folder'), { method: 'POST' });
                 const data = await res.json();
                 if (data.status === 'success') {
                     currentFolder = data.folder;
@@ -875,7 +998,7 @@
 
             try {
                 // Starts background task
-                const res = await fetch('/api/pre-clean', { method: 'POST' });
+                const res = await fetch(withSession('/api/pre-clean'), { method: 'POST' });
                 const data = await res.json();
                 if (data.status !== 'success') {
                     throw new Error(data.message || "Failed to start pre-cleaning");
@@ -884,7 +1007,7 @@
                 // We let the progress polling finish, then fetch results.
                 // Poll check loop
                 const checkCompletion = setInterval(async () => {
-                    const progRes = await fetch('/api/progress');
+                    const progRes = await fetch(withSession('/api/progress'));
                     const progData = await progRes.json();
                     const state = progData['pre_clean'];
                     
@@ -893,7 +1016,7 @@
                         stopProgressPolling('pre_clean');
                         
                         // Load final results
-                        const resultRes = await fetch('/api/pre-clean-results');
+                        const resultRes = await fetch(withSession('/api/pre-clean-results'));
                         const results = await resultRes.json();
                         acceptedList = results.accepted;
                         rejectedList = results.rejected;
@@ -1044,7 +1167,7 @@
             imgContainer.className = 'photo-img-container';
             
             const img = document.createElement('img');
-            img.src = `/api/serve-raw?filename=${encodeURIComponent(item.filename)}`;
+            img.src = withSession(`/api/serve-raw?filename=${encodeURIComponent(item.filename)}`);
             img.loading = 'lazy';
             imgContainer.appendChild(img);
             
@@ -1176,7 +1299,7 @@
                 const ingestRes = await fetch('/api/confirm-ingest', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ filenames: filenames })
+                    body: JSON.stringify({ filenames: filenames, session_id: getSessionId() })
                 });
                 
                 const ingestData = await ingestRes.json();
@@ -1191,7 +1314,7 @@
 
                 // Step B: Start Agent curation pipeline
                 const limitVal = document.getElementById('curation-limit').value;
-                fetch(`/generate?limit=${limitVal}`, { method: 'POST' });
+                fetch(withSession(`/generate?limit=${limitVal}`), { method: 'POST' });
                 
                 // Poll logs
                 startLogPolling();
@@ -1211,6 +1334,7 @@
 
             const formData = new FormData();
             formData.append('contributor_name', document.getElementById('contributor-name').value);
+            formData.append('session_id', getSessionId());
             for (let i = 0; i < files.length; i++) {
                 formData.append('photos', files[i]);
             }
@@ -1241,7 +1365,7 @@
 
             progressInterval = setInterval(async () => {
                 try {
-                    const res = await fetch('/api/progress');
+                    const res = await fetch(withSession('/api/progress'));
                     const progress = await res.json();
                     const state = progress[type];
 
@@ -1285,13 +1409,13 @@
             
             pollingInterval = setInterval(async () => {
                 try {
-                    const res = await fetch('/logs');
+                    const res = await fetch(withSession('/logs'));
                     const data = await res.json();
                     const logs = data.logs || [];
                     logBox.innerHTML = logs.join('\n');
                     logBox.scrollTop = logBox.scrollHeight;
                     
-                    const progRes = await fetch('/api/progress');
+                    const progRes = await fetch(withSession('/api/progress'));
                     const progress = await progRes.json();
                     
                     if (progress.pipeline && (progress.pipeline.status === 'complete' || progress.pipeline.status === 'error')) {
@@ -1320,7 +1444,7 @@
                                     btnContainer.style.marginTop = '1.5rem';
                                     btnContainer.style.textAlign = 'center';
                                     btnContainer.innerHTML = `
-                                        <a href="/viewer" id="summary-viewer-btn" class="btn btn-primary" style="padding: 12px 30px; font-size: 1.1rem; box-shadow: 0 0 15px rgba(255, 123, 0, 0.4); text-decoration: none; border-radius: 8px;">📖 Open Curation Viewer</a>
+                                        <a href="${viewerHref()}" id="summary-viewer-btn" class="btn btn-primary" style="padding: 12px 30px; font-size: 1.1rem; box-shadow: 0 0 15px rgba(255, 123, 0, 0.4); text-decoration: none; border-radius: 8px;">📖 Open Curation Viewer</a>
                                     `;
                                     summaryDiv.appendChild(btnContainer);
                                 }

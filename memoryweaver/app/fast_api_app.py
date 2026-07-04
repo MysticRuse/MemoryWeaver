@@ -46,6 +46,8 @@ from pipeline.orchestrator import execute_trip_pipeline
 from app.agent import app as adk_app
 from app.app_utils.telemetry import setup_telemetry
 from app.app_utils.typing import Feedback
+from app.app_utils.sessions import SessionStore
+from app.app_utils.storage import StorageHelper
 
 setup_telemetry()
 _, project_id = google.auth.default()
@@ -122,7 +124,14 @@ os.makedirs(os.path.join(local_storage_dir, "uploads"), exist_ok=True)
 os.makedirs(os.path.join(local_storage_dir, "thumbs"), exist_ok=True)
 os.makedirs(os.path.join(local_storage_dir, "artefacts"), exist_ok=True)
 
-# Serve local storage files so the frontend can retrieve thumbnails
+# Ensure the session registry exists and 'default' is registered, so
+# GET /api/sessions works immediately for pre-existing single-session installs.
+SessionStore()
+
+# Serve local storage files so the frontend can retrieve thumbnails.
+# Session-scoped files live under local_storage/sessions/<id>/..., and the
+# 'default' session's files live at the original flat paths - both are
+# reachable under this one mount since StaticFiles serves nested directories.
 app.mount("/local_storage", StaticFiles(directory=local_storage_dir), name="local_storage")
 
 
@@ -136,13 +145,14 @@ async def serve_upload_page():
 
 
 @app.post("/delete")
-def delete_photo(filename: str = Form(...)):
-    """Deletes the original photo and its thumbnail from local storage."""
+def delete_photo(filename: str = Form(...), session_id: str = Form("default")):
+    """Deletes the original photo and its thumbnail from one session's storage."""
     try:
         # Prevent path traversal attacks
         safe_filename = os.path.basename(filename)
-        upload_path = os.path.join(local_storage_dir, "uploads", safe_filename)
-        thumb_path = os.path.join(local_storage_dir, "thumbs", safe_filename)
+        session_storage = StorageHelper(session_id=session_id)
+        upload_path = os.path.join(session_storage.local_base, "uploads", safe_filename)
+        thumb_path = os.path.join(session_storage.local_base, "thumbs", safe_filename)
         
         deleted = []
         if os.path.exists(upload_path):
@@ -159,29 +169,96 @@ def delete_photo(filename: str = Form(...)):
         return {"status": "error", "message": f"Failed to delete file: {str(e)}"}
 
 
-selected_folder_path = None
-pre_clean_results = {"accepted": [], "rejected": []}
+# ------------------------------------------------------------------
+# Session state
+#
+# selected_folder_path / pre_clean_results / progress_state / pipeline_logs
+# used to be single module-level globals, which meant two concurrent
+# trips/events (or just two browser tabs) silently clobbered each other's
+# in-progress state. They're now dicts keyed by session_id so multiple
+# events can run independently. Every route below defaults session_id to
+# "default", which preserves the original single-session behavior for
+# callers that don't pass one yet.
+# ------------------------------------------------------------------
+selected_folder_paths: dict[str, str] = {}
+pre_clean_results_by_session: dict[str, dict] = {}
+progress_state_by_session: dict[str, dict] = {}
+pipeline_logs_by_session: dict[str, list] = {}
+
+
+def _get_progress_state(session_id: str) -> dict:
+    if session_id not in progress_state_by_session:
+        progress_state_by_session[session_id] = {
+            "pre_clean": {"current": 0, "total": 0, "status": "idle", "start_time": 0.0},
+            "pipeline": {"current": 0, "total": 0, "status": "idle", "phase": "idle", "start_time": 0.0},
+        }
+    return progress_state_by_session[session_id]
+
+
+def log_pipeline_step(session_id: str, message: str):
+    """Appends a timestamped line to one session's in-memory pipeline log."""
+    timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+    log_line = f"[{timestamp}] {message}"
+    pipeline_logs_by_session.setdefault(session_id, []).append(log_line)
+    print(f"[{session_id}] {log_line}")
+
 
 from pydantic import BaseModel
+
 class IngestRequest(BaseModel):
     filenames: list[str]
+    session_id: str = "default"
+
+
+class CreateSessionRequest(BaseModel):
+    name: str
+    event_type: str = "trip"
+
+
+@app.post("/api/sessions")
+def create_session(req: CreateSessionRequest):
+    """Creates a new, fully isolated event session (own uploads/thumbs/artefacts/memory)."""
+    store = SessionStore()
+    session = store.create_session(req.name, req.event_type)
+    return {"status": "success", "session": session}
+
+
+@app.get("/api/sessions")
+def list_sessions():
+    """Lists every saved event session, most recent first."""
+    store = SessionStore()
+    return {"status": "success", "sessions": store.list_sessions(), "event_types": list(SessionStore.EVENT_TYPES)}
+
+
+@app.get("/api/sessions/{session_id}")
+def get_session(session_id: str):
+    store = SessionStore()
+    session = store.get_session(session_id)
+    if not session:
+        return {"status": "error", "message": "Session not found"}
+    return {"status": "success", "session": session}
+
 
 @app.post("/api/select-folder")
-def select_folder():
-    """Opens a native macOS Finder folder selector and returns file count."""
-    global selected_folder_path
+def select_folder(session_id: str = "default"):
+    """Opens a native macOS Finder folder selector and returns file count.
+
+    Local development convenience only (bulk-import from a Google Photos export
+    folder on the operator's Mac) - not part of the deployed/public upload flow,
+    which is the browser-based /upload endpoint instead.
+    """
     try:
         import subprocess
         # Run AppleScript to open folder picker natively on macOS
         cmd = "osascript -e 'POSIX path of (choose folder with prompt \"Select Google Photos Folder\")'"
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = proc.communicate()
-        
+
         if proc.returncode == 0:
             folder = stdout.decode('utf-8').strip()
             if folder and os.path.exists(folder):
-                selected_folder_path = folder
-                files = [f for f in os.listdir(folder) 
+                selected_folder_paths[session_id] = folder
+                files = [f for f in os.listdir(folder)
                          if f.lower().endswith(('.jpg', '.jpeg', '.png', '.heic'))]
                 return {"status": "success", "folder": folder, "count": len(files)}
         return {"status": "error", "message": "No folder selected or canceled"}
@@ -189,109 +266,103 @@ def select_folder():
         return {"status": "error", "message": f"Folder selector failed: {str(e)}"}
 
 @app.post("/api/set-folder")
-def set_folder(folder: str):
-    global selected_folder_path
-    selected_folder_path = folder
+def set_folder(folder: str, session_id: str = "default"):
+    selected_folder_paths[session_id] = folder
     return {"status": "success", "folder": folder}
 
-progress_state = {
-    "pre_clean": {"current": 0, "total": 0, "status": "idle", "start_time": 0.0},
-    "pipeline": {"current": 0, "total": 0, "status": "idle", "phase": "idle", "start_time": 0.0}
-}
-
 @app.get("/api/progress")
-def get_progress():
-    """Returns the current progress state of long-running operations."""
-    global selected_folder_path
+def get_progress(session_id: str = "default"):
+    """Returns the current progress state of long-running operations for a session."""
     # Inject active elapsed time calculations
     import time
+    state = _get_progress_state(session_id)
     resp = {}
-    for key, val in progress_state.items():
+    for key, val in state.items():
         resp[key] = val.copy()
         if val["status"] == "running" and val["start_time"] > 0:
             resp[key]["elapsed"] = round(time.time() - val["start_time"], 1)
         else:
             resp[key]["elapsed"] = 0.0
-    resp["folder"] = selected_folder_path
+    resp["folder"] = selected_folder_paths.get(session_id)
+    resp["session_id"] = session_id
     return resp
 
-def run_pre_clean_background(folder: str, blur_threshold: float, dup_threshold: int):
-    global pre_clean_results, progress_state, pipeline_logs
-    
-    pipeline_logs.clear()
-    log_pipeline_step(f"Starting Local Pre-Cleaning Analysis on folder: {folder}")
-    
+def run_pre_clean_background(session_id: str, folder: str, blur_threshold: float, dup_threshold: int):
+    state = _get_progress_state(session_id)
+    pipeline_logs_by_session[session_id] = []
+    log_pipeline_step(session_id, f"Starting Local Pre-Cleaning Analysis on folder: {folder}")
+
     import time
     start_time = time.time()
     last_log_pct = -5
-    
+
     def pre_clean_progress(current, total):
-        progress_state["pre_clean"]["current"] = current
-        progress_state["pre_clean"]["total"] = total
-        
+        state["pre_clean"]["current"] = current
+        state["pre_clean"]["total"] = total
+
         nonlocal last_log_pct
         pct = int((current / total) * 100) if total > 0 else 0
         if pct >= last_log_pct + 5 or current == total:
             last_log_pct = pct
             elapsed = time.time() - start_time
-            log_pipeline_step(f"Pre-Clean Progress: {pct}% ({current}/{total}) • {elapsed:.1f}s elapsed")
-            
+            log_pipeline_step(session_id, f"Pre-Clean Progress: {pct}% ({current}/{total}) • {elapsed:.1f}s elapsed")
+
     from pipeline.local_cleaner import analyze_directory
     try:
         res = analyze_directory(
-            folder, 
-            blur_threshold, 
-            dup_threshold, 
+            folder,
+            blur_threshold,
+            dup_threshold,
             progress_callback=pre_clean_progress
         )
-        pre_clean_results = res
+        pre_clean_results_by_session[session_id] = res
         total_time = time.time() - start_time
-        progress_state["pre_clean"]["summary"] = {
+        state["pre_clean"]["summary"] = {
             "elapsed_seconds": round(total_time, 1),
             "accepted_count": len(res['accepted']),
             "rejected_count": len(res['rejected'])
         }
-        progress_state["pre_clean"]["status"] = "complete"
-        log_pipeline_step(f"Local Pre-Cleaning Analysis complete! Kept {len(res['accepted'])} accepted and excluded {len(res['rejected'])} duplicates/blurry files in {total_time:.1f}s.")
+        state["pre_clean"]["status"] = "complete"
+        log_pipeline_step(session_id, f"Local Pre-Cleaning Analysis complete! Kept {len(res['accepted'])} accepted and excluded {len(res['rejected'])} duplicates/blurry files in {total_time:.1f}s.")
     except Exception as e:
-        progress_state["pre_clean"]["status"] = "error"
-        progress_state["pre_clean"]["error_msg"] = str(e)
-        log_pipeline_step(f"Pre-Cleaning FAILED: {str(e)}")
+        state["pre_clean"]["status"] = "error"
+        state["pre_clean"]["error_msg"] = str(e)
+        log_pipeline_step(session_id, f"Pre-Cleaning FAILED: {str(e)}")
 
 @app.post("/api/pre-clean")
-def run_pre_clean(background_tasks: BackgroundTasks, blur_threshold: float = 12.0, dup_threshold: int = 8):
-    """Triggers the local_cleaner.py analysis in the background."""
-    global selected_folder_path, progress_state
-    if not selected_folder_path:
+def run_pre_clean(background_tasks: BackgroundTasks, session_id: str = "default", blur_threshold: float = 12.0, dup_threshold: int = 8):
+    """Triggers the local_cleaner.py analysis in the background for a session's selected folder."""
+    folder = selected_folder_paths.get(session_id)
+    if not folder:
         return {"status": "error", "message": "No folder selected. Please select a folder first."}
-    
+
     # Synchronously reset to running state to prevent frontend from reading 'complete' from a previous run
     import time
-    progress_state["pre_clean"] = {
-        "current": 0, 
-        "total": 0, 
-        "status": "running", 
+    state = _get_progress_state(session_id)
+    state["pre_clean"] = {
+        "current": 0,
+        "total": 0,
+        "status": "running",
         "start_time": time.time()
     }
-    
-    background_tasks.add_task(run_pre_clean_background, selected_folder_path, blur_threshold, dup_threshold)
+
+    background_tasks.add_task(run_pre_clean_background, session_id, folder, blur_threshold, dup_threshold)
     return {"status": "success", "message": "Pre-clean analysis started in the background."}
 
 @app.get("/api/pre-clean-results")
-def get_pre_clean_results():
-    """Returns the completed accepted/rejected pre-clean lists."""
-    global pre_clean_results
-    return pre_clean_results
+def get_pre_clean_results(session_id: str = "default"):
+    """Returns the completed accepted/rejected pre-clean lists for a session."""
+    return pre_clean_results_by_session.get(session_id, {"accepted": [], "rejected": []})
 
 @app.get("/api/serve-raw")
-def serve_raw_file(filename: str):
-    """Streams local images from the selected folder, converting HEIC on-the-fly."""
-    global selected_folder_path
-    if not selected_folder_path:
+def serve_raw_file(filename: str, session_id: str = "default"):
+    """Streams local images from the session's selected folder, converting HEIC on-the-fly."""
+    folder = selected_folder_paths.get(session_id)
+    if not folder:
         return {"status": "error", "message": "No folder selected"}
-        
+
     safe_filename = os.path.basename(filename)
-    full_path = os.path.join(selected_folder_path, safe_filename)
+    full_path = os.path.join(folder, safe_filename)
     
     if os.path.exists(full_path):
         if safe_filename.lower().endswith('.heic'):
@@ -315,32 +386,33 @@ def serve_raw_file(filename: str):
 
 @app.post("/api/confirm-ingest")
 def confirm_ingest(req: IngestRequest):
-    """Copies the approved accepted photo list to local_storage/uploads/."""
-    global selected_folder_path, pre_clean_results
-    if not selected_folder_path:
+    """Copies the approved accepted photo list into one session's uploads/ storage."""
+    folder = selected_folder_paths.get(req.session_id)
+    if not folder:
         return {"status": "error", "message": "No active folder session."}
-        
+
     try:
         import shutil
         import hashlib
         from PIL import Image
         from agents.memory.tools.memory_bank import MemoryBankStore
         from pipeline.local_cleaner import get_exif_metadata
-        
-        upload_dir = os.path.join(local_storage_dir, "uploads")
-        thumb_dir = os.path.join(local_storage_dir, "thumbs")
-        
-        # Clear existing uploads/thumbs
+
+        session_storage = StorageHelper(session_id=req.session_id)
+        upload_dir = os.path.join(session_storage.local_base, "uploads")
+        thumb_dir = os.path.join(session_storage.local_base, "thumbs")
+
+        # Clear existing uploads/thumbs for this session before re-ingesting
         shutil.rmtree(upload_dir, ignore_errors=True)
         shutil.rmtree(thumb_dir, ignore_errors=True)
         os.makedirs(upload_dir, exist_ok=True)
         os.makedirs(thumb_dir, exist_ok=True)
-        
-        store = MemoryBankStore()
+
+        store = MemoryBankStore(req.session_id)
         ingested = []
-        
+
         for filename in req.filenames:
-            src_path = os.path.join(selected_folder_path, filename)
+            src_path = os.path.join(folder, filename)
             if not os.path.exists(src_path):
                 continue
                 
@@ -374,17 +446,18 @@ def confirm_ingest(req: IngestRequest):
         return {"status": "error", "message": f"Ingestion failed: {str(e)}"}
 
 @app.get("/trip-stats")
-def get_trip_stats():
-    """Returns the total number of uploaded photos in the active trip pool."""
+def get_trip_stats(session_id: str = "default"):
+    """Returns the total number of uploaded photos in a session's active photo pool."""
     try:
-        upload_dir = os.path.join(local_storage_dir, "uploads")
+        session_storage = StorageHelper(session_id=session_id)
+        upload_dir = os.path.join(session_storage.local_base, "uploads")
         count = 0
         if os.path.exists(upload_dir):
             count = len([
-                f for f in os.listdir(upload_dir) 
+                f for f in os.listdir(upload_dir)
                 if os.path.isfile(os.path.join(upload_dir, f)) and not f.startswith('.')
             ])
-        return {"status": "success", "total_uploaded": count}
+        return {"status": "success", "total_uploaded": count, "session_id": session_id}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -392,21 +465,22 @@ def get_trip_stats():
 
 
 @app.post("/upload")
-async def handle_photo_upload(photos: list[UploadFile] = File(...), contributor_name: str = Form("Anonymous")):
+async def handle_photo_upload(photos: list[UploadFile] = File(...), contributor_name: str = Form("Anonymous"), session_id: str = Form("default")):
     results = []
     errors = []
-    
-    # Register contributor name in Memory Bank
+
+    # Register contributor name in this session's Memory Bank
     from agents.memory.tools.memory_bank import MemoryBankStore
-    store = MemoryBankStore()
-    
+    store = MemoryBankStore(session_id)
+
     for photo in photos:
         try:
             file_bytes = await photo.read()
             info = process_and_save_upload(
                 file_bytes=file_bytes,
                 original_filename=photo.filename,
-                contributor_name=contributor_name
+                contributor_name=contributor_name,
+                session_id=session_id
             )
             results.append(info)
             # Register the name mapping with 0 initial photos/moments
@@ -442,47 +516,38 @@ async def serve_viewer_page():
     return HTMLResponse(content="<h1>Viewer page not found</h1>", status_code=404)
 
 
-pipeline_logs = []
-
-def log_pipeline_step(message: str):
-    import datetime
-    timestamp = datetime.datetime.now().strftime("%H:%M:%S")
-    log_line = f"[{timestamp}] {message}"
-    pipeline_logs.append(log_line)
-    print(log_line)
-
-
 @app.get("/logs")
-def get_pipeline_logs():
-    """Returns the in-memory logs of the current or most recent curation run."""
-    return {"status": "success", "logs": pipeline_logs}
+def get_pipeline_logs(session_id: str = "default"):
+    """Returns the in-memory logs of the current or most recent curation run for a session."""
+    return {"status": "success", "logs": pipeline_logs_by_session.get(session_id, [])}
 
 
-def run_generation_background(limit: int):
-    """Asynchronous background worker for the 5-agent pipeline."""
+def run_generation_background(session_id: str, limit: int):
+    """Asynchronous background worker for the 5-agent pipeline, scoped to one session."""
     import time
     start_time = time.time()
-    global progress_state, pipeline_logs
+    state = _get_progress_state(session_id)
     try:
-        pipeline_logs.clear()
-        log_pipeline_step("Initiating pipeline orchestration...")
-        
+        pipeline_logs_by_session[session_id] = []
+        log_pipeline_step(session_id, "Initiating pipeline orchestration...")
+
         def pipeline_progress(current, total, phase):
-            progress_state["pipeline"]["current"] = current
-            progress_state["pipeline"]["total"] = total
-            progress_state["pipeline"]["phase"] = phase
+            state["pipeline"]["current"] = current
+            state["pipeline"]["total"] = total
+            state["pipeline"]["phase"] = phase
             if current >= total and phase == "journaling":
-                progress_state["pipeline"]["status"] = "complete"
-                
+                state["pipeline"]["status"] = "complete"
+
         stats = execute_trip_pipeline(
-            project_root, 
+            project_root,
+            session_id=session_id,
             limit=limit,
-            log=log_pipeline_step, 
+            log=lambda msg: log_pipeline_step(session_id, msg),
             progress_callback=pipeline_progress
         )
-        
-        progress_state["pipeline"]["status"] = "complete"
-        
+
+        state["pipeline"]["status"] = "complete"
+
         # ==========================================
         # ### DEBUG / PERFORMANCE TRACKING SECTION ###
         # Comment this section out in production.
@@ -490,47 +555,47 @@ def run_generation_background(limit: int):
         elapsed = round(time.time() - start_time, 2)
         uncached_mod = stats.get("uncached_moderated", 0)
         uncached_score = stats.get("uncached_scored", 0)
-        
+
         moments_count = stats.get("moments_count", 0)
         est_input_tokens = (uncached_mod * 1000) + (uncached_score * 1500) + (moments_count * 800)
         est_output_tokens = (uncached_mod * 100) + (uncached_score * 150) + (moments_count * 250)
         est_cost = (est_input_tokens * 0.000075 / 1000) + (est_output_tokens * 0.0003 / 1000)
-        
-        progress_state["pipeline"]["summary"] = {
+
+        state["pipeline"]["summary"] = {
             "elapsed_seconds": round(elapsed, 1),
             "uncached_moderated": uncached_mod,
             "uncached_scored": uncached_score,
             "estimated_cost": round(est_cost, 4),
             "moments_count": moments_count
         }
-        
-        log_pipeline_step(f"PERFORMANCE REPORT (UNCACHED RUNS ONLY):")
-        log_pipeline_step(f"  - Total Elapsed Time: {elapsed} seconds")
-        log_pipeline_step(f"  - Actual API Calls Made (Mod/Score): {uncached_mod}/{uncached_score}")
-        log_pipeline_step(f"  - Estimated Input Tokens: {est_input_tokens}")
-        log_pipeline_step(f"  - Estimated Output Tokens: {est_output_tokens}")
-        log_pipeline_step(f"  - Estimated API Cost: ${est_cost:.6f} USD")
+
+        log_pipeline_step(session_id, f"PERFORMANCE REPORT (UNCACHED RUNS ONLY):")
+        log_pipeline_step(session_id, f"  - Total Elapsed Time: {elapsed} seconds")
+        log_pipeline_step(session_id, f"  - Actual API Calls Made (Mod/Score): {uncached_mod}/{uncached_score}")
+        log_pipeline_step(session_id, f"  - Estimated Input Tokens: {est_input_tokens}")
+        log_pipeline_step(session_id, f"  - Estimated Output Tokens: {est_output_tokens}")
+        log_pipeline_step(session_id, f"  - Estimated API Cost: ${est_cost:.6f} USD")
         # ==========================================
-        
+
     except Exception as e:
-        progress_state["pipeline"]["status"] = "error"
-        log_pipeline_step(f"CRITICAL ERROR: {str(e)}")
+        state["pipeline"]["status"] = "error"
+        log_pipeline_step(session_id, f"CRITICAL ERROR: {str(e)}")
 
 @app.post("/generate")
-def run_generation_pipeline(background_tasks: BackgroundTasks, limit: int = 50):
-    """Triggers the full multi-agent moderation, curation, memory and narration pipeline."""
-    global progress_state
+def run_generation_pipeline(background_tasks: BackgroundTasks, session_id: str = "default", limit: int = 50):
+    """Triggers the full multi-agent moderation, curation, memory and narration pipeline for one session."""
     import time
     # Synchronously reset to prevent frontend race condition
-    progress_state["pipeline"] = {
-        "current": 0, 
-        "total": 0, 
-        "status": "running", 
+    state = _get_progress_state(session_id)
+    state["pipeline"] = {
+        "current": 0,
+        "total": 0,
+        "status": "running",
         "phase": "initiating",
         "start_time": time.time()
     }
-    background_tasks.add_task(run_generation_background, limit)
-    return {"status": "success", "message": f"Pipeline started with target limit {limit} in the background."}
+    background_tasks.add_task(run_generation_background, session_id, limit)
+    return {"status": "success", "message": f"Pipeline started with target limit {limit} in the background.", "session_id": session_id}
 
 
 # Main execution

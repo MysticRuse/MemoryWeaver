@@ -1,31 +1,32 @@
 import json
 from agents.memory.tools.memory_bank import MemoryBankStore
 
-def upsert_contributor_profile(contributor_id: str, contributor_name: str, moments: list[str], photo_count: int) -> str:
+def upsert_contributor_profile(session_id: str, contributor_id: str, contributor_name: str, moments: list[str], photo_count: int) -> str:
     """
-    Registers or updates a contributor's profile in the cross-session Memory Bank.
+    Registers or updates a contributor's profile in the Memory Bank for one event session.
     """
-    store = MemoryBankStore()
+    store = MemoryBankStore(session_id)
     profile = store.upsert_contributor(contributor_id, contributor_name, moments, photo_count)
     return json.dumps(profile)
 
-def get_contributor_profile(contributor_id: str) -> str:
+def get_contributor_profile(session_id: str, contributor_id: str) -> str:
     """
-    Retrieves a contributor's preferences, stats, and trip record.
+    Retrieves a contributor's preferences, stats, and event record for one session.
     """
-    store = MemoryBankStore()
+    store = MemoryBankStore(session_id)
     profile = store.get_contributor_profile(contributor_id)
     if not profile:
         return json.dumps({"error": f"Contributor {contributor_id} not found."})
     return json.dumps(profile)
 
-def recommend_missed_moments(contributor_id: str, trip_manifest_json: str) -> str:
+def recommend_missed_moments(session_id: str, contributor_id: str, trip_manifest_json: str) -> str:
     """
-    Compares a contributor's profile history with the entire trip photo manifest.
-    Identifies moments where this contributor was absent, and returns the top-scored
-    photo from each of those moments so they can catch up.
+    Compares a contributor's profile history (within one event session) with the
+    full photo manifest for that session. Identifies moments where this contributor
+    was absent, and returns the top-scored photo from each of those moments so they
+    can catch up.
     """
-    store = MemoryBankStore()
+    store = MemoryBankStore(session_id)
     profile = store.get_contributor_profile(contributor_id)
     if not profile:
         return json.dumps({"message": "No profile history found for recommendations."})

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "memoryweaver",
+      "runtimeExecutable": "memoryweaver/.venv/bin/python",
+      "runtimeArgs": ["-m", "uvicorn", "app.fast_api_app:app", "--port", "8090", "--app-dir", "memoryweaver"],
+      "port": 8090
+    }
+  ]
+}

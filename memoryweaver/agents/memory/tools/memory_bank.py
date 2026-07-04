@@ -6,15 +6,16 @@ from app.app_utils.storage import StorageHelper
 MEMORY_FILE = "memory_bank.json"
 
 class MemoryBankStore:
-    def __init__(self):
-        self.storage = StorageHelper()
+    def __init__(self, session_id: str = "default"):
+        self.session_id = session_id
+        self.storage = StorageHelper(session_id=session_id)
         self.local_path = os.path.join(self.storage.local_base, MEMORY_FILE)
         self.data = self._load()
 
     def _load(self) -> dict:
         if self.storage.use_gcs:
             try:
-                blob = self.storage.bucket.blob(f"memory/{MEMORY_FILE}")
+                blob = self.storage.bucket.blob(self.storage.gcs_path(MEMORY_FILE))
                 if blob.exists():
                     return json.loads(blob.download_as_string().decode())
             except Exception as e:
@@ -26,7 +27,7 @@ class MemoryBankStore:
                         return json.load(f)
                 except Exception as e:
                     print(f"Error loading local memory bank: {e}")
-        
+
         # Default empty memory structure
         return {
             "contributors": {},  # contributor_id -> profile
@@ -34,7 +35,8 @@ class MemoryBankStore:
                 "destination": "",
                 "duration_days": 0,
                 "participants": [],
-                "theme": ""
+                "theme": "",
+                "event_type": "trip",  # trip | birthday | wedding | sports_match | reunion | other
             }
         }
 
@@ -42,7 +44,7 @@ class MemoryBankStore:
         content_bytes = json.dumps(self.data, indent=2).encode()
         if self.storage.use_gcs:
             try:
-                blob = self.storage.bucket.blob(f"memory/{MEMORY_FILE}")
+                blob = self.storage.bucket.blob(self.storage.gcs_path(MEMORY_FILE))
                 blob.upload_from_string(content_bytes)
             except Exception as e:
                 print(f"Error saving memory to GCS: {e}")
@@ -94,11 +96,12 @@ class MemoryBankStore:
     def get_trip_context(self) -> dict:
         return self.data["trip_context"]
 
-    def set_trip_context(self, destination: str, duration_days: int, participants: list[str], theme: str):
+    def set_trip_context(self, destination: str, duration_days: int, participants: list[str], theme: str, event_type: str = "trip"):
         self.data["trip_context"] = {
             "destination": destination,
             "duration_days": duration_days,
             "participants": participants,
-            "theme": theme
+            "theme": theme,
+            "event_type": event_type
         }
         self.save()
