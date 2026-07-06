@@ -9,6 +9,7 @@ from agents.curator.tools.embed import get_image_embedding, calculate_cosine_sim
 from agents.memory.tools.memory_bank import MemoryBankStore
 from agents.narrator.tools.journal import generate_all_moments_journal
 from agents.narrator.tools.story import generate_trip_story
+from app.app_utils.storage import StorageHelper
 
 CACHE_FILE = "curation_cache.json"
 
@@ -70,8 +71,14 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
     if not os.path.exists(uploads_dir):
         raise ValueError(f"Uploads directory not found at {uploads_dir}")
         
+    # Filter out photos excluded by the user
+    from app.app_utils.sessions import SessionStore
+    store = SessionStore()
+    session = store.get_session(session_id)
+    excluded = set(session.get("excluded_photos", [])) if session else set()
+
     photos = [f for f in os.listdir(uploads_dir) 
-              if f.lower().endswith(('.jpg', '.jpeg', '.png', '.heic'))]
+              if f.lower().endswith(('.jpg', '.jpeg', '.png', '.heic')) and f not in excluded]
               
     if not photos:
         raise ValueError("No photos found in the upload pool. Upload photos first.")
@@ -115,6 +122,9 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
         lock = threading.Lock()
         progress = {"count": 0}
         
+        if progress_callback:
+            progress_callback(0, len(uncached_photos), "moderation")
+            
         def process_moderation_batch(batch):
             res_list = run_vision_moderation_batch(batch)
             
@@ -181,6 +191,9 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
         lock = threading.Lock()
         progress = {"count": 0}
         
+        if progress_callback:
+            progress_callback(0, len(uncached_approved), "embedding")
+            
         def embed_photo(item):
             photo, path = item
             emb = get_image_embedding(path)
@@ -260,6 +273,9 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
         lock = threading.Lock()
         progress = {"count": 0}
         
+        if progress_callback:
+            progress_callback(0, len(uncached_unique), "scoring")
+            
         def process_scoring_batch(batch):
             res_list = score_photos_as_judge_batch(batch)
             
@@ -426,6 +442,9 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
     log("Starting Phase 5: Batched Narrator Agent synthesis (single API call)...")
     p5_start = time.time()
     
+    if progress_callback:
+        progress_callback(0, 100, "journaling")
+        
     batched_moments_data = []
     for scene, items in sorted_moments:
         items.sort(key=lambda x: x["score"], reverse=True)

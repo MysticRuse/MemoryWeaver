@@ -142,8 +142,37 @@ class SessionStore:
 
         return session
 
+    def update_session(self, session_id: str, updates: dict):
+        """Updates properties of a session and saves the registry."""
+        if session_id in self.data["sessions"]:
+            self.data["sessions"][session_id].update(updates)
+            self._save()
+            return self.data["sessions"][session_id]
+        return None
+
     def list_sessions(self) -> list[dict]:
         return sorted(self.data["sessions"].values(), key=lambda s: s.get("created_at", ""), reverse=True)
 
     def get_session(self, session_id: str) -> dict | None:
         return self.data["sessions"].get(session_id)
+
+    def delete_session(self, session_id: str):
+        """Admin-only: Deletes the session metadata and all its local or GCS storage recursively."""
+        if session_id == DEFAULT_SESSION_ID:
+            raise ValueError("The default session cannot be deleted.")
+        if session_id in self.data["sessions"]:
+            del self.data["sessions"][session_id]
+            self._save()
+        
+        if self.use_gcs:
+            try:
+                prefix = f"sessions/{session_id}/"
+                blobs = self._bucket.list_blobs(prefix=prefix)
+                for blob in blobs:
+                    blob.delete()
+            except Exception as e:
+                print(f"Error deleting GCS session prefix: {e}")
+        else:
+            import shutil
+            session_path = os.path.join(self.local_base, "sessions", session_id)
+            shutil.rmtree(session_path, ignore_errors=True)

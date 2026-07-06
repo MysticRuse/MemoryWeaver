@@ -348,6 +348,46 @@ def delete_photo(filename: str = Form(...), session_id: str = Form("default")):
     except Exception as e:
         return {"status": "error", "message": f"Failed to delete file: {str(e)}"}
 
+@app.post("/api/clear-session", dependencies=[Depends(require_admin_token)])
+def clear_session(session_id: str = "default"):
+    """Admin-only: clears all uploaded photos, thumbnails, and generated artefacts for a session."""
+    try:
+        session_storage = StorageHelper(session_id=session_id)
+        import shutil
+        shutil.rmtree(os.path.join(session_storage.local_base, "uploads"), ignore_errors=True)
+        shutil.rmtree(os.path.join(session_storage.local_base, "thumbs"), ignore_errors=True)
+        shutil.rmtree(os.path.join(session_storage.local_base, "artefacts"), ignore_errors=True)
+        # Recreate empty uploads/thumbs directories
+        os.makedirs(os.path.join(session_storage.local_base, "uploads"), exist_ok=True)
+        os.makedirs(os.path.join(session_storage.local_base, "thumbs"), exist_ok=True)
+        
+        # Reset progress states
+        state = _get_progress_state(session_id)
+        state["pipeline"] = {"current": 0, "total": 0, "status": "idle", "phase": "initiating", "start_time": 0.0}
+        
+        return {"status": "success", "message": "Session storage cleared successfully."}
+    except Exception as e:
+        return {"status": "error", "message": f"Failed to clear session: {str(e)}"}
+
+@app.post("/api/delete-session", dependencies=[Depends(require_admin_token)])
+def delete_session(session_id: str = Form(...)):
+    """Admin-only: Deletes the entire session metadata and all of its uploaded files."""
+    if session_id == "default":
+        return {"status": "error", "message": "The default session cannot be deleted."}
+    try:
+        store = SessionStore()
+        store.delete_session(session_id)
+        
+        # Reset progress state & logs
+        if session_id in progress_state_by_session:
+            del progress_state_by_session[session_id]
+        if session_id in pipeline_logs_by_session:
+            del pipeline_logs_by_session[session_id]
+            
+        return {"status": "success", "message": f"Session '{session_id}' has been deleted successfully."}
+    except Exception as e:
+        return {"status": "error", "message": f"Failed to delete session: {str(e)}"}
+
 
 # ------------------------------------------------------------------
 # Session state
@@ -360,8 +400,6 @@ def delete_photo(filename: str = Form(...), session_id: str = Form("default")):
 # "default", which preserves the original single-session behavior for
 # callers that don't pass one yet.
 # ------------------------------------------------------------------
-selected_folder_paths: dict[str, str] = {}
-pre_clean_results_by_session: dict[str, dict] = {}
 progress_state_by_session: dict[str, dict] = {}
 pipeline_logs_by_session: dict[str, list] = {}
 
@@ -428,36 +466,7 @@ def get_session(session_id: str):
     return {"status": "success", "session": public_view(session)}
 
 
-@app.post("/api/select-folder", dependencies=[Depends(require_admin_token)])
-def select_folder(session_id: str = "default"):
-    """Opens a native macOS Finder folder selector and returns file count.
 
-    Local development convenience only (bulk-import from a Google Photos export
-    folder on the operator's Mac) - not part of the deployed/public upload flow,
-    which is the browser-based /upload endpoint instead.
-    """
-    try:
-        import subprocess
-        # Run AppleScript to open folder picker natively on macOS
-        cmd = "osascript -e 'POSIX path of (choose folder with prompt \"Select Google Photos Folder\")'"
-        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = proc.communicate()
-
-        if proc.returncode == 0:
-            folder = stdout.decode('utf-8').strip()
-            if folder and os.path.exists(folder):
-                selected_folder_paths[session_id] = folder
-                files = [f for f in os.listdir(folder)
-                         if f.lower().endswith(('.jpg', '.jpeg', '.png', '.heic'))]
-                return {"status": "success", "folder": folder, "count": len(files)}
-        return {"status": "error", "message": "No folder selected or canceled"}
-    except Exception as e:
-        return {"status": "error", "message": f"Folder selector failed: {str(e)}"}
-
-@app.post("/api/set-folder", dependencies=[Depends(require_admin_token)])
-def set_folder(folder: str, session_id: str = "default"):
-    selected_folder_paths[session_id] = folder
-    return {"status": "success", "folder": folder}
 
 @app.get("/api/progress")
 def get_progress(session_id: str = "default"):
@@ -472,174 +481,12 @@ def get_progress(session_id: str = "default"):
             resp[key]["elapsed"] = round(time.time() - val["start_time"], 1)
         else:
             resp[key]["elapsed"] = 0.0
-    resp["folder"] = selected_folder_paths.get(session_id)
+    resp["folder"] = None
     resp["session_id"] = session_id
-    # Capability flag: the bulk local-folder wizard shells out to the macOS
-    # Finder picker, so the admin UI hides that tab anywhere it can't work.
-    resp["is_local"] = sys.platform == "darwin" and not os.environ.get("K_SERVICE")
+    resp["is_local"] = False
     return resp
 
-def run_pre_clean_background(session_id: str, folder: str, blur_threshold: float, dup_threshold: int):
-    state = _get_progress_state(session_id)
-    pipeline_logs_by_session[session_id] = []
-    log_pipeline_step(session_id, f"Starting Local Pre-Cleaning Analysis on folder: {folder}")
 
-    import time
-    start_time = time.time()
-    last_log_pct = -5
-
-    def pre_clean_progress(current, total):
-        state["pre_clean"]["current"] = current
-        state["pre_clean"]["total"] = total
-
-        nonlocal last_log_pct
-        pct = int((current / total) * 100) if total > 0 else 0
-        if pct >= last_log_pct + 5 or current == total:
-            last_log_pct = pct
-            elapsed = time.time() - start_time
-            log_pipeline_step(session_id, f"Pre-Clean Progress: {pct}% ({current}/{total}) • {elapsed:.1f}s elapsed")
-
-    from pipeline.local_cleaner import analyze_directory
-    try:
-        res = analyze_directory(
-            folder,
-            blur_threshold,
-            dup_threshold,
-            progress_callback=pre_clean_progress
-        )
-        pre_clean_results_by_session[session_id] = res
-        total_time = time.time() - start_time
-        state["pre_clean"]["summary"] = {
-            "elapsed_seconds": round(total_time, 1),
-            "accepted_count": len(res['accepted']),
-            "rejected_count": len(res['rejected'])
-        }
-        state["pre_clean"]["status"] = "complete"
-        log_pipeline_step(session_id, f"Local Pre-Cleaning Analysis complete! Kept {len(res['accepted'])} accepted and excluded {len(res['rejected'])} duplicates/blurry files in {total_time:.1f}s.")
-    except Exception as e:
-        state["pre_clean"]["status"] = "error"
-        state["pre_clean"]["error_msg"] = str(e)
-        log_pipeline_step(session_id, f"Pre-Cleaning FAILED: {str(e)}")
-
-@app.post("/api/pre-clean", dependencies=[Depends(require_admin_token)])
-def run_pre_clean(background_tasks: BackgroundTasks, session_id: str = "default", blur_threshold: float = 12.0, dup_threshold: int = 8):
-    """Triggers the local_cleaner.py analysis in the background for a session's selected folder."""
-    folder = selected_folder_paths.get(session_id)
-    if not folder:
-        return {"status": "error", "message": "No folder selected. Please select a folder first."}
-
-    # Synchronously reset to running state to prevent frontend from reading 'complete' from a previous run
-    import time
-    state = _get_progress_state(session_id)
-    state["pre_clean"] = {
-        "current": 0,
-        "total": 0,
-        "status": "running",
-        "start_time": time.time()
-    }
-
-    background_tasks.add_task(run_pre_clean_background, session_id, folder, blur_threshold, dup_threshold)
-    return {"status": "success", "message": "Pre-clean analysis started in the background."}
-
-@app.get("/api/pre-clean-results")
-def get_pre_clean_results(session_id: str = "default"):
-    """Returns the completed accepted/rejected pre-clean lists for a session."""
-    return pre_clean_results_by_session.get(session_id, {"accepted": [], "rejected": []})
-
-@app.get("/api/serve-raw")
-def serve_raw_file(filename: str, session_id: str = "default"):
-    """Streams local images from the session's selected folder, converting HEIC on-the-fly."""
-    folder = selected_folder_paths.get(session_id)
-    if not folder:
-        return {"status": "error", "message": "No folder selected"}
-
-    safe_filename = os.path.basename(filename)
-    full_path = os.path.join(folder, safe_filename)
-    
-    if os.path.exists(full_path):
-        if safe_filename.lower().endswith('.heic'):
-            try:
-                from PIL import Image
-                from pillow_heif import register_heif_opener
-                import io
-                from fastapi.responses import Response
-                
-                register_heif_opener()
-                with Image.open(full_path) as im:
-                    buf = io.BytesIO()
-                    im.save(buf, format="JPEG", quality=75)
-                    return Response(content=buf.getvalue(), media_type="image/jpeg")
-            except Exception as e:
-                return {"status": "error", "message": f"HEIC conversion failed: {str(e)}"}
-                
-        from fastapi.responses import FileResponse
-        return FileResponse(full_path)
-    return {"status": "error", "message": "File not found"}
-
-@app.post("/api/confirm-ingest", dependencies=[Depends(require_admin_token)])
-def confirm_ingest(req: IngestRequest):
-    """Copies the approved accepted photo list into one session's uploads/ storage."""
-    folder = selected_folder_paths.get(req.session_id)
-    if not folder:
-        return {"status": "error", "message": "No active folder session."}
-
-    try:
-        import shutil
-        import hashlib
-        from PIL import Image
-        from agents.memory.tools.memory_bank import MemoryBankStore
-        from pipeline.local_cleaner import get_exif_metadata
-
-        session_storage = StorageHelper(session_id=req.session_id)
-        upload_dir = os.path.join(session_storage.local_base, "uploads")
-        thumb_dir = os.path.join(session_storage.local_base, "thumbs")
-
-        # Clear existing uploads/thumbs for this session before re-ingesting
-        shutil.rmtree(upload_dir, ignore_errors=True)
-        shutil.rmtree(thumb_dir, ignore_errors=True)
-        os.makedirs(upload_dir, exist_ok=True)
-        os.makedirs(thumb_dir, exist_ok=True)
-
-        store = MemoryBankStore(req.session_id)
-        ingested = []
-
-        for filename in req.filenames:
-            src_path = os.path.join(folder, filename)
-            if not os.path.exists(src_path):
-                continue
-                
-            # Resolve uploader/contributor info
-            meta = get_exif_metadata(src_path)
-            uploader_name = meta["uploader"]
-            contributor_id = hashlib.sha256(uploader_name.strip().lower().encode()).hexdigest()[:12]
-            
-            # Map name in Memory Bank
-            store.upsert_contributor(contributor_id, uploader_name, [], 0)
-            
-            # Copy file with a STABLE name: contributor hash + original filename.
-            # Names must be deterministic across re-ingests - the journal,
-            # highlights, and curation cache all reference photos by filename,
-            # so the previous wall-clock timestamp prefix orphaned every
-            # generated artifact (and invalidated the paid-for scoring cache)
-            # whenever ingest was re-run.
-            unique_name = f"{contributor_id}_{filename}"
-            dest_path = os.path.join(upload_dir, unique_name)
-            
-            shutil.copy2(src_path, dest_path)
-            
-            # Generate thumbnail locally for viewer page performance
-            try:
-                with Image.open(dest_path) as img:
-                    img.thumbnail((200, 200))
-                    img.save(os.path.join(thumb_dir, unique_name))
-            except:
-                pass
-                
-            ingested.append(filename)
-            
-        return {"status": "success", "ingested_count": len(ingested)}
-    except Exception as e:
-        return {"status": "error", "message": f"Ingestion failed: {str(e)}"}
 
 @app.get("/trip-stats")
 def get_trip_stats(session_id: str = "default"):
@@ -658,6 +505,34 @@ def get_trip_stats(session_id: str = "default"):
         return {"status": "error", "message": str(e)}
 
 
+@app.get("/api/list-uploads", dependencies=[Depends(require_admin_token)])
+def list_uploads(session_id: str = "default"):
+    """Lists the filenames of all uploaded photos in a session."""
+    try:
+        session_storage = StorageHelper(session_id=session_id)
+        upload_dir = os.path.join(session_storage.local_base, "uploads")
+        photos = []
+        if os.path.exists(upload_dir):
+            photos = sorted([
+                f for f in os.listdir(upload_dir)
+                if os.path.isfile(os.path.join(upload_dir, f)) and not f.startswith('.')
+            ])
+        return {"status": "success", "photos": photos, "session_id": session_id}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@app.post("/api/exclude-photos", dependencies=[Depends(require_admin_token)])
+def exclude_photos(session_id: str = Form(...), filenames: str = Form("")):
+    """Saves the list of excluded filenames for a session (comma-separated)."""
+    try:
+        store = SessionStore()
+        # Parse comma-separated filenames
+        exclude_list = [f.strip() for f in filenames.split(",") if f.strip()]
+        store.update_session(session_id, {"excluded_photos": exclude_list})
+        return {"status": "success", "message": f"Updated excluded list with {len(exclude_list)} photos."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 
 @app.post("/upload")
