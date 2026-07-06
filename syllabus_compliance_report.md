@@ -1,7 +1,7 @@
 # 🎓 MemoryWeaver: Syllabus Compliance & Architecture Report
 ### *A Granular Plain-English Explainer for the 5-Day Vibe Coding Course (50/50 Total Score)*
 
-This document is a comprehensive evaluation of how the MemoryWeaver codebase on the `famiyandfriends-hironmoy` branch aligns with the requirements of the **Vibe Coding - 5 Days Intensive Course**.
+This document is a comprehensive evaluation of how the MemoryWeaver codebase on the `fnfevents-hironmoy` branch aligns with the requirements of the **Vibe Coding - 5 Days Intensive Course**.
 
 ---
 
