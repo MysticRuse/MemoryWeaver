@@ -490,6 +490,71 @@
             border-color: var(--accent);
             background: rgba(255, 123, 0, 0.05);
         }
+
+        /* Mobile Responsiveness for Event Creator */
+        @media (max-width: 768px) {
+            #create-event-form > div {
+                grid-template-columns: 1fr !important;
+                gap: 10px !important;
+            }
+            #create-event-form button {
+                width: 100% !important;
+            }
+        }
+
+        /* Uploaded Photo Pool Card styling */
+        .pool-photo-card {
+            position: relative;
+            width: 100%;
+            padding-bottom: 100%; /* force 1:1 aspect ratio */
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: #151515;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .pool-photo-card:hover {
+            transform: scale(1.02);
+            border-color: var(--accent);
+        }
+        .pool-photo-card img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .pool-photo-card .overlay-btn {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: rgba(20, 20, 20, 0.85);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            color: #fff;
+            transition: all 0.2s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            z-index: 2;
+        }
+        .pool-photo-card .overlay-btn:hover {
+            transform: scale(1.1);
+        }
+        .pool-photo-card .overlay-btn.exclude-btn:hover {
+            background: var(--danger) !important;
+            border-color: var(--danger) !important;
+        }
+        .pool-photo-card .overlay-btn.include-btn:hover {
+            background: var(--success) !important;
+            border-color: var(--success) !important;
+        }
     </style>
 </head>
 <body>
@@ -510,20 +575,21 @@
                     <select id="session-select" class="input-text" style="width: 100%; padding: 8px 10px;" onchange="onSessionSwitched(this)"></select>
                 </div>
                 <button class="btn btn-primary" style="padding: 8px 16px;" onclick="toggleCreateEvent(true)">➕ New Event</button>
+                <button id="btnDeleteEvent" class="btn" style="padding: 8px 16px; background: rgba(231, 76, 60, 0.1); border-color: rgba(231, 76, 60, 0.2); color: var(--danger); display: none;" onclick="deleteActiveEvent()">🗑️ Delete Event</button>
             </div>
             <!-- Inline create form, hidden until "New Event" is clicked -->
             <div id="create-event-form" style="display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1);">
-                <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
-                    <div style="flex: 2; min-width: 180px;">
+                <div style="display: grid; grid-template-columns: 2fr 1fr auto auto; gap: 12px; align-items: end;">
+                    <div>
                         <label style="display:block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Event name</label>
-                        <input type="text" id="new-event-name" class="input-text" style="width: 100%; padding: 8px 10px;" placeholder="e.g. Bali Family Trip, Ari's 8th Birthday">
+                        <input type="text" id="new-event-name" class="input-text" style="width: 100%; box-sizing: border-box; padding: 8px 10px;" placeholder="e.g. Bali Family Trip, Ari's 8th Birthday">
                     </div>
-                    <div style="flex: 1; min-width: 140px;">
+                    <div>
                         <label style="display:block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Event type</label>
-                        <select id="new-event-type" class="input-text" style="width: 100%; padding: 8px 10px;"></select>
+                        <select id="new-event-type" class="input-text" style="width: 100%; box-sizing: border-box; padding: 8px 10px;"></select>
                     </div>
-                    <button class="btn btn-primary" style="padding: 8px 16px;" onclick="createEventSession()">Create</button>
-                    <button class="btn" style="padding: 8px 16px;" onclick="toggleCreateEvent(false)">Cancel</button>
+                    <button class="btn btn-primary" style="padding: 8px 16px; min-height: 35px;" onclick="createEventSession()">Create</button>
+                    <button class="btn" style="padding: 8px 16px; min-height: 35px;" onclick="toggleCreateEvent(false)">Cancel</button>
                 </div>
                 <div id="create-event-status" style="margin-top: 8px; font-size: 12px; color: var(--text-muted);"></div>
             </div>
@@ -549,158 +615,52 @@
         </div>
 
         <div class="card">
-            <div class="tabs-header" id="bulk-tab-header" style="display: none;">
-                <button class="tab-btn active">📁 Bulk Local Ingestion (this machine)</button>
+            <div style="font-weight: 700; font-size: 1.2rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                <span>📸 Add Photos to Session</span>
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 16px 0;">
+                Ingest photos directly through the browser. Duplicates and non-image files are automatically skipped.
+            </p>
+
+            <div class="upload-zone" onclick="document.getElementById('file-input').click()">
+                <div style="font-size: 2.4rem; margin-bottom: 8px;">📸</div>
+                <div style="font-weight: 600;">Tap to choose photos</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">JPEG, PNG, or HEIC - straight from your local files</div>
+                <input type="file" id="file-input" multiple accept=".jpg,.jpeg,.png,.heic,image/*" style="display: none;" onchange="uploadFiles(this.files)">
             </div>
 
-            <!-- Bulk Ingest wizard: shown only when the server runs locally on
-                 macOS (is_local flag) - the Finder picker can't work deployed. -->
-            <div id="bulk-tab" class="tab-content active" style="display: none;">
-                <!-- Step 1: Selection -->
-                <div class="wizard-step">
-                    <div class="step-title">
-                        <span class="step-num">1</span>
-                        Choose Google Photos Local Directory
-                    </div>
-                    <button class="btn btn-primary" id="btnSelectFolder" onclick="selectLocalFolder()">
-                        <span>Select Photo Folder</span>
-                    </button>
-                    <div id="folder-info" class="selected-folder-info" style="display: none;">
-                        <div>
-                            <strong style="color: #fff;" id="selectedPath">/path/to/folder</strong>
-                            <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-muted);" id="photoCount">Found 0 images</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Step 2: Local Pre-Clean -->
-                <div class="wizard-step" id="step-clean" style="display: none;">
-                    <div class="step-title">
-                        <span class="step-num">2</span>
-                        Perform Local Pre-Cleaning Analysis
-                    </div>
-                    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
-                        Filters out blurry images and groups burst duplicates locally before hitting the Gemini API. 
-                        <strong>Your source folder files will not be modified.</strong>
-                    </p>
-                    <button class="btn btn-primary" id="btnPreClean" onclick="runPreClean()">
-                        <span id="cleanBtnText">Run Pre-Clean Analysis</span>
-                        <div class="spinner" id="cleanSpinner" style="display: none;"></div>
-                    </button>
-
-                    <!-- Pre-Clean Progress Bar -->
-                    <div id="pre-clean-progress-container" class="progress-container" style="display: none;">
-                        <div class="progress-header">
-                            <span>Filtering blurry files & duplicate frames...</span>
-                            <span id="pre-clean-progress-text">0% (0/0)</span>
-                        </div>
-                        <div class="progress-track">
-                            <div id="pre-clean-progress-fill" class="progress-fill"></div>
-                        </div>
-                    </div>
-
-                    <!-- Pre-Clean Summary Dashboard -->
-                    <div id="pre-clean-summary" class="summary-card" style="display: none; background: rgba(0, 255, 100, 0.04); border: 1px solid rgba(0, 255, 100, 0.15); border-radius: 12px; padding: 1rem 1.5rem; margin-top: 1.5rem; display: none;">
-                        <div style="font-weight: 600; color: #10b981; margin-bottom: 0.5rem; font-size: 1rem;">⚡ Pre-Clean Complete</div>
-                        <div id="pre-clean-summary-details" style="font-size: 0.95rem; color: #d1d5db; display: flex; gap: 2rem;">
-                            <!-- populated dynamically -->
-                        </div>
-                    </div>
-
-                    <!-- Spacious HITL Workspace -->
-                    <div id="trays" class="workspace" style="display: none;">
-                        <div class="workspace-filters">
-                            <div class="filter-group">
-                                <div class="filter-toggle-buttons">
-                                    <button class="toggle-btn active accepted-toggle" id="tab-toggle-accepted" onclick="setWorkspaceView('accepted')">
-                                        🟢 Accepted (<span id="count-accepted">0</span>)
-                                    </button>
-                                    <button class="toggle-btn rejected-toggle" id="tab-toggle-rejected" onclick="setWorkspaceView('rejected')">
-                                        🔴 Rejected (<span id="count-rejected">0</span>)
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div class="filter-group">
-                                <select id="sort-order" class="select-input" onchange="applyFilters()">
-                                    <option value="similarity">📁 Group Duplicates / Bursts</option>
-                                    <option value="name">Sorted: Filename</option>
-                                </select>
-                                <select id="camera-filter" class="select-input" onchange="applyFilters()">
-                                    <option value="all">📷 All Camera Models</option>
-                                </select>
-                                <input type="text" id="search-filter" class="search-input" placeholder="🔍 Search filename..." oninput="applyFilters()">
-                            </div>
-                        </div>
-
-                        <!-- Main Photo Grid -->
-                        <div class="photo-grid" id="workspace-grid">
-                            <!-- Dynamic Photo Cards -->
-                        </div>
-
-                        <!-- Pagination -->
-                        <div class="pagination-bar">
-                            <button class="btn" style="padding: 6px 16px;" onclick="changePage(-1)">◀ Previous</button>
-                            <span class="page-info" id="pagination-info">Page 1 of 1</span>
-                            <button class="btn" style="padding: 6px 16px;" onclick="changePage(1)">Next ▶</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Step 3: Run Curation -->
-                <div class="wizard-step" id="step-curation" style="display: none;">
-                    <div class="step-title">
-                        <span class="step-num">3</span>
-                        Trigger Intelligent Agent Pipeline
-                    </div>
-                    <div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                        <label for="curation-limit" style="font-weight: 600; color: var(--text-main); font-size: 1rem;">Target Journal Size:</label>
-                        <select id="curation-limit" style="padding: 10px 20px; background: rgba(22, 28, 38, 0.9); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 20px; outline: none; font-weight: 600; cursor: pointer; font-family: 'Outfit', sans-serif;">
-                            <option value="20">20 Photos (Compact Diverse Summary)</option>
-                            <option value="30">30 Photos (Standard Balanced Journal)</option>
-                            <option value="50" selected>50 Photos (Detailed Extended Trip Book)</option>
-                            <option value="100">100 Photos (Comprehensive Archive)</option>
-                            <option value="0">Show All Photos</option>
-                        </select>
-                        <span style="font-size: 0.9rem; color: var(--text-muted);">(Applies diversity sampling to maximize coverage of places, food, and people)</span>
-                    </div>
-                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
-                        ⚠️ This copies the accepted folder files into the active event, <strong>replacing its current photo pool</strong>, then runs the pipeline.
-                        To curate photos already uploaded to this event, use "Run Agent Pipeline" below instead.
-                    </p>
-                    <button class="btn btn-primary" id="btnBuild" onclick="triggerCuration()" style="padding: 14px 30px; font-size: 1.1rem;">
-                        <span>Ingest Folder & Build Trip Book</span>
-                        <div class="spinner" id="buildSpinner" style="display: none;"></div>
-                    </button>
-
-                    <!-- Pipeline Progress Bar -->
-                    <div id="pipeline-progress-container" class="progress-container" style="display: none;">
-                        <div class="progress-header">
-                            <span id="pipeline-progress-phase">Running agent processing steps...</span>
-                            <span id="pipeline-progress-text">0% (0/0)</span>
-                        </div>
-                        <div class="progress-track">
-                            <div id="pipeline-progress-fill" class="progress-fill"></div>
-                        </div>
-                    </div>
-
-                    <!-- Pipeline Summary Dashboard -->
-                    <div id="pipeline-summary" class="summary-card" style="display: none; background: rgba(255, 123, 0, 0.05); border: 1px solid rgba(255, 123, 0, 0.2); border-radius: 12px; padding: 1.5rem; margin-top: 1.5rem;">
-                        <div style="font-weight: 600; color: var(--accent); margin-bottom: 1rem; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
-                            <span>✨ Curation Pipeline Complete!</span>
-                        </div>
-                        <div id="pipeline-summary-details" style="font-size: 0.95rem; color: #d1d5db; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
-                            <!-- populated dynamically -->
-                        </div>
-                    </div>
-                </div>
+            <!-- Folder picking convenience -->
+            <div class="upload-zone" id="folder-zone" style="margin-top: 12px; padding: 20px;" onclick="document.getElementById('folder-input').click()">
+                <div style="font-weight: 600;">💻 Upload a Whole Folder</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Photos inside the folder (JPEG/PNG/HEIC) are imported directly</div>
+                <input type="file" id="folder-input" webkitdirectory style="display: none;" onchange="uploadFiles(this.files)">
             </div>
+
+            <div id="upload-status" style="margin-top: 14px; font-size: 0.95rem; font-weight: 600; min-height: 1.2em; color: var(--accent);"></div>
+            
+            <!-- Collapsible Uploaded Photos Pool Tray -->
+            <details id="photo-pool-details" style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 14px;" ontoggle="if(this.open) loadUploadedPoolTray()">
+                <summary style="cursor: pointer; color: var(--accent); font-weight: 500; font-size: 13px; user-select: none;">
+                    📸 View Uploaded Photo Pool (Manage/Exclude Photos)
+                </summary>
+                <div style="margin-top: 12px; display: flex; gap: 8px;">
+                    <button class="toggle-btn active" id="btn-pool-included" style="padding: 4px 12px; font-size: 11px; border-radius: 12px;" onclick="switchPoolTab('included'); event.preventDefault(); event.stopPropagation();">Included</button>
+                    <button class="toggle-btn" id="btn-pool-excluded" style="padding: 4px 12px; font-size: 11px; border-radius: 12px;" onclick="switchPoolTab('excluded'); event.preventDefault(); event.stopPropagation();">Excluded</button>
+                </div>
+                <div id="uploaded-pool-tray" style="margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; max-height: 320px; overflow-y: auto; padding-right: 5px;">
+                    <div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1;">Click to expand and load photo pool...</div>
+                </div>
+            </details>
+        </div>
 
             <!-- Always-visible pipeline runner: curates whatever photos are
                  already in the ACTIVE EVENT (contributor uploads or a folder
                  ingest), without the destructive folder re-ingest above. -->
             <div style="margin-top: 20px; padding: 16px 20px; border: 1px solid var(--border-color); border-radius: 12px;">
-                <div style="font-weight: 700; margin-bottom: 6px;">⚡ Run Agent Pipeline on This Event</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <div style="font-weight: 700;">⚡ Run Agent Pipeline on This Event</div>
+                    <button class="btn" style="padding: 4px 12px; font-size: 11px; background: rgba(231, 76, 60, 0.1); border-color: rgba(231, 76, 60, 0.2); color: var(--danger);" onclick="clearSessionPhotos()">🗑️ Clear Photo Pool</button>
+                </div>
                 <p id="pipeline-only-count" style="font-size: 13px; color: var(--text-muted); margin: 0 0 12px 0;">Checking photo count...</p>
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                     <select id="pipeline-only-limit" class="input-text" style="padding: 8px 12px;">
@@ -716,11 +676,22 @@
 
             <!-- Live Logger console -->
             <div class="console-container" id="console-area" style="display: none;">
+                <!-- Pipeline Progress Bar -->
+                <div id="pipeline-progress-container" class="progress-container" style="display: none; margin-bottom: 20px;">
+                    <div class="progress-header">
+                        <span id="pipeline-progress-phase" style="color: var(--accent);">Running agent processing steps...</span>
+                        <span id="pipeline-progress-text" style="color: var(--text-muted);">0% (0/0)</span>
+                    </div>
+                    <div class="progress-track">
+                        <div id="pipeline-progress-fill" class="progress-fill"></div>
+                    </div>
+                </div>
+
                 <div class="console-header">
                     <span class="console-title">Live Curation Logs</span>
                     <button class="btn" style="padding: 4px 12px; font-size: 11px;" onclick="document.getElementById('log-box').innerHTML = ''">Clear</button>
                 </div>
-                <div class="console-window" id="log-box">
+                <div class="console-window" id="log-box" style="white-space: pre-wrap;">
                     Welcome to the MemoryWeaver Curation terminal...
                 </div>
                 <div style="margin-top: 14px; text-align: center;">
@@ -731,6 +702,8 @@
     </div>
 
     <script>
+        let currentEventType = 'trip';
+        
         // ---- Event session handling (multi-event support) ----
         // The active session id lives in localStorage so it survives reloads and
         // is shared with the viewer page. A ?session=<id> URL param overrides it
@@ -789,9 +762,154 @@
             } catch (e) { /* leave placeholder text */ }
         }
 
+        async function clearSessionPhotos() {
+            if (!confirm("Are you sure you want to delete all uploaded photos and thumbnails in this event? This cannot be undone.")) return;
+            try {
+                const res = await fetch(withSession('/api/clear-session'), {
+                    method: 'POST',
+                    headers: authHeaders()
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    alert("Event photo pool cleared!");
+                    refreshPipelineOnlyCount();
+                } else {
+                    alert("Failed to clear session: " + (data.message || "Unknown error"));
+                }
+            } catch (e) {
+                alert("Error clearing session: " + e.message);
+            }
+        }
+
+        let poolView = "included";
+        
+        function switchPoolTab(view) {
+            poolView = view;
+            document.getElementById('btn-pool-included').classList.toggle('active', view === 'included');
+            document.getElementById('btn-pool-excluded').classList.toggle('active', view === 'excluded');
+            loadUploadedPoolTray();
+        }
+
+        async function setPhotoExclusion(filename, exclude) {
+            try {
+                // Fetch the current session to get the latest excluded list
+                const res = await fetch(`/api/sessions/${getSessionId()}`);
+                const data = await res.json();
+                if (data.status !== 'success') throw new Error(data.message);
+                
+                let list = data.session.excluded_photos || [];
+                if (exclude) {
+                    if (!list.includes(filename)) list.push(filename);
+                } else {
+                    list = list.filter(x => x !== filename);
+                }
+                
+                const formData = new FormData();
+                formData.append('session_id', getSessionId());
+                formData.append('filenames', list.join(','));
+                
+                const upRes = await fetch('/api/exclude-photos', {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: formData
+                });
+                const upData = await upRes.json();
+                if (upData.status === 'success') {
+                    loadUploadedPoolTray();
+                    refreshPipelineOnlyCount();
+                } else {
+                    alert("Error: " + upData.message);
+                }
+            } catch (err) {
+                alert("Failed to update exclusion: " + err.message);
+            }
+        }
+
+        async function loadUploadedPoolTray() {
+            const tray = document.getElementById('uploaded-pool-tray');
+            tray.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1;">Loading photo pool...</div>';
+            try {
+                const res = await fetch(withSession('/api/list-uploads'), { headers: authHeaders() });
+                if (handleAuthFailure(res)) {
+                    tray.innerHTML = '<div style="color: var(--danger); font-size: 13px; grid-column: 1/-1;">Unauthorized: Admin token required.</div>';
+                    return;
+                }
+                if (!res.ok) {
+                    const txt = await res.text();
+                    throw new Error(`HTTP ${res.status}: ${txt}`);
+                }
+                const data = await res.json();
+                if (data.status !== 'success') throw new Error(data.message || data.detail || 'Unknown error');
+                
+                // Fetch current session to filter by excluded list
+                const sRes = await fetch(`/api/sessions/${getSessionId()}`);
+                const sData = await sRes.json();
+                const excluded = sData.session ? (sData.session.excluded_photos || []) : [];
+                
+                const allPhotos = data.photos || [];
+                const includedCount = allPhotos.filter(x => !excluded.includes(x)).length;
+                const excludedCount = allPhotos.filter(x => excluded.includes(x)).length;
+
+                document.getElementById('btn-pool-included').textContent = `Included (${includedCount})`;
+                document.getElementById('btn-pool-excluded').textContent = `Excluded (${excludedCount})`;
+
+                let photos = [];
+                if (poolView === 'included') {
+                    photos = allPhotos.filter(x => !excluded.includes(x));
+                } else {
+                    photos = allPhotos.filter(x => excluded.includes(x));
+                }
+                
+                if (photos.length === 0) {
+                    tray.innerHTML = `<div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1;">No photos in this section.</div>`;
+                    return;
+                }
+                
+                tray.innerHTML = '';
+                photos.forEach(filename => {
+                    const card = document.createElement('div');
+                    card.className = 'pool-photo-card';
+                    
+                    const img = document.createElement('img');
+                    img.src = `/media?filename=${encodeURIComponent(filename)}&session_id=${encodeURIComponent(getSessionId())}`;
+                    img.loading = 'lazy';
+                    
+                    const btn = document.createElement('button');
+                    btn.className = 'overlay-btn';
+                    
+                    if (poolView === 'included') {
+                        btn.classList.add('exclude-btn');
+                        btn.innerHTML = '❌';
+                        btn.title = 'Exclude from curation';
+                        btn.onclick = (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setPhotoExclusion(filename, true);
+                        };
+                    } else {
+                        btn.classList.add('include-btn');
+                        btn.innerHTML = '➕';
+                        btn.title = 'Include in curation';
+                        btn.onclick = (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setPhotoExclusion(filename, false);
+                        };
+                    }
+                    
+                    card.appendChild(img);
+                    card.appendChild(btn);
+                    tray.appendChild(card);
+                });
+            } catch (err) {
+                tray.innerHTML = `<div style="color: var(--danger); font-size: 13px; grid-column: 1/-1;">Error: ${err.message}</div>`;
+            }
+        }
+
         async function runPipelineOnly() {
             const logBox = document.getElementById('log-box');
             document.getElementById('console-area').style.display = 'block';
+            document.getElementById('pipeline-progress-container').style.display = 'block';
             logBox.innerHTML = 'Starting agent pipeline on the photos already in this event...\n';
 
             const limitVal = document.getElementById('pipeline-only-limit').value;
@@ -821,7 +939,7 @@
                     const opt = document.createElement('option');
                     opt.value = s.session_id;
                     opt.textContent = `${EVENT_EMOJI[s.event_type] || '📸'} ${s.name} (${s.event_type.replace('_', ' ')})`;
-                    if (s.session_id === active) { opt.selected = true; activeType = s.event_type; }
+                    if (s.session_id === active) { opt.selected = true; activeType = s.event_type; currentEventType = s.event_type; }
                     sel.appendChild(opt);
                 });
                 document.getElementById('session-emoji').textContent = EVENT_EMOJI[activeType] || '📸';
@@ -834,8 +952,51 @@
                     opt.textContent = `${EVENT_EMOJI[t] || '📸'} ${t.replace('_', ' ')}`;
                     typeSel.appendChild(opt);
                 });
+                
+                // Toggle delete button visibility based on whether the active session is default
+                const deleteBtn = document.getElementById('btnDeleteEvent');
+                if (deleteBtn) {
+                    deleteBtn.style.display = (active === 'default') ? 'none' : 'inline-block';
+                }
             } catch (e) {
                 console.error('Failed to load sessions:', e);
+            }
+        }
+
+        async function deleteActiveEvent() {
+            const active = getSessionId();
+            if (active === 'default') {
+                alert("The default event cannot be deleted.");
+                return;
+            }
+            if (!confirm(`Are you sure you want to delete the active event? This will permanently delete all metadata, uploaded photos, and generated stories for this session. This action cannot be undone!`)) return;
+
+            try {
+                const formData = new FormData();
+                formData.append('session_id', active);
+                const res = await fetch('/api/delete-session', {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    // Clear the share card URL and hide the QR code before reloading
+                    const urlInput = document.getElementById('share-url');
+                    if (urlInput) urlInput.value = '';
+                    const qr = document.getElementById('share-qr');
+                    if (qr) {
+                        qr.src = '';
+                        qr.style.display = 'none';
+                    }
+                    alert("Event deleted successfully!");
+                    localStorage.setItem('mw_session_id', 'default');
+                    window.location.href = '/';
+                } else {
+                    alert("Failed to delete event: " + (data.message || "Unknown error"));
+                }
+            } catch (e) {
+                alert("Error deleting event: " + e.message);
             }
         }
 
@@ -887,6 +1048,49 @@
         let pollingInterval = null;
         let progressInterval = null;
 
+        function showPipelineSummary(summ) {
+            if (!summ) return;
+            let summaryDiv = document.getElementById('pipeline-summary');
+            if (!summaryDiv) {
+                summaryDiv = document.createElement('div');
+                summaryDiv.id = 'pipeline-summary';
+                summaryDiv.className = 'summary-card';
+                summaryDiv.style.background = 'rgba(255, 123, 0, 0.05)';
+                summaryDiv.style.border = '1px solid rgba(255, 123, 0, 0.2)';
+                summaryDiv.style.borderRadius = '12px';
+                summaryDiv.style.padding = '1.5rem';
+                summaryDiv.style.marginTop = '1.5rem';
+                summaryDiv.style.marginBottom = '1.5rem';
+                
+                const consoleArea = document.getElementById('console-area');
+                if (consoleArea) {
+                    consoleArea.parentNode.insertBefore(summaryDiv, consoleArea);
+                }
+            }
+            
+            const modCalls = Math.ceil((summ.uncached_moderated || 0) / 50);
+            const scoreCalls = Math.ceil((summ.uncached_scored || 0) / 15);
+            const totalCalls = modCalls + scoreCalls + 1; // +1 for batched narrator journaling call
+
+            summaryDiv.innerHTML = `
+                <div style="font-weight: 600; color: var(--accent); margin-bottom: 1rem; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                    <span>✨ Curation Complete!</span>
+                </div>
+                <div id="pipeline-summary-details" style="font-size: 0.95rem; color: #d1d5db; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+                    <div>⏱️ <strong>Duration:</strong> ${summ.elapsed_seconds}s</div>
+                    <div>📸 <strong>Uncached Photos:</strong> ${summ.uncached_moderated} moderated / ${summ.uncached_scored} scored</div>
+                    <div>📡 <strong>API Calls:</strong> ${totalCalls} total (${modCalls} mod / ${scoreCalls} score / 1 synthesis)</div>
+                    <div>📖 <strong>Journal size:</strong> ${summ.moments_count} Daily Moments</div>
+                    <div>💰 <strong>Estimated cost:</strong> $${summ.estimated_cost.toFixed(4)}</div>
+                </div>
+                <div style="margin-top: 1.5rem; text-align: center;">
+                    <a href="${viewerHref()}" id="summary-viewer-btn" class="btn btn-primary" style="padding: 12px 30px; font-size: 1.1rem; box-shadow: 0 0 15px rgba(255, 123, 0, 0.4); text-decoration: none; border-radius: 8px;">📖 Open Curation Viewer</a>
+                    <button onclick="showStoryModal()" class="btn" style="padding: 12px 30px; font-size: 1.1rem; border-radius: 8px; margin-left: 10px; background: rgba(0, 255, 100, 0.1); border-color: rgba(0, 255, 100, 0.2); color: #10b981;">📝 Read ${getEventTypeName()} Story</button>
+                </div>
+            `;
+            summaryDiv.style.display = 'block';
+        }
+
         // Auto-detect and sync with active backend tasks on page load/refresh
         window.addEventListener('DOMContentLoaded', async () => {
             loadSessionBar();
@@ -900,140 +1104,25 @@
                 const res = await fetch(withSession('/api/progress'));
                 const progress = await res.json();
                 
-                // Load active folder path if set in backend
-                if (progress.folder) {
-                    currentFolder = progress.folder;
-                    document.getElementById('selectedPath').textContent = currentFolder;
-                    document.getElementById('folder-info').style.display = 'block';
-                    document.getElementById('step-clean').style.display = 'block';
-                }
-                
-                // If pre-clean is already running on the server
-                if (progress.pre_clean && progress.pre_clean.status === 'running') {
-                    document.getElementById('pre-clean-progress-container').style.display = 'block';
-                    document.getElementById('console-area').style.display = 'block';
-                    
-                    const btn = document.getElementById('btnPreClean');
-                    const spinner = document.getElementById('cleanSpinner');
-                    const btnText = document.getElementById('cleanBtnText');
-                    
-                    btn.disabled = true;
-                    spinner.style.display = 'inline-block';
-                    btnText.textContent = 'Analyzing Sharpness & Duplicates...';
-                    
-                    startProgressPolling('pre_clean');
-                    startLogPolling();
-                    
-                    const checkCompletion = setInterval(async () => {
-                        const progRes = await fetch(withSession('/api/progress'));
-                        const progData = await progRes.json();
-                        const state = progData['pre_clean'];
-                        
-                        if (state.status === 'complete') {
-                            clearInterval(checkCompletion);
-                            stopProgressPolling('pre_clean');
-                            
-                            const resultRes = await fetch(withSession('/api/pre-clean-results'));
-                            const results = await resultRes.json();
-                            acceptedList = results.accepted || [];
-                            rejectedList = results.rejected || [];
-                            
-                            currentPage = 1;
-                            populateCameraFilter();
-                            applyFilters();
-                            
-                            document.getElementById('pre-clean-progress-container').style.display = 'none';
-                            document.getElementById('trays').style.display = 'block';
-                            document.getElementById('step-curation').style.display = 'block';
-                            btn.disabled = false;
-                            spinner.style.display = 'none';
-                            btnText.textContent = 'Run Pre-Clean Analysis';
-                        } else if (state.status === 'error') {
-                            clearInterval(checkCompletion);
-                            stopProgressPolling('pre_clean');
-                            alert("Pre-cleaning encountered an error: " + (state.error_msg || "Unknown error"));
-                            btn.disabled = false;
-                            spinner.style.display = 'none';
-                            btnText.textContent = 'Run Pre-Clean Analysis';
-                        }
-                    }, 500);
-                } else if (progress.pre_clean && progress.pre_clean.status === 'complete') {
-                    // Pre-clean is complete, fetch and show results automatically
-                    const resultRes = await fetch(withSession('/api/pre-clean-results'));
-                    const results = await resultRes.json();
-                    if (results && ((results.accepted && results.accepted.length > 0) || (results.rejected && results.rejected.length > 0))) {
-                        acceptedList = results.accepted || [];
-                        rejectedList = results.rejected || [];
-                        
-                        currentPage = 1;
-                        populateCameraFilter();
-                        applyFilters();
-                        
-                        document.getElementById('step-clean').style.display = 'block';
-                        document.getElementById('pre-clean-progress-container').style.display = 'none';
-                        document.getElementById('trays').style.display = 'block';
-                        document.getElementById('step-curation').style.display = 'block';
-                        
-                        if (progress.pre_clean.summary) {
-                            const summ = progress.pre_clean.summary;
-                            document.getElementById('pre-clean-summary').style.display = 'block';
-                            document.getElementById('pre-clean-summary-details').innerHTML = `
-                                <div><strong>⏱️ Duration:</strong> ${summ.elapsed_seconds}s</div>
-                                <div><strong>🟢 Accepted:</strong> ${summ.accepted_count} photos</div>
-                                <div><strong>🔴 Excluded (Blurry/Duplicate):</strong> ${summ.rejected_count} photos</div>
-                            `;
-                        }
-                    }
-                }
-                
                 // If pipeline curation is running or complete on the server
                 if (progress.pipeline) {
                     if (progress.pipeline.status === 'running') {
                         document.getElementById('pipeline-progress-container').style.display = 'block';
                         document.getElementById('console-area').style.display = 'block';
                         
-                        const btn = document.getElementById('btnBuild');
-                        const spinner = document.getElementById('buildSpinner');
-                        
-                        btn.disabled = true;
-                        spinner.style.display = 'inline-block';
+                        const btn = document.getElementById('btnRunPipelineOnly');
+                        if (btn) btn.disabled = true;
                         
                         startProgressPolling('pipeline');
                         startLogPolling();
                     } else if (progress.pipeline.status === 'complete') {
                         document.getElementById('pipeline-progress-container').style.display = 'none';
-                        document.getElementById('console-area').style.display = 'none'; 
+                        document.getElementById('console-area').style.display = 'block'; 
                         
-                        document.getElementById('btnBuild').disabled = false;
-                        document.getElementById('buildSpinner').style.display = 'none';
+                        const btn = document.getElementById('btnRunPipelineOnly');
+                        if (btn) btn.disabled = false;
                         
-                        // Show pipeline summary card and large viewer button
-                        const summ = progress.pipeline.summary;
-                        if (summ) {
-                            document.getElementById('pipeline-summary').style.display = 'block';
-                            document.getElementById('pipeline-summary-details').innerHTML = `
-                                <div>⏱️ <strong>Curation Duration:</strong> ${summ.elapsed_seconds}s</div>
-                                <div>📸 <strong>API Calls (Uncached):</strong> ${summ.uncached_moderated} moderation / ${summ.uncached_scored} scoring</div>
-                                <div>📖 <strong>Generated Journal:</strong> ${summ.moments_count} Daily Moments</div>
-                                <div>💰 <strong>Estimated cost:</strong> $${summ.estimated_cost.toFixed(4)}</div>
-                            `;
-                            
-                            // Insert a beautiful viewer link directly below or inside the card
-                            const summaryDiv = document.getElementById('pipeline-summary');
-                            if (!document.getElementById('summary-viewer-btn')) {
-                                const btnContainer = document.createElement('div');
-                                btnContainer.style.marginTop = '1.5rem';
-                                btnContainer.style.textAlign = 'center';
-                                btnContainer.innerHTML = `
-                                    <a href="${viewerHref()}" id="summary-viewer-btn" class="btn btn-primary" style="padding: 12px 30px; font-size: 1.1rem; box-shadow: 0 0 15px rgba(255, 123, 0, 0.4); text-decoration: none; border-radius: 8px;">📖 Open Curation Viewer</a>
-                                `;
-                                summaryDiv.appendChild(btnContainer);
-                            }
-                        } else {
-                            // Fallback if summary metrics aren't populated yet
-                            document.getElementById('btnViewerLink').style.display = 'inline-block';
-                            document.getElementById('console-area').style.display = 'block';
-                        }
+                        showPipelineSummary(progress.pipeline.summary);
                     }
                 }
             } catch (err) {
@@ -1354,57 +1443,8 @@
             renderGrid();
         }
 
-        async function triggerCuration() {
-            const btn = document.getElementById('btnBuild');
-            const spinner = document.getElementById('buildSpinner');
-            const consoleArea = document.getElementById('console-area');
-            const logBox = document.getElementById('log-box');
+        let currentShareCode = '';
 
-            if (acceptedList.length === 0) {
-                alert("You cannot run curation on 0 accepted images!");
-                return;
-            }
-
-            btn.disabled = true;
-            spinner.style.display = 'inline-block';
-            consoleArea.style.display = 'block';
-            logBox.innerHTML = "Initializing local folder ingestion...\n";
-
-            try {
-                // Step A: Ingest the accepted files
-                const filenames = acceptedList.map(item => item.filename);
-                const ingestRes = await fetch('/api/confirm-ingest', {
-                    method: 'POST',
-                    headers: authHeaders({ 'Content-Type': 'application/json' }),
-                    body: JSON.stringify({ filenames: filenames, session_id: getSessionId() })
-                });
-                if (handleAuthFailure(ingestRes)) throw new Error('Admin token required.');
-                
-                const ingestData = await ingestRes.json();
-                if (ingestData.status !== 'success') {
-                    throw new Error(ingestData.message || "Failed to ingest files");
-                }
-                
-                logBox.innerHTML += `Successfully ingested ${ingestData.ingested_count} files.\nTriggering 5-agent pipeline...\n`;
-
-                document.getElementById('pipeline-progress-container').style.display = 'block';
-                startProgressPolling('pipeline');
-
-                // Step B: Start Agent curation pipeline
-                const limitVal = document.getElementById('curation-limit').value;
-                fetch(withSession(`/generate?limit=${limitVal}`), { method: 'POST', headers: authHeaders() });
-                
-                // Poll logs
-                startLogPolling();
-
-            } catch (err) {
-                logBox.innerHTML += `ERROR: ${err.message}\n`;
-                btn.disabled = false;
-                spinner.style.display = 'none';
-            }
-        }
-
-        // ---- Share & Collect (contributor persona lives on /join/<event>) ----
         async function loadShareCard() {
             try {
                 const res = await fetch(withSession('/api/share-info'), { headers: authHeaders() });
@@ -1414,7 +1454,14 @@
                 }
                 const data = await res.json();
                 if (data.status !== 'success') return;
-                // Show an absolute URL so it's copy-paste ready
+                
+                // Parse share code from path
+                if (data.share_path) {
+                    const urlParams = new URLSearchParams(data.share_path.split('?')[1]);
+                    currentShareCode = urlParams.get('code') || '';
+                }
+
+                // Show absolute URL
                 const abs = data.share_url.startsWith('http') ? data.share_url : window.location.origin + data.share_url;
                 document.getElementById('share-url').value = abs;
                 if (data.qr_data_uri) {
@@ -1427,6 +1474,84 @@
             }
         }
 
+        const SUPPORTED_EXT = /\.(jpe?g|png|heic)$/i;
+        const BATCH_SIZE = 10;
+
+        async function uploadFiles(fileList) {
+            const all = Array.from(fileList);
+            if (!all.length) return;
+            const files = all.filter(f => SUPPORTED_EXT.test(f.name));
+            const skipped = all.length - files.length;
+
+            const status = document.getElementById('upload-status');
+            if (!files.length) {
+                status.style.color = 'var(--danger)';
+                status.textContent = "No supported photos found (JPEG/PNG/HEIC only).";
+                return;
+            }
+
+            if (!currentShareCode) {
+                await loadShareCard();
+                if (!currentShareCode) {
+                    status.style.color = 'var(--danger)';
+                    status.textContent = "Error: Share code not loaded. Cannot upload.";
+                    return;
+                }
+            }
+
+            let uploaded = 0;
+            let failed = 0;
+            status.style.color = 'var(--accent)';
+
+            try {
+                for (let i = 0; i < files.length; i += BATCH_SIZE) {
+                    const batch = files.slice(i, i + BATCH_SIZE);
+                    status.textContent = `Uploading ${Math.min(i + batch.length, files.length)} of ${files.length} photo(s)...`;
+
+                    const formData = new FormData();
+                    formData.append('contributor_name', 'Organizer');
+                    formData.append('session_id', getSessionId());
+                    formData.append('share_code', currentShareCode);
+                    for (const f of batch) {
+                        formData.append('photos', f);
+                    }
+
+                    const res = await fetch('/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await res.json();
+                    if (res.ok && (data.status === 'success' || data.status === 'partial_success')) {
+                        uploaded += (data.uploaded || []).length;
+                        failed += (data.errors || []).length;
+                    } else {
+                        throw new Error(data.detail || data.message || 'Upload failed');
+                    }
+                }
+                status.style.color = failed ? 'var(--accent)' : 'var(--success)';
+                let msg = `✅ ${uploaded} photo(s) added successfully!`;
+                if (failed) msg += ` (${failed} failed)`;
+                if (skipped) msg += ` ${skipped} unsupported file(s) skipped.`;
+                status.textContent = msg;
+                
+                refreshPipelineOnlyCount();
+                
+                // Automatically expand and load the photo pool details tray
+                const details = document.getElementById('photo-pool-details');
+                if (details) {
+                    details.open = true;
+                    loadUploadedPoolTray();
+                }
+            } catch (e) {
+                status.style.color = 'var(--danger)';
+                status.textContent = uploaded
+                    ? `Uploaded ${uploaded}, then failed: ${e.message}`
+                    : 'Upload failed: ' + e.message;
+            }
+            document.getElementById('file-input').value = '';
+            document.getElementById('folder-input').value = '';
+        }
+
         function copyShareLink() {
             const input = document.getElementById('share-url');
             navigator.clipboard.writeText(input.value).then(() => {
@@ -1436,17 +1561,8 @@
             });
         }
 
-        // The bulk local-folder wizard only works when the server runs on this
-        // Mac (Finder picker + local filesystem) - hide it everywhere else.
         async function applyLocalCapability() {
-            try {
-                const res = await fetch(withSession('/api/progress'));
-                const data = await res.json();
-                if (data.is_local) {
-                    document.getElementById('bulk-tab-header').style.display = '';
-                    document.getElementById('bulk-tab').style.display = '';
-                }
-            } catch (e) { /* stay hidden */ }
+            // No-op - local folder pickers deprecated in favor of browser uploader
         }
 
         function startProgressPolling(type) {
@@ -1515,36 +1631,16 @@
                     if (progress.pipeline && (progress.pipeline.status === 'complete' || progress.pipeline.status === 'error')) {
                         clearInterval(pollingInterval);
                         stopProgressPolling('pipeline');
-                        document.getElementById('buildSpinner').style.display = 'none';
-                        document.getElementById('btnBuild').disabled = false;
+                        
+                        const btn = document.getElementById('btnRunPipelineOnly');
+                        if (btn) btn.disabled = false;
                         
                         if (progress.pipeline.status === 'complete') {
                             document.getElementById('pipeline-progress-container').style.display = 'none';
-                            document.getElementById('console-area').style.display = 'none';
+                            // Keep console-area visible so the final log trace remains on screen!
+                            document.getElementById('console-area').style.display = 'block';
                             
-                            const summ = progress.pipeline.summary;
-                            if (summ) {
-                                document.getElementById('pipeline-summary').style.display = 'block';
-                                document.getElementById('pipeline-summary-details').innerHTML = `
-                                    <div>⏱️ <strong>Curation Duration:</strong> ${summ.elapsed_seconds}s</div>
-                                    <div>📸 <strong>API Calls (Uncached):</strong> ${summ.uncached_moderated} moderation / ${summ.uncached_scored} scoring</div>
-                                    <div>📖 <strong>Generated Journal:</strong> ${summ.moments_count} Daily Moments</div>
-                                    <div>💰 <strong>Estimated cost:</strong> $${summ.estimated_cost.toFixed(4)}</div>
-                                `;
-                                
-                                const summaryDiv = document.getElementById('pipeline-summary');
-                                if (!document.getElementById('summary-viewer-btn')) {
-                                    const btnContainer = document.createElement('div');
-                                    btnContainer.style.marginTop = '1.5rem';
-                                    btnContainer.style.textAlign = 'center';
-                                    btnContainer.innerHTML = `
-                                        <a href="${viewerHref()}" id="summary-viewer-btn" class="btn btn-primary" style="padding: 12px 30px; font-size: 1.1rem; box-shadow: 0 0 15px rgba(255, 123, 0, 0.4); text-decoration: none; border-radius: 8px;">📖 Open Curation Viewer</a>
-                                    `;
-                                    summaryDiv.appendChild(btnContainer);
-                                }
-                            } else {
-                                document.getElementById('btnViewerLink').style.display = 'inline-block';
-                            }
+                            showPipelineSummary(progress.pipeline.summary);
                         } else {
                             alert("Curation pipeline encountered an error.");
                         }
@@ -1554,6 +1650,51 @@
                 }
             }, 1000);
         }
+
+        function getEventTypeName() {
+            const names = {
+                trip: 'Trip',
+                birthday: 'Birthday',
+                wedding: 'Wedding',
+                sports_match: 'Sports Match',
+                reunion: 'Reunion',
+                other: 'Event'
+            };
+            return names[currentEventType] || 'Event';
+        }
+
+        async function showStoryModal() {
+            const modal = document.getElementById('story-modal');
+            const body = document.getElementById('story-modal-body');
+            const title = document.getElementById('story-modal-title');
+            if (title) title.textContent = `📖 Compiled ${getEventTypeName()} Story`;
+            modal.style.display = 'flex';
+            body.textContent = 'Loading story...';
+            try {
+                const res = await fetch(withSession('/api/trip-book'));
+                const data = await res.json();
+                if (data.status === 'success' && data.story) {
+                    body.textContent = data.story;
+                } else {
+                    body.textContent = 'Story not found or pipeline has not been completed.';
+                }
+            } catch (e) {
+                body.textContent = 'Error loading story: ' + e.message;
+            }
+        }
     </script>
+
+    <!-- Story Modal -->
+    <div id="story-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(8px);">
+        <div style="background: #111827; border: 1px solid var(--border); border-radius: 20px; width: 90%; max-width: 700px; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 30px rgba(0, 255, 100, 0.15);">
+            <div style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="story-modal-title" style="margin: 0; font-size: 1.3rem; color: #fff;">📖 Compiled Event Story</h3>
+                <button class="btn" style="padding: 6px 12px;" onclick="document.getElementById('story-modal').style.display='none'">Close</button>
+            </div>
+            <div id="story-modal-body" style="padding: 24px; overflow-y: auto; color: #d1d5db; font-size: 1rem; line-height: 1.6; white-space: pre-wrap; text-align: left; font-family: 'Outfit', sans-serif;">
+                Loading story...
+            </div>
+        </div>
+    </div>
 </body>
 </html>
