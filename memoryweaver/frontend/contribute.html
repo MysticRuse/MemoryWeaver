@@ -7,24 +7,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: #080b11;
-            --card-bg: rgba(20, 24, 33, 0.5);
-            --accent: #ff7b00;
-            --accent-grad: linear-gradient(135deg, #ff7b00 0%, #ffaa00 100%);
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
+            --bg-dark: #080a0f;
+            --card-bg: #0e121a;
+            --accent: #ff6b00;
+            --text-main: #ffffff;
+            --text-muted: #8b949e;
             --success: #10b981;
             --danger: #ef4444;
             --border-color: rgba(255, 255, 255, 0.08);
-            --glow: rgba(255, 123, 0, 0.25);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Outfit', sans-serif;
             background-color: var(--bg-dark);
-            background-image: 
-                radial-gradient(at 15% 15%, rgba(255, 123, 0, 0.04) 0px, transparent 60%),
-                radial-gradient(at 85% 85%, rgba(255, 170, 0, 0.04) 0px, transparent 60%);
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
@@ -36,37 +31,29 @@
         .card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 24px;
+            border-radius: 12px;
             padding: 32px 24px;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
             margin-bottom: 20px;
-            animation: fadeIn 0.4s ease-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
         }
         h1 {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             font-weight: 800;
-            background: var(--accent-grad);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #ffffff;
             margin-bottom: 8px;
             text-align: center;
+            letter-spacing: -0.5px;
         }
         .sub {
             color: var(--text-muted);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             line-height: 1.5;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             text-align: center;
         }
         label {
             display: block;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 700;
             color: var(--text-muted);
             margin: 20px 0 8px;
@@ -75,83 +62,74 @@
         }
         input[type="text"] {
             width: 100%;
-            padding: 14px 16px;
-            border-radius: 12px;
+            padding: 12px 16px;
+            border-radius: 8px;
             border: 1px solid var(--border-color);
-            background: rgba(8, 11, 17, 0.6);
+            background: #080a0f;
             color: var(--text-main);
             font-family: inherit;
-            font-size: 1rem;
+            font-size: 0.95rem;
             outline: none;
-            transition: all 0.3s;
+            transition: border-color 0.2s;
         }
         input[type="text"]:focus {
             border-color: var(--accent);
-            box-shadow: 0 0 10px var(--glow);
-            background: rgba(8, 11, 17, 0.9);
         }
         .dropzone {
             margin-top: 20px;
-            border: 2px dashed var(--border-color);
-            border-radius: 16px;
-            padding: 40px 20px;
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 36px 20px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             background: rgba(255, 255, 255, 0.01);
         }
         .dropzone:hover {
             border-color: var(--accent);
-            background: rgba(255, 123, 0, 0.03);
-            box-shadow: 0 0 15px var(--glow);
-            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.02);
         }
         .dz-icon {
-            font-size: 3rem;
-            margin-bottom: 12px;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
             display: inline-block;
-            transition: transform 0.3s;
-        }
-        .dropzone:hover .dz-icon {
-            transform: scale(1.1) rotate(5deg);
         }
         .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             width: 100%;
-            margin-top: 24px;
-            padding: 14px 20px;
+            margin-top: 20px;
+            padding: 12px 20px;
             border: none;
-            border-radius: 30px;
-            background: var(--accent-grad);
-            color: #000;
+            border-radius: 8px;
+            background: var(--accent);
+            color: #ffffff;
             font-family: inherit;
-            font-size: 1.05rem;
-            font-weight: 700;
+            font-size: 0.95rem;
+            font-weight: 600;
             cursor: pointer;
             text-align: center;
             text-decoration: none;
-            transition: all 0.3s;
+            transition: opacity 0.2s;
         }
         .btn:hover:not(:disabled) {
-            box-shadow: 0 4px 20px var(--glow);
-            transform: translateY(-2px);
+            opacity: 0.9;
         }
         .btn:disabled { opacity: 0.5; cursor: default; }
         .btn.secondary {
             background: transparent;
-            border: 1px solid var(--accent);
-            color: var(--accent);
+            border: 1px solid var(--border-color);
+            color: #ffffff;
         }
         .btn.secondary:hover {
-            background: rgba(255, 123, 0, 0.05);
-            box-shadow: 0 4px 15px var(--glow);
+            background: rgba(255, 255, 255, 0.04);
+            border-color: #ffffff;
         }
         #status {
             margin-top: 18px;
-            font-size: 0.95rem;
-            font-weight: 600;
+            font-size: 0.9rem;
+            font-weight: 500;
             min-height: 1.2em;
             text-align: center;
             line-height: 1.4;
@@ -159,14 +137,14 @@
         .count-pill {
             display: inline-block;
             margin: 0 auto 16px auto;
-            padding: 4px 14px;
-            border-radius: 999px;
-            background: rgba(255, 123, 0, 0.12);
-            color: var(--accent);
-            font-size: 0.85rem;
-            font-weight: 700;
+            padding: 3px 12px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 600;
             text-align: center;
-            border: 1px solid rgba(255, 123, 0, 0.2);
+            border: 1px solid var(--border-color);
         }
         .pill-wrapper {
             display: flex;

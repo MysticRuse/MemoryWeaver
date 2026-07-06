@@ -7,24 +7,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,600;0,800;1,400&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0d0f14;
-            --card-bg: rgba(22, 28, 38, 0.7);
+            --bg: #080a0f;
+            --card-bg: #0e121a;
             --border: rgba(255, 255, 255, 0.08);
-            --text: #f3f4f6;
-            --text-muted: #8ba395;
-            --accent: #ff7b00;
-            --accent-grad: linear-gradient(135deg, #ff7b00 0%, #ffae00 100%);
-            --accent-glow: rgba(255, 123, 0, 0.35);
-            --danger: #e74c3c;
-            --success: #2ecc71;
+            --text: #ffffff;
+            --text-muted: #8b949e;
+            --accent: #ff6b00;
+            --accent-glow: rgba(255, 107, 0, 0.15);
+            --danger: #ef4444;
+            --success: #10b981;
         }
 
         body {
             font-family: 'Outfit', sans-serif;
             background-color: var(--bg);
-            background-image: 
-                radial-gradient(at 10% 10%, rgba(255, 123, 0, 0.03) 0px, transparent 50%),
-                radial-gradient(at 90% 90%, rgba(255, 174, 0, 0.03) 0px, transparent 50%);
             color: var(--text);
             margin: 0;
             padding: 0 0 3rem 0;
@@ -45,30 +41,28 @@
         .card {
             background-color: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 30px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
 
         header {
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         header h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 3rem;
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.2rem;
             font-weight: 800;
-            background: var(--accent-grad);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin: 0 0 10px 0;
+            color: #ffffff;
+            margin: 0 0 6px 0;
+            letter-spacing: -0.5px;
         }
 
         header p {
             color: var(--text-muted);
-            font-size: 1.1rem;
+            font-size: 0.95rem;
         }
 
         /* Tabs */
@@ -84,18 +78,17 @@
             background: none;
             border: none;
             color: var(--text-muted);
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
-            padding: 8px 16px;
+            padding: 6px 14px;
             cursor: pointer;
-            border-radius: 20px;
-            transition: all 0.3s;
+            border-radius: 6px;
+            transition: all 0.2s;
         }
 
         .tab-btn.active {
             color: #fff;
-            background: var(--accent-grad);
-            box-shadow: 0 4px 15px var(--accent-glow);
+            background: var(--accent);
         }
 
         .tab-content {
@@ -108,8 +101,8 @@
 
         /* 3-Step Wizard Layout */
         .wizard-step {
-            margin-bottom: 24px;
-            padding-bottom: 24px;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
             border-bottom: 1px solid var(--border);
         }
 
@@ -123,23 +116,24 @@
             display: inline-flex;
             justify-content: center;
             align-items: center;
-            width: 32px;
-            height: 32px;
+            width: 26px;
+            height: 26px;
             border-radius: 50%;
-            background: var(--accent-grad);
-            color: #000;
-            font-weight: 800;
-            margin-right: 12px;
-            font-size: 14px;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 700;
+            margin-right: 10px;
+            font-size: 12px;
         }
 
         .step-title {
-            font-size: 1.25rem;
-            font-weight: 600;
+            font-size: 1.15rem;
+            font-weight: 700;
             display: flex;
             align-items: center;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
             color: #ffffff;
+            letter-spacing: -0.3px;
         }
 
         /* Inputs & Buttons */
@@ -148,30 +142,32 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            padding: 12px 24px;
-            border-radius: 30px;
+            padding: 10px 20px;
+            border-radius: 8px;
             font-family: 'Outfit', sans-serif;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             border: 1px solid var(--border);
-            background: rgba(255, 255, 255, 0.05);
+            background: #121620;
             color: var(--text);
         }
 
         .btn:hover:not(:disabled) {
-            transform: translateY(-2px);
+            border-color: #ffffff;
+            background: #171d2a;
         }
 
         .btn-primary {
-            background: var(--accent-grad);
+            background: var(--accent);
             border-color: transparent;
-            color: #000;
+            color: #ffffff;
         }
 
         .btn-primary:hover:not(:disabled) {
-            box-shadow: 0 4px 20px var(--accent-glow);
+            opacity: 0.9;
+            border-color: transparent;
         }
 
         .btn:disabled {
@@ -180,12 +176,12 @@
         }
 
         .selected-folder-info {
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(255, 255, 255, 0.02);
             border: 1px solid var(--border);
-            padding: 16px;
-            border-radius: 16px;
+            padding: 14px;
+            border-radius: 8px;
             margin-top: 12px;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -193,9 +189,9 @@
 
         /* Progress Bar UI */
         .progress-container {
-            background: rgba(255, 255, 255, 0.02);
+            background: rgba(255, 255, 255, 0.01);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 8px;
             padding: 12px;
             margin-top: 12px;
         }
@@ -203,7 +199,7 @@
         .progress-header {
             display: flex;
             justify-content: space-between;
-            font-size: 12px;
+            font-size: 11px;
             margin-bottom: 6px;
             font-weight: 600;
             color: var(--text-muted);
@@ -211,9 +207,9 @@
 
         .progress-track {
             width: 100%;
-            height: 8px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 4px;
+            height: 6px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 3px;
             overflow: hidden;
             border: 1px solid var(--border);
         }
@@ -615,15 +611,14 @@
         }
 
         .wizard-step-node.active .step-node-num {
-            background: var(--accent-grad);
-            color: #000;
+            background: var(--accent);
+            color: #fff;
             border-color: transparent;
-            box-shadow: 0 0 10px var(--accent-glow);
         }
 
         .wizard-step-node.completed .step-node-num {
             background: var(--success);
-            color: #000;
+            color: #fff;
             border-color: transparent;
         }
 
@@ -631,7 +626,7 @@
             font-size: 0.95rem;
             font-weight: 600;
             color: var(--text-muted);
-            transition: color 0.3s;
+            transition: color 0.2s;
         }
 
         .wizard-step-node.active .step-node-text {
@@ -644,15 +639,14 @@
 
         .wizard-step-line {
             flex: 1;
-            height: 2px;
+            height: 1px;
             background: var(--border);
             margin: 0 20px;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
 
         .wizard-step-line.active {
             background: var(--accent);
-            box-shadow: 0 0 8px var(--accent-glow);
         }
 
         /* General layout additions */
