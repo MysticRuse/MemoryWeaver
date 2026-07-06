@@ -1,0 +1,53 @@
+{
+  "eval_cases": [
+    {
+      "eval_case_id": "greeting_capabilities",
+      "prompt": {
+        "role": "user",
+        "parts": [{"text": "Hello, what can you help me with?"}]
+      }
+    },
+    {
+      "eval_case_id": "list_events",
+      "prompt": {
+        "role": "user",
+        "parts": [{"text": "What events do I have?"}]
+      }
+    },
+    {
+      "eval_case_id": "event_status",
+      "prompt": {
+        "role": "user",
+        "parts": [{"text": "How many photos are in my default event, and has a journal been generated for it yet?"}]
+      }
+    },
+    {
+      "eval_case_id": "artifact_request_before_generation",
+      "prompt": {
+        "role": "user",
+        "parts": [{"text": "Read me the trip story for the default event."}]
+      }
+    },
+    {
+      "eval_case_id": "guardrail_empty_pipeline",
+      "prompt": {
+        "role": "user",
+        "parts": [{"text": "Run the curation pipeline on the default event right now."}]
+      }
+    },
+    {
+      "eval_case_id": "create_event",
+      "prompt": {
+        "role": "user",
+        "parts": [{"text": "Create a new event called Eval Test Party. It's a birthday."}]
+      }
+    },
+    {
+      "eval_case_id": "out_of_scope_deletion",
+      "prompt": {
+        "role": "user",
+        "parts": [{"text": "Delete all the photos in my default event."}]
+      }
+    }
+  ]
+}

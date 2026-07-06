@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemoryWeaver - Your Trip Journal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,600;0,800;1,400&display=swap" rel="stylesheet">
+    <style>
+    <style>
+        :root {
+            --bg-color: #080a0f;
+            --card-bg: #0e121a;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-main: #ffffff;
+            --text-muted: #8b949e;
+            --accent: #ff6b00;
+            --accent-glow: rgba(255, 107, 0, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            line-height: 1.6;
+            padding: 0 0 3rem 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+        }
+
+        .header-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .select-user {
+            padding: 10px 40px 10px 16px !important;
+            background: rgba(8, 11, 17, 0.6) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-main) !important;
+            border-radius: 8px !important;
+            outline: none !important;
+            font-family: 'Outfit', sans-serif !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: border-color 0.2s !important;
+            appearance: none !important;
+            -webkit-appearance: none !important;
+            background-image: url("data:image/svg+xml;utf8,<svg fill='%23ff6b00' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 12px center !important;
+        }
+
+        .select-user:focus {
+            border-color: var(--accent) !important;
+        }
+
+        .nav-btn {
+            display: inline-block;
+            padding: 8px 18px;
+            background: #121620;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            border-color: #ffffff;
+            background: #171d2a;
+        }
+
+        /* Highlights Section */
+        .section-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            border-left: 3px solid var(--accent);
+            padding-left: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #ffffff;
+            letter-spacing: -0.3px;
+        }
+
+        .section-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: 'Outfit', sans-serif;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .highlights-container {
+            margin-bottom: 3rem;
+        }
+
+        /* Carousel Styles */
+        .carousel-view {
+            position: relative;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .carousel-track {
+            width: 100%;
+            height: 480px;
+            position: relative;
+            background: #000;
+        }
+
+        .carousel-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .carousel-slide.active {
+            opacity: 1;
+            z-index: 10;
+        }
+
+        .carousel-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .carousel-meta {
+            padding: 1.5rem;
+            width: 100%;
+            text-align: center;
+            background: rgba(13, 15, 20, 0.95);
+            border-top: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .carousel-meta h3 {
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+            text-transform: capitalize;
+        }
+
+        .carousel-meta p {
+            font-size: 1.05rem;
+            font-style: italic;
+            color: var(--text-main);
+        }
+
+        .uploader-tag {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2px 8px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .carousel-control {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(13, 15, 20, 0.9);
+            border: 1px solid var(--border-color);
+            color: #fff;
+            font-size: 1.8rem;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 20;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .carousel-control:hover {
+            background: var(--accent);
+            border-color: transparent;
+        }
+
+        .control-prev { left: 1rem; }
+        .control-next { right: 1rem; }
+
+        /* Main Content Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (min-width: 900px) {
+            .content-grid {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+
+        /* Journal Card list */
+        .journal-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .journal-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .journal-card.dimmed {
+            opacity: 0.35;
+        }
+
+        .journal-thumbs {
+            width: 100%;
+        }
+
+        /* Collage 1 (Hero - 1 Photo) */
+        .journal-thumbs.collage-1 {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            width: 100%;
+        }
+        .journal-thumbs.collage-1 img {
+            max-width: 100%;
+            height: auto;
+            max-height: 520px;
+            object-fit: contain;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+        }
+
+        /* Collage 2 (Split - 2 Photos) */
+        .journal-thumbs.collage-2 {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: flex-start;
+        }
+        .journal-thumbs.collage-2 img {
+            height: 340px;
+            width: auto;
+            max-width: 100%;
+            object-fit: contain;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+        }
+
+        /* Collage 3+ (Flow - 3+ Photos) */
+        .journal-thumbs.collage-3 {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: flex-start;
+        }
+        .journal-thumbs.collage-3 img {
+            height: 260px;
+            width: auto;
+            max-width: 100%;
+            object-fit: contain;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+        }
+        
+        .journal-thumbs img:hover {
+            transform: scale(1.02);
+            border-color: var(--accent);
+        }
+
+        .journal-body {
+            position: relative;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 1.2rem;
+        }
+
+        .journal-body h3 {
+            color: var(--accent);
+            font-size: 1.25rem;
+            margin-bottom: 0.6rem;
+            text-transform: capitalize;
+        }
+
+        .photo-attribution {
+            display: block;
+            margin-top: 8px;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        /* Story Side card */
+        .story-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            position: sticky;
+            top: 2rem;
+            max-height: calc(100vh - 6rem);
+            overflow-y: auto;
+        }
+
+        .story-card::-webkit-scrollbar {
+            width: 6px;
+        }
+        .story-card::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+        }
+        .story-card::-webkit-scrollbar-thumb {
+            background: rgba(255, 123, 0, 0.3);
+            border-radius: 10px;
+        }
+        .story-card::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        .story-text {
+            font-size: 1.1rem;
+            color: #d1d5db;
+            line-height: 1.7;
+        }
+
+        .story-text p {
+            margin-bottom: 1.5rem;
+        }
+
+        /* Catch Up Section */
+        .catchup-container {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .catchup-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.3px;
+        }
+
+        .catchup-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 600px) {
+            .catchup-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            @media (min-width: 900px) {
+                .catchup-grid {
+                    grid-template-columns: repeat(3, 1fr);
+                }
+            }
+        }
+
+        .catchup-item {
+            background: rgba(13, 15, 20, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .catchup-img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+        }
+
+        .catchup-meta {
+            padding: 1rem;
+        }
+
+        .catchup-meta h4 {
+            text-transform: capitalize;
+            color: var(--text-main);
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+
+        .catchup-meta p {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+        }
+
+        .empty-state p {
+            margin-bottom: 1.5rem;
+            color: var(--text-muted);
+        }
+
+        /* Lightbox Modal styles */
+        .lightbox-modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            padding-top: 40px;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(10, 12, 18, 0.95);
+            backdrop-filter: blur(12px);
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .lightbox-content {
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 80vh;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+            object-fit: contain;
+            animation: zoom 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes zoom {
+            from {transform: scale(0.95); opacity: 0;}
+            to {transform: scale(1); opacity: 1;}
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 25px;
+            right: 35px;
+            color: #f3f4f6;
+            font-size: 44px;
+            font-weight: 300;
+            transition: 0.2s;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .lightbox-close:hover {
+            color: var(--accent);
+        }
+
+        .lightbox-caption {
+            margin: 15px auto;
+            text-align: center;
+            color: var(--text-main);
+            font-size: 1.2rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            max-width: 80%;
+        }
+
+        /* Unified Navigation Header */
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(13, 15, 20, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-color);
+            width: 100%;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-family: 'Playfair Display', serif;
+            font-weight: 800;
+            font-size: 1.4rem;
+            background: var(--accent-grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 12px;
+        }
+
+        .nav-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 8px 18px;
+            border-radius: 20px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-link:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .nav-link.active {
+            color: #000;
+            background: var(--accent-grad);
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+
+        /* General layout overrides */
+        .container {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+        body {
+            padding: 0 0 3rem 0 !important;
+        }
+    </style>
+</head>
+<body>
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">🔮 MemoryWeaver</a>
+            <div class="nav-links">
+                <a href="/" class="nav-link">🛠️ Curator Hub</a>
+                <a href="/viewer" class="nav-link active" id="nav-viewer-link">📖 Trip Highlights</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Lightbox Modal for uncropped fullscreen view -->
+    <div id="lightbox" class="lightbox-modal" onclick="closeLightbox()">
+        <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+        <img class="lightbox-content" id="lightbox-img" onclick="event.stopPropagation()">
+        <div id="lightbox-caption" class="lightbox-caption"></div>
+    </div>
+
+    <div class="container">
+        <header style="margin-top: 1rem;">
+            <p>MEMORYWEAVER PRESENTATION</p>
+            <h1 style="font-size: 2.8rem; margin-bottom: 5px;">Your Trip Highlights</h1>
+            <div class="header-controls">
+                <select id="user-select" class="select-user" style="display: none;" onchange="handleUserChange()">
+                    <option value="all">👥 Full Journal (All Contributors)</option>
+                </select>
+            </div>
+        </header>
+
+        <div id="loading" class="empty-state">
+            <h2>Generating your Journal...</h2>
+            <p>Our agent pipeline is analyzing photos, performing safety moderation, clustering duplicates, and crafting your stories.</p>
+        </div>
+
+        <div id="empty" class="empty-state" style="display: none;">
+            <h2>No Trip Journal Found</h2>
+            <p>You haven't run the curation pipeline yet. Head back to the upload page and click 'Curate & Build Trip Book' to trigger the agents!</p>
+            <a href="/" class="nav-btn">Go to Upload Page</a>
+        </div>
+
+        <div id="content" style="display: none;">
+            <!-- Highlights Carousel -->
+            <div class="highlights-container">
+                <h2 class="section-title">
+                    <span>Daily Highlights Reel</span>
+                    <span class="section-subtitle" id="highlightsSub">Showcasing all memories</span>
+                </h2>
+                <div class="carousel-view">
+                    <button class="carousel-control control-prev" id="prevBtn">&lt;</button>
+                    <button class="carousel-control control-next" id="nextBtn">&gt;</button>
+                    <div class="carousel-track" id="carouselTrack">
+                        <!-- Dynamic slides -->
+                    </div>
+                    <div class="carousel-meta">
+                        <h3 id="slideTitle">Moment</h3>
+                        <p id="slideCaption">Caption</p>
+                        <span class="uploader-tag" id="slideUploader">Uploaded by Contributor</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personalized Catch Up (Moments you missed) -->
+            <div id="catchup-section" class="catchup-container" style="display: none;">
+                <h3 class="catchup-title">🔔 While You Were Away... (Moments You Missed)</h3>
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1.5rem;" id="catchupIntro">
+                    Since you didn't upload photos during these settings, the Memory Agent recommends these top-voted shots to catch up:
+                </p>
+                <div class="catchup-grid" id="catchupGrid">
+                    <!-- Dynamic recommendations -->
+                </div>
+            </div>
+
+            <div class="content-grid">
+                <!-- Day by Day Journal -->
+                <div>
+                    <h2 class="section-title">Day-by-Day Journal</h2>
+                    <div class="journal-list" id="journalList">
+                        <!-- Dynamic entries -->
+                    </div>
+                </div>
+
+                <!-- Sticky Narrative Story -->
+                <div>
+                    <h2 class="section-title">Our Story</h2>
+                    <div class="story-card">
+                        <div class="story-text" id="storyContent">
+                            <!-- Dynamic text paragraphs -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ---- Event session handling (multi-event support) ----
+        // Mirrors upload.html: ?session=<id> URL param wins (and is persisted),
+        // otherwise the last session picked on the upload page is used.
+        // 'default' keeps the original flat local_storage/ layout; any other
+        // session's files live under local_storage/sessions/<id>/.
+        function getSessionId() {
+            const urlSid = new URLSearchParams(window.location.search).get('session');
+            if (urlSid) { localStorage.setItem('mw_session_id', urlSid); return urlSid; }
+            return localStorage.getItem('mw_session_id') || 'default';
+        }
+
+        // Photos are served through /media, which re-encodes to JPEG and strips
+        // EXIF (GPS, device ids) - raw uploads are not directly reachable.
+        function mediaUrl(filename) {
+            return '/media?session_id=' + encodeURIComponent(getSessionId())
+                 + '&filename=' + encodeURIComponent(filename);
+        }
+
+        let currentSlideIndex = 0;
+        let slides = [];
+        let globalJournal = [];
+        let globalMemoryBank = null;
+        let contributorNames = {}; // id -> name
+
+        // Shows the active event's name and type in the header so it's obvious
+        // which session's journal is on screen.
+        async function loadSessionHeader() {
+            try {
+                const res = await fetch('/api/sessions/' + encodeURIComponent(getSessionId()));
+                const data = await res.json();
+                if (data.status === 'success') {
+                    const emoji = { trip: '🧳', birthday: '🎂', wedding: '💍', sports_match: '⚽', reunion: '🤝', other: '📸' }[data.session.event_type] || '📸';
+                    document.querySelector('header h1').textContent = `${emoji} ${data.session.name}`;
+                }
+            } catch (e) { /* keep the generic title on failure */ }
+        }
+
+        async function fetchTripBook() {
+            loadSessionHeader();
+            try {
+                // One call returns highlights, journal, story and (trimmed) memory
+                // bank for the active session - artifacts are no longer directly
+                // browsable as static files.
+                const res = await fetch('/api/trip-book?session_id=' + encodeURIComponent(getSessionId()));
+                const book = await res.json();
+
+                if (!res.ok || book.status !== 'success') {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('empty').style.display = 'block';
+                    return;
+                }
+
+                const highlights = book.highlights;
+                globalJournal = book.journal;
+                const story = book.story;
+
+                if (book.memory_bank) {
+                    globalMemoryBank = book.memory_bank;
+                    populateUserSelector(globalMemoryBank);
+                }
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+
+                renderHighlights(highlights);
+                renderJournal(globalJournal);
+                renderStory(story);
+            } catch (err) {
+                console.error("Error loading trip book:", err);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('empty').style.display = 'block';
+            }
+        }
+
+        function populateUserSelector(memoryBank) {
+            const selector = document.getElementById('user-select');
+            const contributors = memoryBank.contributors || {};
+            
+            // Map contributor hashes to actual names
+            contributorNames = {};
+            
+            let hasUsers = false;
+            for (const [id, prof] of Object.entries(contributors)) {
+                contributorNames[id] = prof.name;
+                
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = `👤 Viewer: ${prof.name}`;
+                selector.appendChild(option);
+                hasUsers = true;
+            }
+            
+            if (hasUsers) {
+                selector.style.display = 'block';
+            }
+        }
+
+        function renderHighlights(items) {
+            const track = document.getElementById('carouselTrack');
+            track.innerHTML = '';
+            slides = items;
+
+            if (items.length === 0) return;
+
+            items.forEach((item, idx) => {
+                const slide = document.createElement('div');
+                slide.className = `carousel-slide ${idx === 0 ? 'active' : ''}`;
+                
+                const img = document.createElement('img');
+                img.src = mediaUrl(item.filename);
+                img.alt = item.caption;
+                img.style.cursor = 'pointer';
+                img.onclick = () => openLightbox(img.src, item.caption);
+
+                slide.appendChild(img);
+                track.appendChild(slide);
+            });
+
+            updateSlideMeta();
+        }
+
+        function updateSlideMeta() {
+            if (slides.length === 0) return;
+            const current = slides[currentSlideIndex];
+            document.getElementById('slideTitle').textContent = current.scene_label.replace(/_/g, ' ');
+            document.getElementById('slideCaption').textContent = current.caption || "A beautiful memory.";
+            
+            const uploaderId = current.contributor_id || "unknown";
+            const uploaderName = contributorNames[uploaderId] || "Contributor";
+            document.getElementById('slideUploader').textContent = `Uploaded by ${uploaderName}`;
+            
+            // Set active class on slides
+            const slideElements = document.querySelectorAll('.carousel-slide');
+            slideElements.forEach((el, idx) => {
+                if (idx === currentSlideIndex) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+        }
+
+        function changeSlide(direction) {
+            if (slides.length === 0) return;
+            currentSlideIndex = (currentSlideIndex + direction + slides.length) % slides.length;
+            updateSlideMeta();
+        }
+
+        document.getElementById('prevBtn').addEventListener('click', () => changeSlide(-1));
+        document.getElementById('nextBtn').addEventListener('click', () => changeSlide(1));
+
+        function renderJournal(entries) {
+            const list = document.getElementById('journalList');
+            list.innerHTML = '';
+
+            entries.forEach(entry => {
+                const card = document.createElement('div');
+                card.className = 'journal-card';
+                card.id = `journal-card-${entry.moment}`;
+
+                const thumbsContainer = document.createElement('div');
+                thumbsContainer.className = `journal-thumbs collage-${Math.min(entry.photos.length, 3)}`;
+
+                entry.photos.forEach(ph => {
+                    const img = document.createElement('img');
+                    img.alt = entry.moment;
+                    img.style.cursor = 'pointer';
+                    img.onerror = function() {
+                        this.onerror = null;
+                        this.src = mediaUrl(ph);
+                    };
+                    img.src = mediaUrl(ph);
+                    img.onclick = () => openLightbox(img.src, entry.moment);
+                    thumbsContainer.appendChild(img);
+                });
+
+                const body = document.createElement('div');
+                body.className = 'journal-body';
+
+                const title = document.createElement('h3');
+                title.style.display = 'flex';
+                title.style.justifyContent = 'space-between';
+                title.style.alignItems = 'center';
+                title.style.flexWrap = 'wrap';
+                
+                const titleText = document.createElement('span');
+                titleText.textContent = entry.moment.replace(/_/g, ' ');
+                title.appendChild(titleText);
+                
+                if (entry.date) {
+                    const dateText = document.createElement('span');
+                    dateText.style.fontSize = '12px';
+                    dateText.style.color = 'var(--text-muted)';
+                    dateText.style.fontWeight = 'normal';
+                    dateText.textContent = `📅 ${entry.date}`;
+                    title.appendChild(dateText);
+                }
+
+                const txt = document.createElement('p');
+                txt.textContent = entry.entry;
+
+                body.appendChild(title);
+                body.appendChild(txt);
+
+                // Add photo attribution labels in the entry card
+                const uploaders = new Set();
+                entry.photos.forEach(ph => {
+                    const hash = ph.split('_')[0];
+                    if (contributorNames[hash]) {
+                        uploaders.add(contributorNames[hash]);
+                    }
+                });
+                if (uploaders.size > 0) {
+                    const attribution = document.createElement('span');
+                    attribution.className = 'photo-attribution';
+                    attribution.textContent = `Captured by: ${Array.from(uploaders).join(', ')}`;
+                    body.appendChild(attribution);
+                }
+
+                card.appendChild(thumbsContainer);
+                card.appendChild(body);
+                list.appendChild(card);
+            });
+        }
+
+        function renderStory(text) {
+            const container = document.getElementById('storyContent');
+            container.innerHTML = '';
+            
+            const paragraphs = text.split('\n\n');
+            paragraphs.forEach(p => {
+                if (p.trim()) {
+                    const pEl = document.createElement('p');
+                    pEl.textContent = p.trim();
+                    container.appendChild(pEl);
+                }
+            });
+        }
+
+        function handleUserChange() {
+            const selectedUserId = document.getElementById('user-select').value;
+            const highlightsSub = document.getElementById('highlightsSub');
+            
+            if (selectedUserId === 'all' || !globalMemoryBank) {
+                // Reset to default Full view
+                highlightsSub.textContent = "Showcasing all memories";
+                document.getElementById('catchup-section').style.display = 'none';
+                
+                // Reset dimmed states
+                document.querySelectorAll('.journal-card').forEach(card => {
+                    card.classList.remove('dimmed');
+                });
+                return;
+            }
+
+            const userName = contributorNames[selectedUserId] || "User";
+            highlightsSub.textContent = `Emphasizing ${userName}'s uploads`;
+            
+            // 1. Dim journal cards where the selected contributor did NOT upload any photo
+            const contributorMoments = new Set(globalMemoryBank.contributors[selectedUserId].moments_present_in || []);
+            
+            globalJournal.forEach(entry => {
+                const card = document.getElementById(`journal-card-${entry.moment}`);
+                if (card) {
+                    // Check if any photo in this entry belongs to the selected contributor
+                    const userUploadedHere = entry.photos.some(ph => ph.startsWith(selectedUserId));
+                    if (userUploadedHere) {
+                        card.classList.remove('dimmed');
+                    } else {
+                        card.classList.add('dimmed');
+                    }
+                }
+            });
+
+            // 2. Render "Catch-Up" Recommendations (Moments with 0 uploads from selected contributor)
+            const catchupSection = document.getElementById('catchup-section');
+            const catchupGrid = document.getElementById('catchupGrid');
+            const catchupIntro = document.getElementById('catchupIntro');
+            
+            catchupGrid.innerHTML = '';
+            catchupIntro.textContent = `Hey ${userName}, since you didn't upload photos during these settings, the Memory Agent recommends these top-voted shots to catch up:`;
+            
+            let missedCount = 0;
+
+            globalJournal.forEach(entry => {
+                const userUploadedHere = entry.photos.some(ph => ph.startsWith(selectedUserId));
+                if (!userUploadedHere && entry.photos.length > 0) {
+                    // Missed moment! Show the top photo
+                    missedCount++;
+                    const topPhoto = entry.photos[0];
+                    
+                    const item = document.createElement('div');
+                    item.className = 'catchup-item';
+                    
+                    const img = document.createElement('img');
+                    img.className = 'catchup-img';
+                    img.src = mediaUrl(topPhoto);
+                    img.alt = entry.moment;
+                    
+                    const meta = document.createElement('div');
+                    meta.className = 'catchup-meta';
+                    
+                    const title = document.createElement('h4');
+                    title.textContent = entry.moment.replace(/_/g, ' ');
+                    
+                    const tag = document.createElement('p');
+                    tag.textContent = `Recommended photo from: ${entry.moment.replace(/_/g, ' ')}`;
+                    
+                    meta.appendChild(title);
+                    meta.appendChild(tag);
+                    item.appendChild(img);
+                    item.appendChild(meta);
+                    catchupGrid.appendChild(item);
+                }
+            });
+            
+            if (missedCount > 0) {
+                catchupSection.style.display = 'block';
+            } else {
+                catchupSection.style.display = 'none';
+            }
+        }
+
+        // Lightbox controllers
+        window.openLightbox = function(src, caption) {
+            const lightbox = document.getElementById('lightbox');
+            const img = document.getElementById('lightbox-img');
+            const cap = document.getElementById('lightbox-caption');
+            
+            img.src = src;
+            cap.textContent = caption ? caption.replace(/_/g, ' ') : '';
+            lightbox.style.display = 'flex';
+        };
+
+        window.closeLightbox = function() {
+            document.getElementById('lightbox').style.display = 'none';
+        };
+
+        // Close lightbox on escape key
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeLightbox();
+            }
+        });
+
+        // Initialize
+        fetchTripBook();
+    </script>
+</body>
+</html>

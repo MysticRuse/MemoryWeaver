@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemoryWeaver - Add Your Photos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #080a0f;
+            --card-bg: #0e121a;
+            --accent: #ff6b00;
+            --text-main: #ffffff;
+            --text-muted: #8b949e;
+            --success: #10b981;
+            --danger: #ef4444;
+            --border-color: rgba(255, 255, 255, 0.08);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 32px 16px;
+        }
+        .wrap { width: 100%; max-width: 480px; }
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 32px 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 8px;
+            text-align: center;
+            letter-spacing: -0.5px;
+        }
+        .sub {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        label {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin: 20px 0 8px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: #080a0f;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus {
+            border-color: var(--accent);
+        }
+        .dropzone {
+            margin-top: 20px;
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 36px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.01);
+        }
+        .dropzone:hover {
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .dz-icon {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            margin-top: 20px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        .btn:hover:not(:disabled) {
+            opacity: 0.9;
+        }
+        .btn:disabled { opacity: 0.5; cursor: default; }
+        .btn.secondary {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: #ffffff;
+        }
+        .btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: #ffffff;
+        }
+        #status {
+            margin-top: 18px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            min-height: 1.2em;
+            text-align: center;
+            line-height: 1.4;
+        }
+        .count-pill {
+            display: inline-block;
+            margin: 0 auto 16px auto;
+            padding: 3px 12px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        .pill-wrapper {
+            display: flex;
+            justify-content: center;
+        }
+        #error-card { display: none; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="card" id="main-card" style="display: none;">
+            <h1 id="event-title">Loading event...</h1>
+            <p class="sub">Add your photos to the event album - they'll be woven into the live presentation.</p>
+            <div class="pill-wrapper">
+                <span class="count-pill" id="photo-count"></span>
+            </div>
+
+            <label for="contributor-name">YOUR NAME (so we know who captured what)</label>
+            <input type="text" id="contributor-name" placeholder="e.g. Grandma Lena">
+
+            <div class="dropzone" onclick="document.getElementById('file-input').click()">
+                <div class="dz-icon">📸</div>
+                <div style="font-weight: 700; font-size: 1.1rem; color: #fff;">Tap to choose photos</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 6px;">JPEG, PNG, or HEIC - straight from your camera roll</div>
+                <input type="file" id="file-input" multiple accept=".jpg,.jpeg,.png,.heic,image/*" style="display: none;" onchange="uploadFiles(this.files)">
+            </div>
+
+            <!-- Desktop-only convenience: webkitdirectory lets a browser pick an
+                 entire folder. Hidden on phones (no iOS/Android support). -->
+            <div class="dropzone" id="folder-zone" style="margin-top: 12px; padding: 24px 16px;" onclick="document.getElementById('folder-input').click()">
+                <div style="font-weight: 700; color: #fff; font-size: 1rem;">💻 On a computer? Upload a whole folder</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">Photos only (JPEG/PNG/HEIC) - other files are skipped</div>
+                <input type="file" id="folder-input" webkitdirectory style="display: none;" onchange="uploadFiles(this.files)">
+            </div>
+            <div id="status"></div>
+
+            <!-- Appears only once the admin has generated the journal -->
+            <a class="btn secondary" id="viewer-link" style="display: none;">📖 The journal is ready - view it!</a>
+        </div>
+
+        <div class="card" id="error-card">
+            <h1 style="background: none; -webkit-text-fill-color: var(--text-main); font-size: 1.8rem;">🔗 Link problem</h1>
+            <p class="sub" id="error-msg" style="margin-top: 12px;">This share link is invalid or has expired. Ask the event organizer to send it again.</p>
+        </div>
+    </div>
+
+    <script>
+        // Identity of this page comes entirely from the share link:
+        // /join/<session_id>?code=<share_code>. The code doubles as the upload
+        // credential - there is no login and no admin capability here.
+        const sessionId = decodeURIComponent(window.location.pathname.split('/').pop());
+        const shareCode = new URLSearchParams(window.location.search).get('code') || '';
+
+        const EVENT_EMOJI = { trip: '🧳', birthday: '🎂', wedding: '💍', sports_match: '⚽', reunion: '🤝', other: '📸' };
+
+        async function loadEvent() {
+            try {
+                const res = await fetch(`/api/session-public/${encodeURIComponent(sessionId)}?code=${encodeURIComponent(shareCode)}`);
+                if (!res.ok) throw new Error('bad code');
+                const data = await res.json();
+
+                document.getElementById('event-title').textContent =
+                    `${EVENT_EMOJI[data.event_type] || '📸'} ${data.name}`;
+                document.getElementById('photo-count').textContent =
+                    `${data.photo_count} photo(s) collected so far`;
+
+                const viewerLink = document.getElementById('viewer-link');
+                if (data.journal_ready && data.viewer_url) {
+                    viewerLink.href = data.viewer_url;
+                    viewerLink.style.display = 'block';
+                }
+                document.getElementById('main-card').style.display = 'block';
+            } catch (e) {
+                document.getElementById('error-card').style.display = 'block';
+            }
+        }
+
+        const SUPPORTED_EXT = /\.(jpe?g|png|heic)$/i;
+        const BATCH_SIZE = 10; // folder picks can be hundreds of files - batch so no single request is huge
+
+        async function uploadFiles(fileList) {
+            const all = Array.from(fileList);
+            if (!all.length) return;
+            const files = all.filter(f => SUPPORTED_EXT.test(f.name));
+            const skipped = all.length - files.length;
+
+            const status = document.getElementById('status');
+            if (!files.length) {
+                status.style.color = 'var(--danger)';
+                status.textContent = 'No supported photos found (JPEG/PNG/HEIC only - videos aren\'t supported yet).';
+                return;
+            }
+
+            const name = document.getElementById('contributor-name').value.trim() || 'Anonymous';
+            localStorage.setItem('mw_contributor_name', name);
+
+            let uploaded = 0;
+            let failed = 0;
+            status.style.color = 'var(--accent)';
+
+            try {
+                for (let i = 0; i < files.length; i += BATCH_SIZE) {
+                    const batch = files.slice(i, i + BATCH_SIZE);
+                    status.textContent = `Uploading ${Math.min(i + batch.length, files.length)} of ${files.length} photo(s)...`;
+
+                    const formData = new FormData();
+                    formData.append('contributor_name', name);
+                    formData.append('session_id', sessionId);
+                    formData.append('share_code', shareCode);
+                    for (const f of batch) formData.append('photos', f);
+
+                    const res = await fetch('/upload', { method: 'POST', body: formData });
+                    const data = await res.json();
+                    if (res.ok && (data.status === 'success' || data.status === 'partial_success')) {
+                        uploaded += (data.uploaded || []).length;
+                        failed += (data.errors || []).length;
+                    } else {
+                        throw new Error(data.detail || data.message || 'Upload failed');
+                    }
+                }
+                status.style.color = failed ? 'var(--accent)' : 'var(--success)';
+                let msg = `✅ ${uploaded} photo(s) added - thank you! Add more anytime.`;
+                if (failed) msg += ` (${failed} failed)`;
+                if (skipped) msg += ` ${skipped} unsupported file(s) skipped.`;
+                status.textContent = msg;
+                loadEvent(); // refresh count + journal-ready state
+            } catch (e) {
+                status.style.color = 'var(--danger)';
+                status.textContent = uploaded
+                    ? `Uploaded ${uploaded}, then failed: ${e.message}`
+                    : 'Upload failed: ' + e.message;
+            }
+            document.getElementById('file-input').value = '';
+            document.getElementById('folder-input').value = '';
+        }
+
+        // Folder picking isn't supported on iOS/Android - hide the zone there.
+        if (!('webkitdirectory' in document.createElement('input'))) {
+            document.getElementById('folder-zone').style.display = 'none';
+        }
+
+        document.getElementById('contributor-name').value = localStorage.getItem('mw_contributor_name') || '';
+        loadEvent();
+    </script>
+</body>
+</html>
