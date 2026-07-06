@@ -617,8 +617,6 @@ def run_generation_background(session_id: str, limit: int):
             state["pipeline"]["current"] = current
             state["pipeline"]["total"] = total
             state["pipeline"]["phase"] = phase
-            if current >= total and phase == "journaling":
-                state["pipeline"]["status"] = "complete"
 
         stats = execute_trip_pipeline(
             project_root,
@@ -627,8 +625,6 @@ def run_generation_background(session_id: str, limit: int):
             log=lambda msg: log_pipeline_step(session_id, msg),
             progress_callback=pipeline_progress
         )
-
-        state["pipeline"]["status"] = "complete"
 
         # ==========================================
         # ### DEBUG / PERFORMANCE TRACKING SECTION ###
@@ -650,6 +646,8 @@ def run_generation_background(session_id: str, limit: int):
             "estimated_cost": round(est_cost, 4),
             "moments_count": moments_count
         }
+
+        state["pipeline"]["status"] = "complete"
 
         log_pipeline_step(session_id, f"PERFORMANCE REPORT (UNCACHED RUNS ONLY):")
         log_pipeline_step(session_id, f"  - Total Elapsed Time: {elapsed} seconds")
