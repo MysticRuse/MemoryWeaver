@@ -36,6 +36,8 @@ just these 3 photos", "who missed the beach day?").
 
 import json
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 from google.adk.agents import Agent
 from google.adk.apps import App

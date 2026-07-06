@@ -1,4 +1,4 @@
-import json
+import yaml
 import os
 import re
 from google import genai
@@ -11,10 +11,34 @@ def get_gemini_client():
         raise ValueError("GEMINI_API_KEY environment variable is not set.")
     return genai.Client(api_key=api_key)
 
+def score_photo_as_judge(path: str, filename: str, others_summary: str = "") -> dict:
+    """
+    Scores a single photo as a judge.
+    
+    Args:
+        path: Path to the image file.
+        filename: Filename of the image.
+        others_summary: Summary of other photos for uniqueness context.
+        
+    Returns:
+        A dict with keys score, sharpness, composition, uniqueness, human_presence, scene_label, caption.
+    """
+    results = score_photos_as_judge_batch([{"path": path, "filename": filename}], others_summary)
+    return results[0] if results else {
+        "score": 5.0,
+        "sharpness": 5.0,
+        "composition": 5.0,
+        "uniqueness": 5.0,
+        "human_presence": 5.0,
+        "scene_label": "unknown",
+        "caption": "Exploring the sights."
+    }
+
 def score_photos_as_judge_batch(photo_batch: list, others_summary: str = "") -> list:
     """
     Evaluates a batch of uploaded photos (up to 15) in a single API call,
     guiding landmark naming via EXIF GPS / Date.
+    Uses YAML formatting for the prompt and response to optimize model parsing.
     """
     client = get_gemini_client()
     
@@ -24,13 +48,10 @@ def score_photos_as_judge_batch(photo_batch: list, others_summary: str = "") -> 
     # 1. Compress images and compile metadata contexts
     from pipeline.local_cleaner import get_exif_metadata
     
-    from pipeline.prompt_safety import sanitize_for_prompt
-
     for idx, item in enumerate(photo_batch):
-        # Filenames are user-controlled; sanitize before prompt interpolation
-        filename = sanitize_for_prompt(item["filename"])
+        filename = item["filename"]
         path = item["path"]
-
+        
         meta = get_exif_metadata(path)
         meta_str = f"Image Index {idx} ({filename}): "
         if meta.get("gps"):
@@ -68,19 +89,17 @@ def score_photos_as_judge_batch(photo_batch: list, others_summary: str = "") -> 
         "Also generate:\n"
         "- A scene label identifying the setting (e.g. 'hotel_room', 'beach', 'hiking_trail', 'restaurant' or the specific landmark name like 'manaus_city_palace', 'teatro_amazonas', 'panama_canal' if recognizable).\n"
         "- A warm, descriptive caption (1-2 sentences) capturing the emotion and setting from a family member perspective.\n\n"
-        "You must respond ONLY with a raw JSON array of objects (one for each image in order of input):\n"
-        "[\n"
-        "  {\n"
-        '    "index": 0,\n'
-        '    "sharpness": 0-10,\n'
-        '    "composition": 0-10,\n'
-        '    "uniqueness": 0-10,\n'
-        '    "human_presence": 0-10,\n'
-        '    "scene_label": "string",\n'
-        '    "caption": "string"\n'
-        "  },\n"
-        "  ...\n"
-        "]"
+        "You must respond ONLY with a raw YAML array of objects (one for each image in order of input):\n"
+        "```yaml\n"
+        "-\n"
+        "  index: 0\n"
+        "  sharpness: 0-10\n"
+        "  composition: 0-10\n"
+        "  uniqueness: 0-10\n"
+        "  human_presence: 0-10\n"
+        "  scene_label: \"string\"\n"
+        "  caption: \"string\"\n"
+        "```"
     )
     
     contents.append(prompt)
@@ -89,20 +108,19 @@ def score_photos_as_judge_batch(photo_batch: list, others_summary: str = "") -> 
     try:
         response = client.models.generate_content(
             model="gemini-2.5-flash",
-            contents=contents,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json"
-            )
+            contents=contents
         )
         
         raw_text = response.text.strip()
-        if raw_text.startswith("```json"):
+        if raw_text.startswith("```yaml"):
             raw_text = raw_text[7:]
+        elif raw_text.startswith("```"):
+            raw_text = raw_text[3:]
         if raw_text.endswith("```"):
             raw_text = raw_text[:-3]
         raw_text = raw_text.strip()
         
-        parsed_results = json.loads(raw_text)
+        parsed_results = yaml.safe_load(raw_text)
         for res in parsed_results:
             idx = res.get("index")
             if idx is not None and idx < len(photo_batch):
@@ -142,3 +160,4 @@ def score_photos_as_judge_batch(photo_batch: list, others_summary: str = "") -> 
             }
             
     return [results_map[item["filename"]] for item in photo_batch]
+

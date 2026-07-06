@@ -4,9 +4,10 @@ import hashlib
 import datetime
 from PIL import Image
 from PIL.ExifTags import TAGS, GPSTAGS
-from pillow_heif import register_heif_opener
-from app.app_utils.storage import StorageHelper
 
+
+
+from pillow_heif import register_heif_opener
 register_heif_opener()
 
 def _get_decimal_coordinates(info):
@@ -120,6 +121,7 @@ def process_and_save_upload(file_bytes: bytes, original_filename: str, contribut
     unique_filename = f"{contributor_id}_{timestamp_prefix}_{safe_filename}"
     
     # Save to storage (GCS/Local fallback), scoped to this event's session
+    from app.app_utils.storage import StorageHelper
     storage = StorageHelper(session_id=session_id)
     gcs_uri = storage.save_upload(file_bytes, unique_filename)
     

@@ -9,7 +9,6 @@ from agents.curator.tools.embed import get_image_embedding, calculate_cosine_sim
 from agents.memory.tools.memory_bank import MemoryBankStore
 from agents.narrator.tools.journal import generate_all_moments_journal
 from agents.narrator.tools.story import generate_trip_story
-from app.app_utils.storage import StorageHelper
 
 CACHE_FILE = "curation_cache.json"
 
@@ -40,14 +39,19 @@ def get_photo_date_info(path: str) -> tuple[float, str]:
 
 def execute_trip_pipeline(project_root: str, session_id: str = "default", limit: int = 50, log=print, progress_callback=None) -> dict:
     """
-    Runs the sequential 5-agent pipeline on all photos uploaded to one event session.
-    session_id selects the isolated storage namespace (see StorageHelper) so multiple
-    events can be curated independently. Saves outputs to that session's artefacts/
-    and returns stats. Uses concurrent threads, caching, and a progress callback to
-    track states.
+    Runs the sequential 5-agent pipeline on all photos in local_storage/uploads.
+    Saves outputs to local_storage/artefacts/ and returns stats.
+    Uses concurrent threads, caching, and a progress callback to track states.
     """
     log("Starting MemoryWeaver Optimised Pipeline...")
-
+    
+    trajectory = {
+        "pipeline_name": "MemoryWeaver Multi-Agent Pipeline",
+        "started_at": datetime.datetime.utcnow().isoformat(),
+        "steps": [],
+        "metadata": {}
+    }
+    
     session_storage = StorageHelper(session_id=session_id)
     uploads_dir = os.path.join(session_storage.local_base, "uploads")
     artefacts_dir = os.path.join(session_storage.local_base, "artefacts")
@@ -146,6 +150,17 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
         raise ValueError("All photos were quarantined by the Moderator Agent.")
         
     log(f"Phase 1 complete: {len(approved)} approved, {len(quarantined)} quarantined in {time.time() - p1_start:.1f}s.")
+    trajectory["steps"].append({
+        "phase": 1,
+        "name": "Moderator Agent (Safety & Quality Check)",
+        "duration_seconds": round(time.time() - p1_start, 2),
+        "inputs": len(photos),
+        "outputs": {
+            "approved": len(approved),
+            "quarantined": len(quarantined)
+        },
+        "cached_hits": len(photos) - len(uncached_photos)
+    })
     
     # Run Embedding in Parallel (only for uncached approved photos)
     log("Starting Phase 2: Curator Deduplication...")
@@ -204,6 +219,17 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
             unique_photos.append((photo_a, path_a, emb_a))
             
     log(f"Phase 2 complete: Kept {len(unique_photos)}/{len(approved)} unique photos in {time.time() - p2_start:.1f}s.")
+    trajectory["steps"].append({
+        "phase": 2,
+        "name": "Curator Agent (Embedding & Cosine Similarity Deduplication)",
+        "duration_seconds": round(time.time() - p2_start, 2),
+        "inputs": len(approved),
+        "outputs": {
+            "unique": len(unique_photos),
+            "duplicates_dropped": len(approved) - len(unique_photos)
+        },
+        "cached_hits": len(approved) - len(uncached_approved)
+    })
     
     # Run Curation/Scoring in Parallel (only for uncached unique photos)
     log("Starting Phase 3: Curator Quality Evaluation...")
@@ -276,6 +302,16 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
             progress_callback(100, 100, "scoring")
             
     log(f"Phase 3 complete: Evaluated {len(scored_photos)} photos in {time.time() - p3_start:.1f}s.")
+    trajectory["steps"].append({
+        "phase": 3,
+        "name": "Curator Agent (LLM-as-Judge Quality Scoring)",
+        "duration_seconds": round(time.time() - p3_start, 2),
+        "inputs": len(unique_photos),
+        "outputs": {
+            "scored": len(scored_photos)
+        },
+        "cached_hits": len(unique_photos) - len(uncached_unique)
+    })
             
     # Save the updated curation cache file
     try:
@@ -293,10 +329,12 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
         json.dump(scored_photos, f, indent=2)
         
     # --- Agent 4: Memory ---
+    p4_start = time.time()
     log("Starting Phase 4: Memory Agent profile indexing...")
     memory_store = MemoryBankStore(session_id)
-
-    # Extract date & timestamp for chronological sorting (uploads_dir computed above)
+    
+    # Extract date & timestamp for chronological sorting
+    uploads_dir = os.path.join(session_storage.local_base, "uploads")
     for p in scored_photos:
         p_path = os.path.join(uploads_dir, p["filename"])
         ts, date_str = get_photo_date_info(p_path)
@@ -374,6 +412,15 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
         )
         
     log("Memory Bank profiles updated successfully.")
+    trajectory["steps"].append({
+        "phase": 4,
+        "name": "Memory Agent (Cross-Session Profile Indexing)",
+        "duration_seconds": round(time.time() - p4_start, 2),
+        "inputs": len(selected_photos),
+        "outputs": {
+            "profiles_updated": len(contributors_activity)
+        }
+    })
     
     # Run Narrator Journaling in a Single Batched API Call
     log("Starting Phase 5: Batched Narrator Agent synthesis (single API call)...")
@@ -429,9 +476,37 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
         destination=memory_store.get_trip_context().get("destination") or "our trip"
     )
     
+    trajectory["steps"].append({
+        "phase": 5,
+        "name": "Narrator Agent (Journal & Story Compilation)",
+        "duration_seconds": round(time.time() - p5_start, 2),
+        "inputs": {
+            "moments_count": len(moments),
+            "journal_entries": len(journal_entries)
+        },
+        "outputs": {
+            "story_word_count": len(full_story.split())
+        }
+    })
+    
     # Select highlights (top 12 overall photos from selected diverse set)
     highlights = selected_photos[:12]
     
+    # Write vibe trajectory trace
+    trajectory["ended_at"] = datetime.datetime.utcnow().isoformat()
+    trajectory["metadata"] = {
+        "total_processed": len(photos),
+        "approved": len(approved),
+        "quarantined": len(quarantined),
+        "unique": len(unique_photos),
+        "moments_count": len(moments),
+        "uncached_moderated": len(uncached_photos),
+        "uncached_scored": len(uncached_unique)
+    }
+    
+    with open(os.path.join(artefacts_dir, "vibe_trajectory.json"), "w") as f:
+        json.dump(trajectory, f, indent=2)
+        
     # --- Write Final Artifacts ---
     with open(os.path.join(artefacts_dir, "highlights.json"), "w") as f:
         json.dump(highlights, f, indent=2)
