@@ -490,13 +490,180 @@
             border-color: var(--accent);
             background: rgba(255, 123, 0, 0.05);
         }
+
+        /* Unified Navigation Header */
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(13, 15, 20, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            width: 100%;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .nav-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-family: 'Playfair Display', serif;
+            font-weight: 800;
+            font-size: 1.4rem;
+            background: var(--accent-grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 12px;
+        }
+
+        .nav-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 8px 18px;
+            border-radius: 20px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-link:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .nav-link.active {
+            color: #000;
+            background: var(--accent-grad);
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+
+        /* Step Wizard Stepper UI */
+        .wizard-stepper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 16px 24px;
+        }
+
+        .wizard-step-node {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            opacity: 0.4;
+            transition: all 0.3s;
+            user-select: none;
+        }
+
+        .wizard-step-node.active {
+            opacity: 1;
+        }
+
+        .wizard-step-node.completed {
+            opacity: 0.9;
+        }
+
+        .step-node-num {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            font-weight: 800;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .wizard-step-node.active .step-node-num {
+            background: var(--accent-grad);
+            color: #000;
+            border-color: transparent;
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        .wizard-step-node.completed .step-node-num {
+            background: var(--success);
+            color: #000;
+            border-color: transparent;
+        }
+
+        .step-node-text {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: color 0.3s;
+        }
+
+        .wizard-step-node.active .step-node-text {
+            color: #fff;
+        }
+
+        .wizard-step-node.completed .step-node-text {
+            color: var(--success);
+        }
+
+        .wizard-step-line {
+            flex: 1;
+            height: 2px;
+            background: var(--border);
+            margin: 0 20px;
+            transition: all 0.3s;
+        }
+
+        .wizard-step-line.active {
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        /* General layout additions */
+        .container {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+        body {
+            padding: 0 0 3rem 0 !important;
+        }
     </style>
 </head>
 <body>
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">🔮 MemoryWeaver</a>
+            <div class="nav-links">
+                <a href="/" class="nav-link active">🛠️ Curator Hub</a>
+                <a href="/viewer" class="nav-link" id="nav-viewer-link">📖 Trip Highlights</a>
+            </div>
+        </div>
+    </nav>
     <div class="container">
-        <header>
+        <header style="margin-top: 1rem;">
             <p>MEMORYWEAVER MANAGER</p>
-            <h1>Curator Hub</h1>
+            <h1 style="font-size: 2.4rem; margin-bottom: 5px;">Curator Hub</h1>
         </header>
 
         <!-- Event session bar: pick which event (trip/birthday/wedding/...) you're
@@ -556,10 +723,27 @@
             <!-- Bulk Ingest wizard: shown only when the server runs locally on
                  macOS (is_local flag) - the Finder picker can't work deployed. -->
             <div id="bulk-tab" class="tab-content active" style="display: none;">
+                <!-- Modern Interactive Stepper -->
+                <div class="wizard-stepper">
+                    <div class="wizard-step-node active" id="step-node-1" onclick="showWizardStep(1)">
+                        <span class="step-node-num">1</span>
+                        <span class="step-node-text">Ingestion</span>
+                    </div>
+                    <div class="wizard-step-line" id="step-line-1"></div>
+                    <div class="wizard-step-node" id="step-node-2" onclick="showWizardStep(2)">
+                        <span class="step-node-num">2</span>
+                        <span class="step-node-text">Pre-Clean & HITL</span>
+                    </div>
+                    <div class="wizard-step-line" id="step-line-2"></div>
+                    <div class="wizard-step-node" id="step-node-3" onclick="showWizardStep(3)">
+                        <span class="step-node-num">3</span>
+                        <span class="step-node-text">Curation</span>
+                    </div>
+                </div>
+
                 <!-- Step 1: Selection -->
-                <div class="wizard-step">
+                <div class="wizard-step" id="step-1">
                     <div class="step-title">
-                        <span class="step-num">1</span>
                         Choose Google Photos Local Directory
                     </div>
                     <button class="btn btn-primary" id="btnSelectFolder" onclick="selectLocalFolder()">
@@ -576,7 +760,6 @@
                 <!-- Step 2: Local Pre-Clean -->
                 <div class="wizard-step" id="step-clean" style="display: none;">
                     <div class="step-title">
-                        <span class="step-num">2</span>
                         Perform Local Pre-Cleaning Analysis
                     </div>
                     <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
@@ -650,7 +833,6 @@
                 <!-- Step 3: Run Curation -->
                 <div class="wizard-step" id="step-curation" style="display: none;">
                     <div class="step-title">
-                        <span class="step-num">3</span>
                         Trigger Intelligent Agent Pipeline
                     </div>
                     <div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
@@ -715,16 +897,24 @@
             </div>
 
             <!-- Live Logger console -->
-            <div class="console-container" id="console-area" style="display: none;">
-                <div class="console-header">
+            <div class="console-container" id="console-area" style="display: none; margin-top: 28px;">
+                <div class="console-header" style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
                     <span class="console-title">Live Curation Logs</span>
-                    <button class="btn" style="padding: 4px 12px; font-size: 11px;" onclick="document.getElementById('log-box').innerHTML = ''">Clear</button>
+                    <button class="btn" style="padding: 6px 14px; font-size: 11px; border-radius: 15px;" onclick="document.getElementById('log-box').innerHTML = ''">Clear Logs</button>
                 </div>
-                <div class="console-window" id="log-box">
-                    Welcome to the MemoryWeaver Curation terminal...
+                <div class="terminal-wrapper" style="border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: #05070a; box-shadow: 0 8px 30px rgba(0,0,0,0.5);">
+                    <div class="terminal-header" style="background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                        <span style="display:inline-block; width: 12px; height: 12px; border-radius: 50%; background: #ff5f56;"></span>
+                        <span style="display:inline-block; width: 12px; height: 12px; border-radius: 50%; background: #ffbd2e;"></span>
+                        <span style="display:inline-block; width: 12px; height: 12px; border-radius: 50%; background: #27c93f;"></span>
+                        <span style="margin-left: 12px; font-size: 11px; font-weight: 700; color: var(--text-muted); font-family: monospace; letter-spacing: 0.5px;">bash - memoryweaver_curator_node.sh</span>
+                    </div>
+                    <div class="console-window" id="log-box" style="border: none; border-radius: 0; background: transparent; height: 240px; box-shadow: none;">
+                        Welcome to the MemoryWeaver Curation terminal...
+                    </div>
                 </div>
-                <div style="margin-top: 14px; text-align: center;">
-                    <a href="/viewer" class="btn btn-primary" id="btnViewerLink" style="display: none; padding: 10px 24px;">📖 Open Curation Viewer</a>
+                <div style="margin-top: 18px; text-align: center;">
+                    <a href="/viewer" class="btn btn-primary" id="btnViewerLink" style="display: none; padding: 12px 30px; font-size: 1.1rem; box-shadow: 0 0 15px rgba(255, 123, 0, 0.4); text-decoration: none; border-radius: 8px;">📖 Open Curation Viewer</a>
                 </div>
             </div>
         </div>
@@ -875,6 +1065,51 @@
             }
         }
 
+        // --- Step Wizard Controller ---
+        let activeStep = 1;
+        let highestUnlockedStep = 1;
+
+        function showWizardStep(stepNum) {
+            if (stepNum > highestUnlockedStep) {
+                // Keep locked if user clicks a future step they haven't unlocked
+                return;
+            }
+            activeStep = stepNum;
+            
+            // Show only the selected step
+            document.getElementById('step-1').style.display = stepNum === 1 ? 'block' : 'none';
+            
+            const stepClean = document.getElementById('step-clean');
+            if (stepClean) {
+                stepClean.style.display = stepNum === 2 ? 'block' : 'none';
+            }
+            
+            const stepCuration = document.getElementById('step-curation');
+            if (stepCuration) {
+                stepCuration.style.display = stepNum === 3 ? 'block' : 'none';
+            }
+            
+            // Highlight nodes
+            for (let i = 1; i <= 3; i++) {
+                const node = document.getElementById(`step-node-${i}`);
+                const line = document.getElementById(`step-line-${i}`);
+                if (node) {
+                    node.classList.toggle('active', i === stepNum);
+                    node.classList.toggle('completed', i < highestUnlockedStep);
+                }
+                if (line) {
+                    line.classList.toggle('active', i < highestUnlockedStep);
+                }
+            }
+        }
+
+        function unlockWizardStep(stepNum) {
+            if (stepNum > highestUnlockedStep) {
+                highestUnlockedStep = stepNum;
+            }
+            showWizardStep(stepNum);
+        }
+
         let currentFolder = "";
         let acceptedList = [];
         let rejectedList = [];
@@ -905,11 +1140,12 @@
                     currentFolder = progress.folder;
                     document.getElementById('selectedPath').textContent = currentFolder;
                     document.getElementById('folder-info').style.display = 'block';
-                    document.getElementById('step-clean').style.display = 'block';
+                    unlockWizardStep(2);
                 }
                 
                 // If pre-clean is already running on the server
                 if (progress.pre_clean && progress.pre_clean.status === 'running') {
+                    unlockWizardStep(2);
                     document.getElementById('pre-clean-progress-container').style.display = 'block';
                     document.getElementById('console-area').style.display = 'block';
                     
@@ -944,7 +1180,7 @@
                             
                             document.getElementById('pre-clean-progress-container').style.display = 'none';
                             document.getElementById('trays').style.display = 'block';
-                            document.getElementById('step-curation').style.display = 'block';
+                            unlockWizardStep(3);
                             btn.disabled = false;
                             spinner.style.display = 'none';
                             btnText.textContent = 'Run Pre-Clean Analysis';
@@ -969,10 +1205,9 @@
                         populateCameraFilter();
                         applyFilters();
                         
-                        document.getElementById('step-clean').style.display = 'block';
                         document.getElementById('pre-clean-progress-container').style.display = 'none';
                         document.getElementById('trays').style.display = 'block';
-                        document.getElementById('step-curation').style.display = 'block';
+                        unlockWizardStep(3);
                         
                         if (progress.pre_clean.summary) {
                             const summ = progress.pre_clean.summary;
@@ -1050,7 +1285,7 @@
                     document.getElementById('selectedPath').textContent = data.folder;
                     document.getElementById('photoCount').textContent = `Found ${data.count} image(s) in folder.`;
                     document.getElementById('folder-info').style.display = 'flex';
-                    document.getElementById('step-clean').style.display = 'block';
+                    unlockWizardStep(2);
                 } else {
                     alert(data.message || "Failed to select folder");
                 }
@@ -1113,7 +1348,7 @@
                         }
                         
                         document.getElementById('trays').style.display = 'block';
-                        document.getElementById('step-curation').style.display = 'block';
+                        unlockWizardStep(3);
                         btn.disabled = false;
                         spinner.style.display = 'none';
                         btnText.textContent = 'Run Pre-Clean Analysis';

@@ -535,9 +535,91 @@
             letter-spacing: 0.5px;
             max-width: 80%;
         }
+
+        /* Unified Navigation Header */
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(13, 15, 20, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-color);
+            width: 100%;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-family: 'Playfair Display', serif;
+            font-weight: 800;
+            font-size: 1.4rem;
+            background: var(--accent-grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 12px;
+        }
+
+        .nav-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 8px 18px;
+            border-radius: 20px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-link:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .nav-link.active {
+            color: #000;
+            background: var(--accent-grad);
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+
+        /* General layout overrides */
+        .container {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+        body {
+            padding: 0 0 3rem 0 !important;
+        }
     </style>
 </head>
 <body>
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">🔮 MemoryWeaver</a>
+            <div class="nav-links">
+                <a href="/" class="nav-link">🛠️ Curator Hub</a>
+                <a href="/viewer" class="nav-link active" id="nav-viewer-link">📖 Trip Highlights</a>
+            </div>
+        </div>
+    </nav>
+
     <!-- Lightbox Modal for uncropped fullscreen view -->
     <div id="lightbox" class="lightbox-modal" onclick="closeLightbox()">
         <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
@@ -546,11 +628,10 @@
     </div>
 
     <div class="container">
-        <header>
+        <header style="margin-top: 1rem;">
             <p>MEMORYWEAVER PRESENTATION</p>
-            <h1>Your Trip Highlights</h1>
+            <h1 style="font-size: 2.8rem; margin-bottom: 5px;">Your Trip Highlights</h1>
             <div class="header-controls">
-                <a href="/" class="nav-btn">← Back to Upload Terminal</a>
                 <select id="user-select" class="select-user" style="display: none;" onchange="handleUserChange()">
                     <option value="all">👥 Full Journal (All Contributors)</option>
                 </select>
