@@ -1,5 +1,7 @@
 # MemoryWeaver 🧵📸
 
+![MemoryWeaver Project Card](memoryweaver_card_560x280.jpg)
+
 **Turn a family's chaotic post-event photo dump into a curated, narrated keepsake journal — automatically, with a team of AI agents.**
 
 After every trip, birthday, or wedding, the photos scatter: hundreds on Mom's phone, more on Dad's, a few gems on Grandma's. Someone (usually a busy parent) is supposed to collect them all, delete the blurry ones, pick the best, and make something worth keeping. Nobody ever does.
@@ -73,6 +75,7 @@ Results are cached per photo, so re-runs are near-free.
 | **MCP server** | [`mcp_server.py`](mcp_server.py) — 4 read-only tools over stdio, deliberately unable to bypass the web auth layer |
 | **Security features** | Admin-token gate on destructive/billable endpoints; per-event `share_code` upload credential; EXIF-stripping `/media` endpoint (raw GPS never leaves the server); prompt-injection sanitizer ([`pipeline/prompt_safety.py`](pipeline/prompt_safety.py)); STRIDE notes in [`CONTEXT.md`](../CONTEXT.md) |
 | **Agent skills (Agents CLI)** | Project scaffolded and driven with `agents-cli` (see [`agents-cli-manifest.yaml`](agents-cli-manifest.yaml)); `agents-cli playground` runs the concierge |
+| **Agent Evaluation (Agents CLI)** | [`eval/eval_config.yaml`](eval/eval_config.yaml) and [`eval/datasets/basic-dataset.json`](eval/datasets/basic-dataset.json) — automated LLM-as-judge quality & safety evaluation pipeline |
 | **Deployability** | [`Dockerfile`](Dockerfile) + [`deployment/terraform/`](deployment/terraform/) + `agents-cli deploy` (Cloud Run); see [Deployment](#deployment) |
 
 ---
@@ -100,10 +103,9 @@ Open **http://localhost:8000** — the Curator Hub, with a default event ready.
 
 1. **Create an event** in the session bar (name + type: trip / birthday / wedding / sports match / reunion).
 2. **Share & Collect** — copy the contributor link or let family scan the QR. They open it on their phones: name, pick photos, done. Desktop contributors can upload a whole folder at once.
-3. When photos are in, click **▶ Curate & Narrate Now** and watch the live agent logs.
-4. Open the **viewer** — highlights carousel, per-moment journal with captions and dates, the full trip story, and a per-contributor filter. Contributors' share page automatically shows a *"journal is ready"* link.
-
-*(Running the server on your Mac? A bulk local-folder wizard also appears, with free on-device CLIP pre-cleaning that filters blur/duplicates before any API spend.)*
+3. **Manage the Photo Pool** — expand the collapsible "View Uploaded Photo Pool" tray right under the upload status. Toggle photos in/out of the curation pipeline using the **Included** and **Excluded** tabs and the `❌` / `➕` overlays.
+4. When the pool is ready, click **▶ Curate & Narrate Now** and watch the live agent logs and progress bar.
+5. Open the **viewer** — highlights carousel, per-moment journal with captions and dates, the full trip story, and a per-contributor filter. Contributors' share page automatically shows a *"journal is ready"* link.
 
 ### Talk to the agent
 
@@ -181,7 +183,6 @@ The Terraform under `deployment/terraform/` provisions Cloud Run, GCS buckets, a
 - **Photos only** — videos are filtered out at upload; video moderation/curation is roadmap.
 - Pipeline progress/log state is in-memory per process — fine for a family-scale single instance, needs Redis/Firestore for multi-instance serving.
 - The `share_code` travels in the URL query string — the right trade-off for "grandma scans a QR" (vs. accounts/OAuth), but links should be shared as privately as the photos themselves.
-- Bulk folder import (with free local pre-cleaning) requires running the server locally on macOS; the UI hides it elsewhere.
 
 ## Roadmap
 
