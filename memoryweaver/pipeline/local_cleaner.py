@@ -1,11 +1,19 @@
 import os
 import datetime
 import numpy as np
-import torch
 from PIL import Image, ImageFilter
 from PIL.ExifTags import TAGS
-from sentence_transformers import SentenceTransformer
-from sklearn.cluster import DBSCAN
+
+# torch / sentence-transformers / scikit-learn are imported lazily inside the
+# functions that need them: they belong to the OPTIONAL on-device pre-clean
+# feature (install with `uv sync --extra local-preclean`, ~2GB+). Keeping them
+# out of module scope means the light helpers here (get_exif_metadata, used by
+# the orchestrator and ingest path) work on a lean install, and the default
+# quick-start doesn't download torch.
+_PRECLEAN_INSTALL_HINT = (
+    "Local pre-cleaning requires the optional ML stack. "
+    "Install it with: uv sync --extra local-preclean"
+)
 
 # Module-level cache for CLIP model to avoid reloading on every API call
 _CLIP_MODEL = None
@@ -13,6 +21,11 @@ _CLIP_MODEL = None
 def get_clip_model():
     global _CLIP_MODEL
     if _CLIP_MODEL is None:
+        try:
+            import torch
+            from sentence_transformers import SentenceTransformer
+        except ImportError as e:
+            raise ImportError(_PRECLEAN_INSTALL_HINT) from e
         device = "mps" if torch.backends.mps.is_available() else "cpu"
         print(f"Loading local CLIP model on device: {device}...")
         _CLIP_MODEL = SentenceTransformer('clip-ViT-B-32', device=device)
@@ -227,6 +240,7 @@ def analyze_directory(source_dir: str, blur_threshold: float = 12.0, dup_thresho
         else:
             # 2. Strict Visual-Only clustering (fallback if EXIF dates are missing/uniform due to bulk copy)
             # We cluster using DBSCAN but with a very tight threshold (eps=0.06 equivalent to similarity >= 0.94)
+            from sklearn.cluster import DBSCAN  # optional-extra dep; see _PRECLEAN_INSTALL_HINT
             embeddings_matrix = np.array([c["embedding"] for c in valid_candidates])
             db = DBSCAN(eps=0.06, min_samples=2, metric='cosine')
             labels = db.fit_predict(embeddings_matrix)

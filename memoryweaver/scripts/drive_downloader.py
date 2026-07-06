@@ -1,7 +1,30 @@
+"""Standalone utility: bulk-import photos from a Google Drive folder.
+
+Not part of the running app - run it manually to pull a shared Drive folder
+into the active event's photo pool:
+
+    uv sync --extra drive-import          # its deps are an optional extra
+    uv run python scripts/drive_downloader.py <GOOGLE_DRIVE_FOLDER_ID>
+
+Requires a Google OAuth client secret JSON in the project directory (Desktop
+app credentials from console.cloud.google.com); a token.json is created on
+first auth. Keep both files out of git - .gitignore already covers them.
+"""
+
 import os
 import io
+import sys
 import hashlib
-from googleapiclient.discovery import build
+
+# Make project-root imports work when run as a script from anywhere
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+try:
+    from googleapiclient.discovery import build
+except ImportError as e:
+    raise SystemExit(
+        "Google Drive import needs optional deps - run: uv sync --extra drive-import"
+    ) from e
 from googleapiclient.http import MediaIoBaseDownload
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials

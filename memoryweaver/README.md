@@ -73,7 +73,7 @@ Results are cached per photo, so re-runs are near-free.
 | **MCP server** | [`mcp_server.py`](mcp_server.py) — 4 read-only tools over stdio, deliberately unable to bypass the web auth layer |
 | **Security features** | Admin-token gate on destructive/billable endpoints; per-event `share_code` upload credential; EXIF-stripping `/media` endpoint (raw GPS never leaves the server); prompt-injection sanitizer ([`pipeline/prompt_safety.py`](pipeline/prompt_safety.py)); STRIDE notes in [`CONTEXT.md`](../CONTEXT.md) |
 | **Agent skills (Agents CLI)** | Project scaffolded and driven with `agents-cli` (see [`agents-cli-manifest.yaml`](agents-cli-manifest.yaml)); `agents-cli playground` runs the concierge |
-| **Agent Evaluation (Agents CLI)** | [`eval/eval_config.yaml`](eval/eval_config.yaml) and [`eval/datasets/basic-dataset.json`](eval/datasets/basic-dataset.json) — automated LLM-as-judge quality & safety evaluation pipeline |
+| **Agent Evaluation (Agents CLI)** | [`tests/eval/eval_config.yaml`](tests/eval/eval_config.yaml) and [`tests/eval/datasets/basic-dataset.json`](tests/eval/datasets/basic-dataset.json) — run `agents-cli eval generate && agents-cli eval grade`: deterministic tool-trajectory checks + local LLM-as-judge (this suite caught a share-code credential leak pre-submission) |
 | **Deployability** | [`Dockerfile`](Dockerfile) + [`deployment/terraform/`](deployment/terraform/) + `agents-cli deploy` (Cloud Run); see [Deployment](#deployment) |
 
 ---
@@ -85,7 +85,7 @@ Results are cached per photo, so re-runs are near-free.
 ```bash
 git clone <this-repo> && cd MemoryWeaver/memoryweaver
 
-# Install dependencies
+# Install dependencies (core only - small and fast)
 uv sync
 
 # Configure
@@ -96,6 +96,10 @@ uv run uvicorn app.fast_api_app:app --port 8000
 ```
 
 Open **http://localhost:8000** — the Curator Hub, with a default event ready.
+
+Optional extras (not needed for the core demo): `uv sync --extra local-preclean`
+adds the on-device CLIP pre-cleaning used by the macOS bulk-folder wizard
+(~2GB torch download); `--extra drive-import` enables `scripts/drive_downloader.py`.
 
 ### The full loop (5 minutes)
 
