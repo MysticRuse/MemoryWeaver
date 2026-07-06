@@ -8,8 +8,6 @@ After every trip, birthday, or wedding, the photos scatter: hundreds on Mom's ph
 
 MemoryWeaver does. Family members upload photos through a shareable link — no accounts, no app installs. A five-agent pipeline moderates, de-duplicates, scores, and narrates them into a journal with per-moment entries, accurate landmark names, and a flowing trip story. Every event (a weekend trip, a soccer final, a wedding) lives in its own isolated session.
 
-Built for the [Kaggle AI Agents: Intensive Vibe Coding Capstone](https://www.kaggle.com/competitions/vibecoding-agents-capstone-project) — **Concierge Agents track**.
-
 ---
 
 ## Architecture
@@ -67,7 +65,7 @@ Results are cached per photo, so re-runs are near-free.
 
 ---
 
-## Key concepts demonstrated (capstone rubric)
+## Key Architecture Concepts
 
 | Concept | Where |
 |---|---|
@@ -164,7 +162,7 @@ memoryweaver/
 
 ## Deployment
 
-Judging doesn't require a live endpoint; to reproduce a Cloud Run deployment:
+To deploy this application to Google Cloud Run:
 
 ```bash
 gcloud config set project <your-project-id>
