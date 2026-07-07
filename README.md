@@ -53,6 +53,10 @@ flowchart TD
 
 ### Pipeline phases
 
+The pipeline executes in two user-controlled sequential stages:
+1. **Curate & Score:** Runs Moderation, Deduplication, Scoring, and Memory mapping, then displays the proposed photo highlights to the admin in Step 3.
+2. **Narrate & Finalize:** Triggered via the **Proceed** button once the curated photo grid is approved, running the Narrator agent to write the final journal and stories.
+
 | Phase | Agent | What happens |
 |---|---|---|
 | 1. Moderation | Moderator | Gemini vision screens batches of 50: safety, sharpness, real-photo-vs-screenshot |
@@ -102,8 +106,9 @@ Open **http://localhost:8000** — the Curator Hub, with a default event ready.
 1. **Create an event** in the session bar (name + type: trip / birthday / wedding / sports match / reunion).
 2. **Share & Collect** — copy the contributor link or let family scan the QR. They open it on their phones: name, pick photos, done. Desktop contributors can upload a whole folder at once.
 3. **Manage the Photo Pool** — expand the collapsible "View Uploaded Photo Pool" tray right under the upload status. Toggle photos in/out of the curation pipeline using the **Included** and **Excluded** tabs and the `❌` / `➕` overlays.
-4. When the pool is ready, click **▶ Curate & Narrate Now** and watch the live agent logs and progress bar.
-5. Open the **viewer** — highlights carousel, per-moment journal with captions and dates, the full trip story, and a per-contributor filter. Contributors' share page automatically shows a *"journal is ready"* link.
+4. **Curate & Score** — click **▶ Curate & Score Now** and watch the live agent logs and progress bar. Once complete, inspect the generated curation grid (showing scores, labels, and captions).
+5. **Narrate & Finalize** — click the **"Love the Curated Highlights - Proceed to create Trip Highlights"** button at the bottom of the grid to execute the final narration and write stories/journals.
+6. **Viewer with Sub-Event Filters** — open the viewer to see the highlights carousel, moment-by-moment journal with captions, and full trip story. Use the new **dynamic sub-event filter tabs** (e.g. 🌟 Overall Highlights, 📍 specific moments) to interactively explore curated moments. Contributor share links will update to show the *"journal is ready"* link.
 
 ### Talk to the agent
 

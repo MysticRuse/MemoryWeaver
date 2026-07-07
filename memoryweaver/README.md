@@ -53,6 +53,10 @@ flowchart TD
 
 ### Pipeline phases
 
+The pipeline executes in two user-controlled sequential stages:
+1. **Curate & Score:** Runs Moderation, Deduplication, Scoring, and Memory mapping, then displays the proposed photo highlights to the admin in Step 3.
+2. **Narrate & Finalize:** Triggered via the **Proceed** button once the curated photo grid is approved, running the Narrator agent to write the final journal and stories.
+
 | Phase | Agent | What happens |
 |---|---|---|
 | 1. Moderation | Moderator | Gemini vision screens batches of 50: safety, sharpness, real-photo-vs-screenshot |
@@ -73,7 +77,7 @@ Results are cached per photo, so re-runs are near-free.
 | **MCP server** | [`mcp_server.py`](mcp_server.py) — 4 read-only tools over stdio, deliberately unable to bypass the web auth layer |
 | **Security features** | Admin-token gate on destructive/billable endpoints; per-event `share_code` upload credential; EXIF-stripping `/media` endpoint (raw GPS never leaves the server); prompt-injection sanitizer ([`pipeline/prompt_safety.py`](pipeline/prompt_safety.py)); STRIDE notes in [`CONTEXT.md`](../CONTEXT.md) |
 | **Agent skills (Agents CLI)** | Project scaffolded and driven with `agents-cli` (see [`agents-cli-manifest.yaml`](agents-cli-manifest.yaml)); `agents-cli playground` runs the concierge |
-| **Agent Evaluation (Agents CLI)** | [`tests/eval/eval_config.yaml`](tests/eval/eval_config.yaml) and [`tests/eval/datasets/basic-dataset.json`](tests/eval/datasets/basic-dataset.json) — run `agents-cli eval generate && agents-cli eval grade`: deterministic tool-trajectory checks + local LLM-as-judge (this suite caught a share-code credential leak pre-submission) |
+| **Agent Evaluation (Agents CLI)** | [`eval/eval_config.yaml`](eval/eval_config.yaml) and [`eval/datasets/basic-dataset.json`](eval/datasets/basic-dataset.json) — automated LLM-as-judge quality & safety evaluation pipeline |
 | **Deployability** | [`Dockerfile`](Dockerfile) + [`deployment/terraform/`](deployment/terraform/) + `agents-cli deploy` (Cloud Run); see [Deployment](#deployment) |
 
 ---
@@ -85,7 +89,7 @@ Results are cached per photo, so re-runs are near-free.
 ```bash
 git clone <this-repo> && cd MemoryWeaver/memoryweaver
 
-# Install dependencies (core only - small and fast)
+# Install dependencies
 uv sync
 
 # Configure
@@ -97,17 +101,14 @@ uv run uvicorn app.fast_api_app:app --port 8000
 
 Open **http://localhost:8000** — the Curator Hub, with a default event ready.
 
-Optional extras (not needed for the core demo): `uv sync --extra local-preclean`
-adds the on-device CLIP pre-cleaning used by the macOS bulk-folder wizard
-(~2GB torch download); `--extra drive-import` enables `scripts/drive_downloader.py`.
-
 ### The full loop (5 minutes)
 
 1. **Create an event** in the session bar (name + type: trip / birthday / wedding / sports match / reunion).
 2. **Share & Collect** — copy the contributor link or let family scan the QR. They open it on their phones: name, pick photos, done. Desktop contributors can upload a whole folder at once.
 3. **Manage the Photo Pool** — expand the collapsible "View Uploaded Photo Pool" tray right under the upload status. Toggle photos in/out of the curation pipeline using the **Included** and **Excluded** tabs and the `❌` / `➕` overlays.
-4. When the pool is ready, click **▶ Curate & Narrate Now** and watch the live agent logs and progress bar.
-5. Open the **viewer** — highlights carousel, per-moment journal with captions and dates, the full trip story, and a per-contributor filter. Contributors' share page automatically shows a *"journal is ready"* link.
+4. **Curate & Score** — click **▶ Curate & Score Now** and watch the live agent logs and progress bar. Once complete, inspect the generated curation grid (showing scores, labels, and captions).
+5. **Narrate & Finalize** — click the **"Love the Curated Highlights - Proceed to create Trip Highlights"** button at the bottom of the grid to execute the final narration and write stories/journals.
+6. **Viewer with Sub-Event Filters** — open the viewer to see the highlights carousel, moment-by-moment journal with captions, and full trip story. Use the new **dynamic sub-event filter tabs** (e.g. 🌟 Overall Highlights, 📍 specific moments) to interactively explore curated moments. Contributor share links will update to show the *"journal is ready"* link.
 
 ### Talk to the agent
 
