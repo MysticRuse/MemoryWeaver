@@ -236,6 +236,29 @@
             border: 1px solid var(--border-color);
         }
 
+        .filter-tab-pill {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            user-select: none;
+        }
+        .filter-tab-pill:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+        }
+        .filter-tab-pill.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #ffffff;
+            box-shadow: 0 0 10px rgba(255, 123, 0, 0.4);
+        }
+
         .carousel-control {
             position: absolute;
             top: 50%;
@@ -689,6 +712,12 @@
                     <span>Daily Highlights Reel</span>
                     <span class="section-subtitle" id="highlightsSub">Showcasing all memories</span>
                 </h2>
+                
+                <!-- Event / Settings Filter Tabs -->
+                <div id="highlights-filter-tabs" style="margin-bottom: 20px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; border-bottom: 1px solid var(--border-color); padding-bottom: 16px;">
+                    <!-- Dynamically populated event pills -->
+                </div>
+
                 <div class="carousel-view">
                     <button class="carousel-control control-prev" id="prevBtn"><i data-lucide="chevron-left" style="width: 24px; height: 24px;"></i></button>
                     <button class="carousel-control control-next" id="nextBtn"><i data-lucide="chevron-right" style="width: 24px; height: 24px;"></i></button>
@@ -758,6 +787,9 @@
         let currentSlideIndex = 0;
         let slides = [];
         let globalJournal = [];
+        let globalHighlights = [];
+        let globalManifest = [];
+        let photoMetadataMap = {}; // filename -> metadata dict
         let globalMemoryBank = null;
         let contributorNames = {}; // id -> name
 
@@ -790,9 +822,25 @@
                     return;
                 }
 
-                const highlights = book.highlights;
-                globalJournal = book.journal;
+                globalHighlights = book.highlights || [];
+                globalManifest = book.manifest || [];
+                globalJournal = book.journal || [];
                 const story = book.story;
+
+                // Build lookup map for photo details
+                photoMetadataMap = {};
+                if (globalManifest) {
+                    globalManifest.forEach(item => {
+                        if (item.filename) photoMetadataMap[item.filename] = item;
+                    });
+                }
+                if (globalHighlights) {
+                    globalHighlights.forEach(item => {
+                        if (item.filename && !photoMetadataMap[item.filename]) {
+                            photoMetadataMap[item.filename] = item;
+                        }
+                    });
+                }
 
                 if (book.memory_bank) {
                     globalMemoryBank = book.memory_bank;
@@ -802,7 +850,8 @@
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('content').style.display = 'block';
 
-                renderHighlights(highlights);
+                renderHighlights(globalHighlights);
+                renderHighlightsFilterTabs();
                 renderJournal(globalJournal);
                 renderStory(story);
             } catch (err) {
@@ -810,6 +859,62 @@
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('empty').style.display = 'block';
             }
+        }
+
+        function renderHighlightsFilterTabs() {
+            const container = document.getElementById('highlights-filter-tabs');
+            container.innerHTML = '';
+            
+            // 1. "Overall Highlights" pill
+            const allPill = document.createElement('div');
+            allPill.className = 'filter-tab-pill active';
+            allPill.innerHTML = '🌟 Overall Highlights';
+            allPill.onclick = () => {
+                document.querySelectorAll('.filter-tab-pill').forEach(p => p.classList.remove('active'));
+                allPill.classList.add('active');
+                currentSlideIndex = 0;
+                renderHighlights(globalHighlights);
+            };
+            container.appendChild(allPill);
+            
+            // 2. Extract unique settings/moments from the journal entries
+            const settings = [];
+            globalJournal.forEach(entry => {
+                if (entry.moment && entry.photos && entry.photos.length > 0) {
+                    settings.push(entry.moment);
+                }
+            });
+            
+            // Generate pills for each unique setting
+            const uniqueSettings = [...new Set(settings)];
+            uniqueSettings.forEach(setting => {
+                const pill = document.createElement('div');
+                pill.className = 'filter-tab-pill';
+                const displayName = setting.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                pill.innerHTML = `📍 ${displayName}`;
+                
+                pill.onclick = () => {
+                    document.querySelectorAll('.filter-tab-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    
+                    const journalEntry = globalJournal.find(j => j.moment === setting);
+                    let momentPhotos = [];
+                    if (journalEntry && journalEntry.photos) {
+                        momentPhotos = journalEntry.photos.map(filename => {
+                            return photoMetadataMap[filename] || {
+                                filename: filename,
+                                scene_label: setting,
+                                caption: "Curated photo from " + displayName,
+                                contributor_id: filename.split('_')[0] || "unknown"
+                            };
+                        });
+                    }
+                    
+                    currentSlideIndex = 0;
+                    renderHighlights(momentPhotos);
+                };
+                container.appendChild(pill);
+            });
         }
 
         function populateUserSelector(memoryBank) {

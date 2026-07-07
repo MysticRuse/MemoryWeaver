@@ -217,6 +217,8 @@ def get_trip_book(session_id: str = "default"):
         with open(story_path) as f:
             story = f.read()
 
+    manifest = read_json(os.path.join(artefacts_dir, "manifest.json"))
+
     if highlights is None or journal is None or story is None:
         return {"status": "empty", "message": "Curation pipeline has not been run for this session."}
 
@@ -237,6 +239,7 @@ def get_trip_book(session_id: str = "default"):
         "highlights": highlights,
         "journal": journal,
         "story": story,
+        "manifest": manifest,
         "memory_bank": {"contributors": contributors, "trip_context": memory.get("trip_context", {})},
     }
 
