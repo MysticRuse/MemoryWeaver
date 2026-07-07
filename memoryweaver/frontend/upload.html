@@ -5,17 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MemoryWeaver - Curator Hub</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,600;0,800;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
-            --bg: #080a0f;
-            --card-bg: #0e121a;
-            --border: rgba(255, 255, 255, 0.08);
-            --text: #ffffff;
-            --text-muted: #8b949e;
-            --accent: #ff6b00;
-            --accent-glow: rgba(255, 107, 0, 0.15);
-            --danger: #ef4444;
-            --success: #10b981;
+            --bg: #0d0f11;
+            --card-bg: #17191d;
+            --border: #282c34;
+            --text: #f8fafc;
+            --text-muted: #8a90a0;
+            --accent: #ffffff;
+            --accent-glow: rgba(255, 255, 255, 0.05);
+            --accent-grad: #ffffff;
+            --danger: #f87171;
+            --success: #f8fafc;
         }
 
         body {
@@ -35,15 +37,30 @@
             max-width: 1000px;
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 16px;
+            padding: 12px;
+            box-sizing: border-box;
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                gap: 24px;
+                padding: 24px;
+            }
         }
 
         .card {
             background-color: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 28px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            padding: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        @media (min-width: 768px) {
+            .card {
+                padding: 28px;
+            }
         }
 
         header {
@@ -55,7 +72,7 @@
             font-family: 'Outfit', sans-serif;
             font-size: 2.2rem;
             font-weight: 800;
-            color: #ffffff;
+            color: var(--text);
             margin: 0 0 6px 0;
             letter-spacing: -0.5px;
         }
@@ -87,8 +104,8 @@
         }
 
         .tab-btn.active {
-            color: #fff;
-            background: var(--accent);
+            color: #0d0f11;
+            background: #ffffff;
         }
 
         .tab-content {
@@ -132,7 +149,7 @@
             display: flex;
             align-items: center;
             margin-bottom: 14px;
-            color: #ffffff;
+            color: var(--text);
             letter-spacing: -0.3px;
         }
 
@@ -142,32 +159,39 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 10px 18px;
+            border-radius: 6px;
             font-family: 'Outfit', sans-serif;
-            font-size: 0.95rem;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             border: 1px solid var(--border);
-            background: #121620;
+            background: #1c2024;
             color: var(--text);
+            min-height: 44px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
 
         .btn:hover:not(:disabled) {
-            border-color: #ffffff;
-            background: #171d2a;
+            border-color: #484f58;
+            background: #24292f;
+        }
+
+        .btn:active:not(:disabled) {
+            transform: scale(0.98);
         }
 
         .btn-primary {
-            background: var(--accent);
-            border-color: transparent;
-            color: #ffffff;
+            background: #f8fafc;
+            border-color: #f8fafc;
+            color: #0d0f11;
         }
 
         .btn-primary:hover:not(:disabled) {
-            opacity: 0.9;
-            border-color: transparent;
+            background: #ffffff;
+            border-color: #ffffff;
+            opacity: 1;
         }
 
         .btn:disabled {
@@ -279,29 +303,30 @@
         }
 
         .input-text, .search-input, .select-input {
-            padding: 10px 16px !important;
-            background: rgba(8, 11, 17, 0.6) !important;
+            padding: 10px 14px !important;
+            background: #17191d !important;
             border: 1px solid var(--border) !important;
             color: var(--text) !important;
-            border-radius: 12px !important;
+            border-radius: 6px !important;
             outline: none !important;
             font-family: inherit !important;
-            font-size: 14px !important;
-            transition: all 0.3s !important;
+            font-size: 13px !important;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
             box-sizing: border-box !important;
+            min-height: 44px;
         }
 
         .input-text:focus, .search-input:focus, .select-input:focus {
-            border-color: var(--accent) !important;
-            box-shadow: 0 0 12px var(--accent-glow) !important;
-            background: rgba(8, 11, 17, 0.95) !important;
+            border-color: #8a90a0 !important;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1) !important;
+            background: #1e2127 !important;
         }
 
         select.input-text, select.select-input {
             cursor: pointer !important;
             appearance: none !important;
             -webkit-appearance: none !important;
-            background-image: url("data:image/svg+xml;utf8,<svg fill='%23ff7b00' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>") !important;
+            background-image: url("data:image/svg+xml;utf8,<svg fill='%2394a3b8' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>") !important;
             background-repeat: no-repeat !important;
             background-position: right 12px center !important;
             padding-right: 40px !important;
@@ -310,13 +335,13 @@
         /* Photo Grid */
         .photo-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 12px;
             margin-bottom: 20px;
         }
 
         .photo-card {
-            background: rgba(22, 28, 38, 0.8);
+            background: #1b2029;
             border: 1px solid var(--border);
             border-radius: 14px;
             overflow: hidden;
@@ -329,7 +354,7 @@
         .photo-card:hover {
             transform: translateY(-4px);
             border-color: var(--accent);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         }
 
         .photo-card.similar-highlight {
@@ -366,7 +391,7 @@
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
-            color: #ffffff;
+            color: var(--text);
         }
 
         .photo-badge {
@@ -487,19 +512,66 @@
         }
 
         /* Web Uploader styling */
+        .upload-zones-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        @media (min-width: 600px) {
+            .upload-zones-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
         .upload-zone {
-            border: 2px dashed var(--border);
-            border-radius: 16px;
-            padding: 40px;
+            border: 1px dashed var(--border-color);
+            border-radius: 6px;
+            padding: 40px 20px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s;
-            background: rgba(255, 255, 255, 0.02);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            background: rgba(255, 255, 255, 0.01);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .upload-zone:hover {
+            border-color: #8a90a0;
+            background: rgba(255, 255, 255, 0.03);
         }
 
-        .upload-zone:hover {
-            border-color: var(--accent);
-            background: rgba(255, 123, 0, 0.05);
+        /* Custom UI Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .modal-content {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            animation: scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes scaleIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
 
         /* Unified Navigation Header */
@@ -611,15 +683,15 @@
         }
 
         .wizard-step-node.active .step-node-num {
-            background: var(--accent);
-            color: #fff;
-            border-color: transparent;
+            background: #ffffff;
+            color: #0d0f11;
+            border-color: #ffffff;
         }
 
         .wizard-step-node.completed .step-node-num {
-            background: var(--success);
-            color: #fff;
-            border-color: transparent;
+            background: #24292f;
+            color: #ffffff;
+            border-color: #484f58;
         }
 
         .step-node-text {
@@ -634,7 +706,7 @@
         }
 
         .wizard-step-node.completed .step-node-text {
-            color: var(--success);
+            color: var(--text);
         }
 
         .wizard-step-line {
@@ -722,6 +794,158 @@
             background: var(--success) !important;
             border-color: var(--success) !important;
         }
+
+        /* Simplified Event Manager Styles */
+        .event-type-radios {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+        .event-type-radio-label {
+            cursor: pointer;
+            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            transition: all 0.2s;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .event-type-radio-label:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+        .event-type-radio-input {
+            display: none;
+        }
+        .event-type-radio-input:checked + .event-type-radio-label {
+            background: var(--accent-grad);
+            border-color: var(--accent);
+            color: #000;
+            box-shadow: 0 0 10px rgba(255, 107, 0, 0.2);
+            font-weight: 600;
+        }
+        .event-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .event-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            transition: all 0.2s;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .event-row:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        .event-row.active {
+            border-color: var(--accent);
+            background: var(--accent-glow);
+        }
+        .event-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            cursor: pointer;
+            min-width: 200px;
+        }
+        .event-name-text {
+            font-weight: 600;
+            font-size: 14px;
+            color: #fff;
+        }
+        .event-category-badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .event-row.active .event-category-badge {
+            background: var(--accent-glow);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .event-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .event-action-btn {
+            background: #1c2024;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 6px 12px;
+            font-size: 11px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 500;
+        }
+        .event-action-btn:hover {
+            background: #24292f;
+            border-color: #484f58;
+            color: var(--text);
+        }
+        .event-action-btn:active {
+            transform: scale(0.96);
+        }
+        .event-action-btn.active-indicator {
+            background: #ffffff;
+            border-color: #ffffff;
+            color: #0d0f11;
+            font-weight: 600;
+        }
+        .event-action-btn.btn-delete {
+            color: #f87171;
+            background: rgba(248, 113, 113, 0.05);
+            border-color: rgba(248, 113, 113, 0.1);
+        }
+        .event-action-btn.btn-delete:hover {
+            background: #ef4444;
+            border-color: #ef4444;
+            color: #fff;
+        }
+        .event-action-btn.btn-edit {
+            color: #f8fafc;
+            background: #222630;
+            border-color: var(--border);
+        }
+        .event-action-btn.btn-edit:hover {
+            background: #2d3139;
+            border-color: #484f58;
+            color: #fff;
+        }
+        .edit-event-input-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 200px;
+        }
     </style>
 </head>
 <body>
@@ -740,153 +964,230 @@
             <h1 style="font-size: 2.4rem; margin-bottom: 5px;">Curator Hub</h1>
         </header>
 
-        <!-- Event session bar: pick which event (trip/birthday/wedding/...) you're
-             working on, or create a new one. Every API call below is scoped to
-             the selected session so events stay fully isolated. -->
-        <div class="card" id="session-bar" style="margin-bottom: 20px; padding: 16px 20px;">
-            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                <span id="session-emoji" style="font-size: 1.6rem;">🧳</span>
-                <div style="flex: 1; min-width: 220px;">
-                    <label style="display:block; font-size: 11px; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 4px;">ACTIVE EVENT</label>
-                    <select id="session-select" class="input-text" style="width: 100%; padding: 8px 10px;" onchange="onSessionSwitched(this)"></select>
-                </div>
-                <button class="btn btn-primary" style="padding: 8px 16px;" onclick="toggleCreateEvent(true)">➕ New Event</button>
-                <button id="btnDeleteEvent" class="btn" style="padding: 8px 16px; background: rgba(231, 76, 60, 0.1); border-color: rgba(231, 76, 60, 0.2); color: var(--danger); display: none;" onclick="deleteActiveEvent()">🗑️ Delete Event</button>
+        <!-- Grandma's Guided Memory Tour -->
+        <div class="wizard-stepper" style="margin-top: 16px;">
+            <div class="wizard-step-node" id="step-node-1" onclick="showWizardStep(1)" style="cursor: pointer;">
+                <span class="step-node-num">1</span>
+                <span class="step-node-text">Choose Album</span>
             </div>
-            <!-- Inline create form, hidden until "New Event" is clicked -->
-            <div id="create-event-form" style="display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1);">
-                <div style="display: grid; grid-template-columns: 2fr 1fr auto auto; gap: 12px; align-items: end;">
-                    <div>
-                        <label style="display:block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Event name</label>
-                        <input type="text" id="new-event-name" class="input-text" style="width: 100%; box-sizing: border-box; padding: 8px 10px;" placeholder="e.g. Bali Family Trip, Ari's 8th Birthday">
-                    </div>
-                    <div>
-                        <label style="display:block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Event type</label>
-                        <select id="new-event-type" class="input-text" style="width: 100%; box-sizing: border-box; padding: 8px 10px;"></select>
-                    </div>
-                    <button class="btn btn-primary" style="padding: 8px 16px; min-height: 35px;" onclick="createEventSession()">Create</button>
-                    <button class="btn" style="padding: 8px 16px; min-height: 35px;" onclick="toggleCreateEvent(false)">Cancel</button>
-                </div>
-                <div id="create-event-status" style="margin-top: 8px; font-size: 12px; color: var(--text-muted);"></div>
+            <div style="flex: 1; height: 1px; background: var(--border); margin: 0 16px;" id="step-line-1"></div>
+            <div class="wizard-step-node" id="step-node-2" onclick="showWizardStep(2)" style="cursor: pointer;">
+                <span class="step-node-num">2</span>
+                <span class="step-node-text">Add Pictures</span>
+            </div>
+            <div style="flex: 1; height: 1px; background: var(--border); margin: 0 16px;" id="step-line-2"></div>
+            <div class="wizard-step-node" id="step-node-3" onclick="showWizardStep(3)" style="cursor: pointer;">
+                <span class="step-node-num">3</span>
+                <span class="step-node-text">Write Storybook</span>
             </div>
         </div>
 
-        <!-- Share & Collect: the contributor persona lives on a separate
-             /join/<event> page reached via this link/QR - family members
-             upload from their phones with zero setup. Admin-only info. -->
-        <div class="card" id="share-card" style="margin-bottom: 20px; padding: 18px 20px;">
-            <div style="font-weight: 700; margin-bottom: 6px;">📨 Share & Collect Photos</div>
-            <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 12px 0;">
-                Send this link (or QR) to everyone on the trip - they upload straight from their phones.
-                Photos land in the active event above.
-            </p>
-            <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
-                <div style="flex: 1; min-width: 240px;">
-                    <input type="text" id="share-url" class="input-text" readonly style="width: 100%; padding: 8px 10px; font-size: 12px;" value="Loading share link...">
-                    <button class="btn btn-primary" style="margin-top: 8px; padding: 8px 16px;" onclick="copyShareLink()">📋 Copy Link</button>
-                    <span id="share-copy-status" style="margin-left: 8px; font-size: 12px; color: var(--success);"></span>
-                </div>
-                <img id="share-qr" alt="QR code for the contributor upload link" style="display: none; width: 120px; height: 120px; border-radius: 8px; background: #fff; padding: 4px;">
+        <!-- Tour Guide Guidepost Banner -->
+        <div id="tour-guidepost" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; gap: 14px;">
+            <div style="font-size: 24px; color: var(--accent); user-select: none;">🧭</div>
+            <div style="flex: 1;">
+                <h4 id="tour-guide-title" style="margin: 0 0 4px 0; font-size: 14px; font-weight: 700; color: #ffffff;">Your Album Guide</h4>
+                <p id="tour-guide-text" style="margin: 0; font-size: 13px; color: var(--text-muted); line-height: 1.4;">Loading your self-guided tour path...</p>
             </div>
         </div>
 
-        <div class="card">
+        <!-- Event Management Console: Simplified creation and listing workspace -->
+        <div class="card" id="card-step-1" style="margin-bottom: 24px; padding: 20px; transition: all 0.3s;">
+            <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+                <span>🛠️ Step 1: Choose or Create Your Event</span>
+                <div id="badge-step-1" style="display: flex; flex: 1; justify-content: flex-end;"></div>
+            </div>
+            
+            <!-- Event Creation Sub-section -->
+            <div style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.05); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+                <div style="font-weight: 600; font-size: 13px; margin-bottom: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Create New Event</div>
+                <div style="display: flex; flex-direction: column; gap: 14px;">
+                    <div>
+                        <label style="display:block; font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Event Name</label>
+                        <input type="text" id="new-event-name" class="input-text" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px;" placeholder="e.g. Bali Family Trip, Christmas Reunion">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Event Category</label>
+                        <div id="event-type-radios" class="event-type-radios">
+                            <!-- Dynamic radio button pills populated by JS -->
+                            <span style="font-size: 12px; color: var(--text-muted);">Loading categories...</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; margin-top: 4px;">
+                        <button class="btn btn-primary" style="padding: 10px 24px; font-size: 13px; min-height: 38px;" onclick="createEventSession()"><i data-lucide="plus" style="width: 14px; height: 14px; margin-right: 6px;"></i>Create Event</button>
+                    </div>
+                </div>
+                <div id="create-event-status" style="margin-top: 10px; font-size: 12px; color: var(--text-muted);"></div>
+            </div>
+
+            <!-- Events List Sub-section -->
+            <div>
+                <div style="font-weight: 600; font-size: 13px; margin-bottom: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">All Events</div>
+                <div id="event-list" class="event-list">
+                    <!-- Dynamic event list populated by JS -->
+                    <div style="font-size: 13px; color: var(--text-muted); padding: 12px;">Loading events...</div>
+                </div>
+            </div>
+
+            <!-- Step 1 Friendly Tip -->
+            <div style="margin-top: 14px; background: rgba(0, 255, 100, 0.03); border: 1px dashed rgba(0, 255, 100, 0.15); border-radius: 8px; padding: 12px; font-size: 13px; color: var(--text-muted); display: flex; align-items: start; gap: 8px; line-height: 1.4;">
+                <span style="font-size: 16px; user-select: none;">💡</span>
+                <span><strong>Quick Tip:</strong> You can create multiple independent events (like "Hawaii Trip 2025" or "Christmas Reunion"). Each event holds its own pictures, so your memories never get mixed up!</span>
+            </div>
+        </div>
+
+
+        <div class="card" id="card-step-2" style="transition: all 0.3s;">
             <div style="font-weight: 700; font-size: 1.2rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
-                <span>📸 Add Photos to Session</span>
+                <span id="upload-header-title"><i data-lucide="image" style="width: 20px; height: 20px; color: var(--text-muted); vertical-align: middle; margin-right: 8px;"></i>✨ Step 2: Add Photos to Your Memory Album</span>
+                <div id="badge-step-2" style="display: flex; flex: 1; justify-content: flex-end;"></div>
             </div>
             <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 16px 0;">
-                Ingest photos directly through the browser. Duplicates and non-image files are automatically skipped.
+                Pick folders or individual pictures to add to your event album. Blurry pictures and duplicates are automatically filtered out!
             </p>
 
-            <div class="upload-zone" onclick="document.getElementById('file-input').click()">
-                <div style="font-size: 2.4rem; margin-bottom: 8px;">📸</div>
-                <div style="font-weight: 600;">Tap to choose photos</div>
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">JPEG, PNG, or HEIC - straight from your local files</div>
-                <input type="file" id="file-input" multiple accept=".jpg,.jpeg,.png,.heic,image/*" style="display: none;" onchange="uploadFiles(this.files)">
+            <div class="upload-zones-grid">
+                <!-- Folder picking convenience -->
+                <div class="upload-zone" id="folder-zone" onclick="openFsBrowser('folder')">
+                    <div style="color: var(--text-muted); margin-bottom: 8px;"><i data-lucide="folder" style="width: 32px; height: 32px;"></i></div>
+                    <div style="font-weight: 600;">📂 Add a Whole Folder</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Choose a folder on your computer to add all its photos</div>
+                </div>
+
+                <div class="upload-zone" onclick="openFsBrowser('files')">
+                    <div style="color: var(--text-muted); margin-bottom: 8px;"><i data-lucide="image" style="width: 32px; height: 32px;"></i></div>
+                    <div style="font-weight: 600;">🖼️ Pick Individual Photos</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Select individual pictures from your computer</div>
+                </div>
             </div>
 
-
-
-            <!-- Folder picking convenience -->
-            <div class="upload-zone" id="folder-zone" style="margin-top: 12px; padding: 20px;" onclick="document.getElementById('folder-input').click()">
-                <div style="font-weight: 600;">💻 Upload a Whole Folder</div>
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Photos inside the folder (JPEG/PNG/HEIC) are imported directly</div>
-                <input type="file" id="folder-input" webkitdirectory style="display: none;" onchange="uploadFiles(this.files)">
-            </div>
-
-            <div id="upload-status" style="margin-top: 14px; font-size: 0.95rem; font-weight: 600; min-height: 1.2em; color: var(--accent);"></div>
+            <div id="upload-status" style="margin-top: 14px; font-size: 0.95rem; font-weight: 600; min-height: 1.2em; color: var(--text-main);"></div>
             
-            <!-- Collapsible Uploaded Photos Pool Tray -->
-            <details id="photo-pool-details" style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 14px;" ontoggle="if(this.open) loadUploadedPoolTray()">
-                <summary style="cursor: pointer; color: var(--accent); font-weight: 500; font-size: 13px; user-select: none;">
-                    📸 View Uploaded Photo Pool (Manage/Exclude Photos)
-                </summary>
-                <div style="margin-top: 12px; display: flex; gap: 8px;">
-                    <button class="toggle-btn active" id="btn-pool-included" style="padding: 4px 12px; font-size: 11px; border-radius: 12px;" onclick="switchPoolTab('included'); event.preventDefault(); event.stopPropagation();">Included</button>
-                    <button class="toggle-btn" id="btn-pool-excluded" style="padding: 4px 12px; font-size: 11px; border-radius: 12px;" onclick="switchPoolTab('excluded'); event.preventDefault(); event.stopPropagation();">Excluded</button>
+            <!-- Uploaded Photos Pool Tray (shown when photos exist) -->
+            <div id="photo-pool-details" style="display: none; margin-top: 14px; border-top: 1px solid var(--border); padding-top: 14px;">
+                <div style="color: var(--text-main); font-weight: 500; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; user-select: none;">
+                    <i data-lucide="images" style="width: 14px; height: 14px; color: var(--text-muted);"></i> 📦 Album Photos
                 </div>
-                <div id="uploaded-pool-tray" style="margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; max-height: 320px; overflow-y: auto; padding-right: 5px;">
-                    <div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1;">Click to expand and load photo pool...</div>
+                <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; gap: 8px;">
+                        <button class="event-action-btn active-indicator" id="btn-pool-included" onclick="switchPoolTab('included'); event.preventDefault(); event.stopPropagation();">Included in Album</button>
+                        <button class="event-action-btn" id="btn-pool-excluded" onclick="switchPoolTab('excluded'); event.preventDefault(); event.stopPropagation();">Hidden / Removed</button>
+                    </div>
+                    <button class="event-action-btn btn-delete" onclick="clearSessionPhotos(); event.preventDefault(); event.stopPropagation();"><i data-lucide="trash-2" style="width: 12px; height: 12px; margin-right: 4px;"></i> Delete All</button>
                 </div>
-            </details>
+                <div id="uploaded-pool-tray" style="margin-top: 14px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; max-height: 320px; overflow-y: auto; padding-right: 5px;">
+                    <div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1;">Loading pictures...</div>
+                </div>
+
+                <!-- Step 2 Friendly Tip -->
+                <div style="margin-top: 14px; background: rgba(0, 255, 100, 0.03); border: 1px dashed rgba(0, 255, 100, 0.15); border-radius: 8px; padding: 12px; font-size: 13px; color: var(--text-muted); display: flex; align-items: start; gap: 8px; line-height: 1.4;">
+                    <span style="font-size: 16px; user-select: none;">💡</span>
+                    <span><strong>Quick Tip:</strong> Click the <strong>✕</strong> on any photo card below to hide it from your final book. It won't be deleted, it just moves into the <strong>Hidden / Removed</strong> tab so you can bring it back anytime!</span>
+                </div>
+            </div>
+        </div>
+        <div class="card" id="card-step-3" style="margin-top: 20px; padding: 20px; transition: all 0.3s;">
+            <div style="font-weight: 700; font-size: 1.2rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                <span id="curation-header-title"><i data-lucide="zap" style="width: 20px; height: 20px; color: var(--text-muted); vertical-align: middle; margin-right: 8px;"></i>📖 Step 3: Create Your Memory Storybook</span>
+                <div id="badge-step-3" style="display: flex; flex: 1; justify-content: flex-end;"></div>
+            </div>
+            <p id="pipeline-only-count" style="font-size: 13px; color: var(--text-muted); margin: 0 0 12px 0;">Checking photo count...</p>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <select id="pipeline-only-limit" class="input-text" style="padding: 8px 12px;">
+                    <option value="20">20 Photos (Compact & Fast)</option>
+                    <option value="30">30 Photos (Standard)</option>
+                    <option value="50" selected>50 Photos (Detailed & Rich)</option>
+                    <option value="100">100 Photos (Comprehensive - Takes Longer)</option>
+                    <option value="0">All Photos</option>
+                </select>
+                <button class="btn btn-primary" id="btnRunPipelineOnly" onclick="runPipelineOnly()"><i data-lucide="play" style="width: 14px; height: 14px; margin-right: 6px;"></i> ✨ Write & Build Storybook Now</button>
+            </div>
+            <div style="margin-top: 8px; font-size: 12px; color: var(--accent); display: flex; align-items: center; gap: 6px;">
+                <span>🛡️</span> <span><strong>Don't worry:</strong> Clicking this will not finalize your book. You will have a final step to review, swap photos, and approve everything!</span>
+            </div>
+
+            <!-- Step 3 Friendly Tip -->
+            <div style="margin-top: 14px; background: rgba(0, 255, 100, 0.03); border: 1px dashed rgba(0, 255, 100, 0.15); border-radius: 8px; padding: 12px; font-size: 13px; color: var(--text-muted); display: flex; align-items: start; gap: 8px; line-height: 1.4;">
+                <span style="font-size: 16px; user-select: none;">💡</span>
+                <span>
+                    <strong>How Curation Works:</strong>
+                    <ul style="margin: 4px 0 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px;">
+                        <li><strong>Where do photos come from?</strong> The curation system works only with the active photos you've chosen to include (completely ignoring any photos you hid in Step 2).</li>
+                        <li><strong>How does it pick the best photos (e.g. 50 photos)?</strong> Our smart system does all the heavy lifting for you! If you select "50 Photos," it reviews all your pictures, groups similar shots together (so you never get duplicates), filters out any blurry shots, and selects the absolute top 50 highest-scoring highlights. Your other photos are kept safe and untouched!</li>
+                        <li><strong>What does the size mean (50 vs 100)?</strong> Choosing "50 Photos" compiles your top 50 moments. Selecting a larger size (like 100 Photos) builds a longer, more detailed storybook. Because the system performs deep quality analysis on each photo to pick the perfect highlights, larger books take a few extra minutes to compile.</li>
+                    </ul>
+                </span>
+            </div>
         </div>
 
-            <!-- Always-visible pipeline runner: curates whatever photos are
-                 already in the ACTIVE EVENT (contributor uploads or a folder
-                 ingest), without the destructive folder re-ingest above. -->
-            <div style="margin-top: 20px; padding: 16px 20px; border: 1px solid var(--border-color); border-radius: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                    <div style="font-weight: 700;">⚡ Run Agent Pipeline on This Event</div>
-                    <button class="btn" style="padding: 4px 12px; font-size: 11px; background: rgba(231, 76, 60, 0.1); border-color: rgba(231, 76, 60, 0.2); color: var(--danger);" onclick="clearSessionPhotos()">🗑️ Clear Photo Pool</button>
-                </div>
-                <p id="pipeline-only-count" style="font-size: 13px; color: var(--text-muted); margin: 0 0 12px 0;">Checking photo count...</p>
-                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <select id="pipeline-only-limit" class="input-text" style="padding: 8px 12px;">
-                        <option value="20">20 Photos (Compact)</option>
-                        <option value="30">30 Photos (Standard)</option>
-                        <option value="50" selected>50 Photos (Detailed)</option>
-                        <option value="100">100 Photos (Comprehensive)</option>
-                        <option value="0">All Photos</option>
-                    </select>
-                    <button class="btn btn-primary" id="btnRunPipelineOnly" onclick="runPipelineOnly()" style="padding: 10px 24px;">▶ Curate & Narrate Now</button>
+        <!-- Curation Highlights Review Area (shown after pipeline is run) -->
+        <div class="card" id="curation-highlights-review" style="display: none; margin-top: 24px; border: 1px solid var(--border); border-radius: 16px; padding: 24px; background: var(--bg-card); box-shadow: 0 8px 32px rgba(0,0,0,0.35);">
+            <div style="color: var(--text-main); font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <i data-lucide="check-square" style="width: 18px; height: 18px; color: var(--accent);"></i> Curation complete and ready for your final review
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 16px 0; line-height: 1.4;">
+                Review the curated list below. Click the overlay button on any photo to move it between <strong>Curated Highlights</strong> and <strong>Other Photos</strong>. Excluded photos can only be managed in Step 2.
+            </p>
+
+            <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+                <div style="display: flex; gap: 8px;">
+                    <button class="event-action-btn active-indicator" id="btn-curation-selected" onclick="switchCurationReviewTab('curated'); event.preventDefault();">Curated Highlights</button>
+                    <button class="event-action-btn" id="btn-curation-unselected" onclick="switchCurationReviewTab('uncurated'); event.preventDefault();">Other Photos (Not Selected)</button>
+                    <button class="event-action-btn" id="btn-curation-excluded" onclick="switchCurationReviewTab('excluded'); event.preventDefault();">Hidden / Excluded (Step 2)</button>
                 </div>
             </div>
 
-            <div class="console-container" id="console-area" style="display: none; margin-top: 28px;">
-                <!-- Pipeline Progress Bar -->
-                <div id="pipeline-progress-container" class="progress-container" style="display: none; margin-bottom: 20px;">
-                    <div class="progress-header">
-                        <span id="pipeline-progress-phase" style="color: var(--accent);">Running agent processing steps...</span>
-                        <span id="pipeline-progress-text" style="color: var(--text-muted);">0% (0/0)</span>
-                    </div>
-                    <div class="progress-track">
-                        <div id="pipeline-progress-fill" class="progress-fill"></div>
-                    </div>
-                </div>
+            <div id="curation-review-tray" class="photo-grid" style="margin-top: 16px; max-height: 480px; overflow-y: auto; display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; padding: 4px; box-sizing: border-box;">
+                <!-- Curated review grid -->
+            </div>
+            
+            <div id="narrative-proceed-container" style="margin-top: 20px; display: flex; justify-content: center; border-top: 1px solid var(--border); padding-top: 20px;">
+                <button class="btn btn-primary" id="btnRunNarrativeOnly" onclick="runNarrativeOnly()" style="padding: 12px 36px; font-size: 14px; min-height: 44px; display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i>
+                    <span id="btnRunNarrativeText">Love the Curated Highlights - Proceed to create Trip Highlights</span>
+                </button>
+            </div>
+        </div>
 
-                <div class="console-header" style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                    <span class="console-title">Live Curation Logs</span>
-                    <button class="btn" style="padding: 6px 14px; font-size: 11px; border-radius: 15px;" onclick="document.getElementById('log-box').innerHTML = ''">Clear Logs</button>
+        <div class="console-container" id="console-area" style="display: none; margin-top: 28px;">
+            <!-- Pipeline Progress Bar -->
+            <div id="pipeline-progress-container" class="progress-container" style="display: none; margin-bottom: 20px;">
+                <div class="progress-header">
+                    <span id="pipeline-progress-phase" style="color: var(--accent);">Running agent processing steps...</span>
+                    <span id="pipeline-progress-text" style="color: var(--text-muted);">0% (0/0)</span>
                 </div>
-                <div class="terminal-wrapper" style="border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: #05070a; box-shadow: 0 8px 30px rgba(0,0,0,0.5);">
-                    <div class="terminal-header" style="background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
-                        <span style="display:inline-block; width: 12px; height: 12px; border-radius: 50%; background: #ff5f56;"></span>
-                        <span style="display:inline-block; width: 12px; height: 12px; border-radius: 50%; background: #ffbd2e;"></span>
-                        <span style="display:inline-block; width: 12px; height: 12px; border-radius: 50%; background: #27c93f;"></span>
-                        <span style="margin-left: 12px; font-size: 11px; font-weight: 700; color: var(--text-muted); font-family: monospace; letter-spacing: 0.5px;">bash - memoryweaver_curator_node.sh</span>
-                    </div>
-                    <div class="console-window" id="log-box" style="border: none; border-radius: 0; background: transparent; height: 240px; box-shadow: none; white-space: pre-wrap;">
-                        Welcome to the MemoryWeaver Curation terminal...
-                    </div>
+                <div class="progress-track">
+                    <div id="pipeline-progress-fill" class="progress-fill"></div>
                 </div>
-                <div style="margin-top: 18px; text-align: center;">
-                    <a href="/viewer" class="btn btn-primary" id="btnViewerLink" style="display: none; padding: 12px 30px; font-size: 1.1rem; box-shadow: 0 0 15px rgba(255, 123, 0, 0.4); text-decoration: none; border-radius: 8px;">📖 Open Curation Viewer</a>
+            </div>
+
+            <div class="console-header" style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <span class="console-title">Live Curation Logs</span>
+                <button class="btn" style="padding: 6px 14px; font-size: 11px; border-radius: 15px;" onclick="document.getElementById('log-box').innerHTML = ''">Clear Logs</button>
+            </div>
+            <div class="terminal-wrapper" style="border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: #05070a; box-shadow: 0 8px 30px rgba(0,0,0,0.5);">
+                <div class="terminal-header" style="background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                    <span style="display:inline-block; width: 12px; height: 12px; border-radius: 50%; background: #ff5f56;"></span>
+                    <span style="display:inline-block; width: 12px; height: 12px; border-radius: 50%; background: #ffbd2e;"></span>
+                    <span style="display:inline-block; width: 12px; height: 12px; border-radius: 50%; background: #27c93f;"></span>
+                    <span style="margin-left: 12px; font-size: 11px; font-weight: 700; color: var(--text-muted); font-family: monospace; letter-spacing: 0.5px;">bash - memoryweaver_curator_node.sh</span>
                 </div>
+                <div class="console-window" id="log-box" style="border: none; border-radius: 0; background: transparent; height: 240px; box-shadow: none; white-space: pre-wrap;">
+                    Welcome to the MemoryWeaver Curation terminal...
+                </div>
+            </div>
+            <div style="margin-top: 18px; text-align: center;">
+                <a href="/viewer" class="btn btn-primary" id="btnViewerLink" style="display: none; padding: 12px 30px; font-size: 1.1rem; box-shadow: 0 0 15px rgba(255, 123, 0, 0.4); text-decoration: none; border-radius: 8px;">📖 Open Curation Viewer</a>
             </div>
         </div>
     </div>
 
     <script>
+        // Override standard system alerts with custom Web Modal alerts
+        window.alert = function(message) {
+            uiAlert(message);
+        };
+
         let currentEventType = 'trip';
         
         // ---- Event session handling (multi-event support) ----
@@ -894,7 +1195,7 @@
         // is shared with the viewer page. A ?session=<id> URL param overrides it
         // (and is persisted), so links can deep-link into a specific event.
         // 'default' is the original single-event data pool.
-        const EVENT_EMOJI = { trip: '🧳', birthday: '🎂', wedding: '💍', sports_match: '⚽', reunion: '🤝', other: '📸' };
+        const EVENT_ICONS = { trip: 'compass', birthday: 'gift', wedding: 'heart', sports_match: 'award', reunion: 'users', other: 'camera' };
 
         function getSessionId() {
             const urlSid = new URLSearchParams(window.location.search).get('session');
@@ -939,16 +1240,25 @@
             try {
                 const res = await fetch(withSession('/trip-stats'));
                 const data = await res.json();
-                const count = data.total_uploaded || 0;
-                document.getElementById('pipeline-only-count').textContent = count > 0
-                    ? `${count} photo(s) currently in this event's pool.`
+                
+                // Use the backend's correct active count (which doesn't count old deleted exclusions)
+                const activeCount = typeof data.active_count === 'number'
+                    ? data.active_count
+                    : (data.total_uploaded || 0);
+
+                document.getElementById('pipeline-only-count').innerHTML = activeCount > 0
+                    ? `📝 <strong>${activeCount} picture(s)</strong> are currently included and ready for curation.`
                     : 'No photos in this event yet — share the link above with contributors, or use the folder import.';
-                document.getElementById('btnRunPipelineOnly').disabled = count === 0;
-            } catch (e) { /* leave placeholder text */ }
+                document.getElementById('btnRunPipelineOnly').disabled = activeCount === 0;
+                
+                updateGuidedTour(activeCount);
+            } catch (e) {
+                updateGuidedTour(null);
+            }
         }
 
         async function clearSessionPhotos() {
-            if (!confirm("Are you sure you want to delete all uploaded photos and thumbnails in this event? This cannot be undone.")) return;
+            if (!await uiConfirm("Are you sure you want to delete all uploaded photos and thumbnails in this event? This cannot be undone.")) return;
             try {
                 const res = await fetch(withSession('/api/clear-session'), {
                     method: 'POST',
@@ -956,8 +1266,14 @@
                 });
                 const data = await res.json();
                 if (data.status === 'success') {
-                    alert("Event photo pool cleared!");
+                    await uiAlert("Event photo pool cleared!");
                     refreshPipelineOnlyCount();
+                    
+                    // Force refresh of the uploaded photo pool tray grid
+                    const details = document.getElementById('photo-pool-details');
+                    if (details && details.open) {
+                        loadUploadedPoolTray();
+                    }
                 } else {
                     alert("Failed to clear session: " + (data.message || "Unknown error"));
                 }
@@ -970,8 +1286,8 @@
         
         function switchPoolTab(view) {
             poolView = view;
-            document.getElementById('btn-pool-included').classList.toggle('active', view === 'included');
-            document.getElementById('btn-pool-excluded').classList.toggle('active', view === 'excluded');
+            document.getElementById('btn-pool-included').classList.toggle('active-indicator', view === 'included');
+            document.getElementById('btn-pool-excluded').classList.toggle('active-indicator', view === 'excluded');
             loadUploadedPoolTray();
         }
 
@@ -1064,7 +1380,7 @@
                     
                     if (poolView === 'included') {
                         btn.classList.add('exclude-btn');
-                        btn.innerHTML = '❌';
+                        btn.innerHTML = '<i data-lucide="x" style="width: 14px; height: 14px;"></i>';
                         btn.title = 'Exclude from curation';
                         btn.onclick = (e) => {
                             e.preventDefault();
@@ -1073,7 +1389,7 @@
                         };
                     } else {
                         btn.classList.add('include-btn');
-                        btn.innerHTML = '➕';
+                        btn.innerHTML = '<i data-lucide="plus" style="width: 14px; height: 14px;"></i>';
                         btn.title = 'Include in curation';
                         btn.onclick = (e) => {
                             e.preventDefault();
@@ -1086,6 +1402,7 @@
                     card.appendChild(btn);
                     tray.appendChild(card);
                 });
+                lucide.createIcons();
             } catch (err) {
                 tray.innerHTML = `<div style="color: var(--danger); font-size: 13px; grid-column: 1/-1;">Error: ${err.message}</div>`;
             }
@@ -1099,7 +1416,7 @@
 
             const limitVal = document.getElementById('pipeline-only-limit').value;
             try {
-                const res = await fetch(withSession(`/generate?limit=${limitVal}`), { method: 'POST', headers: authHeaders() });
+                const res = await fetch(withSession(`/generate?limit=${limitVal}&stage=curate`), { method: 'POST', headers: authHeaders() });
                 if (handleAuthFailure(res)) return;
                 const data = await res.json();
                 if (data.status !== 'success') throw new Error(data.message || 'Failed to start pipeline');
@@ -1110,55 +1427,320 @@
             }
         }
 
-        async function loadSessionBar() {
+        async function runNarrativeOnly() {
+            const btn = document.getElementById('btnRunNarrativeOnly');
+            const btnText = document.getElementById('btnRunNarrativeText');
+            btn.disabled = true;
+            btnText.textContent = 'Generating Trip Highlights Storybook...';
+            
+            document.getElementById('console-area').style.display = 'block';
+            document.getElementById('pipeline-progress-container').style.display = 'block';
+            
+            try {
+                const limitVal = document.getElementById('pipeline-only-limit').value;
+                const res = await fetch(withSession(`/generate-narrative?limit=${limitVal}`), { method: 'POST', headers: authHeaders() });
+                if (handleAuthFailure(res)) return;
+                const data = await res.json();
+                if (data.status !== 'success') throw new Error(data.message || 'Failed to start narrative pipeline');
+                startProgressPolling('pipeline');
+                startLogPolling();
+            } catch (err) {
+                const logBox = document.getElementById('log-box');
+                if (logBox) logBox.innerHTML += `ERROR: ${err.message}\n`;
+                btn.disabled = false;
+                btnText.textContent = 'Love the Curated Highlights - Proceed to create Trip Highlights';
+            }
+        }
+
+        let editingSessionId = null;
+
+        async function loadActiveShareCode() {
+            try {
+                const res = await fetch(`/api/share-info?session_id=${getSessionId()}`, { headers: authHeaders() });
+                if (res.status === 200) {
+                    const data = await res.json();
+                    if (data.status === 'success' && data.share_path) {
+                        const urlParams = new URLSearchParams(data.share_path.split('?')[1]);
+                        currentShareCode = urlParams.get('code') || '';
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to load active share code:", e);
+            }
+        }
+
+        async function loadSessions() {
             try {
                 const res = await fetch('/api/sessions');
                 const data = await res.json();
                 if (data.status !== 'success') return;
 
-                const sel = document.getElementById('session-select');
                 const active = getSessionId();
-                sel.innerHTML = '';
-                let activeType = 'trip';
-                data.sessions.forEach(s => {
-                    const opt = document.createElement('option');
-                    opt.value = s.session_id;
-                    opt.textContent = `${EVENT_EMOJI[s.event_type] || '📸'} ${s.name} (${s.event_type.replace('_', ' ')})`;
-                    if (s.session_id === active) { opt.selected = true; activeType = s.event_type; currentEventType = s.event_type; }
-                    sel.appendChild(opt);
-                });
-                document.getElementById('session-emoji').textContent = EVENT_EMOJI[activeType] || '📸';
 
-                const typeSel = document.getElementById('new-event-type');
-                typeSel.innerHTML = '';
-                (data.event_types || []).forEach(t => {
-                    const opt = document.createElement('option');
-                    opt.value = t;
-                    opt.textContent = `${EVENT_EMOJI[t] || '📸'} ${t.replace('_', ' ')}`;
-                    typeSel.appendChild(opt);
-                });
-                
-                // Toggle delete button visibility based on whether the active session is default
-                const deleteBtn = document.getElementById('btnDeleteEvent');
-                if (deleteBtn) {
-                    deleteBtn.style.display = (active === 'default') ? 'none' : 'inline-block';
+                // Update uploader header title with active session name
+                const activeSession = (data.sessions || []).find(s => s.session_id === active);
+                const uploadHeader = document.getElementById('upload-header-title');
+                if (uploadHeader && activeSession) {
+                    uploadHeader.innerHTML = `<i data-lucide="image" style="width: 20px; height: 20px; color: var(--text-muted); vertical-align: middle; margin-right: 8px;"></i>Add Photos to <span style="font-weight: 800; color: #ffffff;">"${activeSession.name}"</span>`;
+                }
+
+                // 1. Populate Event Type/Category radio pills
+                const radiosDiv = document.getElementById('event-type-radios');
+                if (radiosDiv) {
+                    radiosDiv.innerHTML = '';
+                    (data.event_types || []).forEach((t, idx) => {
+                        const wrapper = document.createElement('div');
+                        wrapper.style.display = 'inline-block';
+                        
+                        const input = document.createElement('input');
+                        input.type = 'radio';
+                        input.name = 'new-event-category';
+                        input.id = `cat-${t}`;
+                        input.value = t;
+                        input.className = 'event-type-radio-input';
+                        if (idx === 0) input.checked = true; // default select first category
+
+                        const label = document.createElement('label');
+                        label.htmlFor = `cat-${t}`;
+                        label.className = 'event-type-radio-label';
+                        label.innerHTML = `<i data-lucide="${EVENT_ICONS[t] || 'camera'}" style="width: 14px; height: 14px; margin-right: 4px; vertical-align: middle;"></i> ${t.replace('_', ' ')}`;
+
+                        wrapper.appendChild(input);
+                        wrapper.appendChild(label);
+                        radiosDiv.appendChild(wrapper);
+                    });
+                }
+
+                // 2. Populate Event List
+                const listDiv = document.getElementById('event-list');
+                if (listDiv) {
+                    listDiv.innerHTML = '';
+                    data.sessions.forEach(s => {
+                        const isActive = s.session_id === active;
+                        const row = document.createElement('div');
+                        row.className = `event-row${isActive ? ' active' : ''}`;
+
+                        if (s.session_id === editingSessionId) {
+                            // Render inline edit fields
+                            const editContainer = document.createElement('div');
+                            editContainer.className = 'edit-event-input-container';
+
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.id = `edit-name-${s.session_id}`;
+                            input.className = 'input-text';
+                            input.value = s.name;
+                            input.style.flex = '1';
+                            input.style.padding = '6px 10px';
+                            input.style.fontSize = '13px';
+
+                            const select = document.createElement('select');
+                            select.id = `edit-type-${s.session_id}`;
+                            select.className = 'input-text';
+                            select.style.padding = '6px 10px';
+                            select.style.fontSize = '13px';
+                            select.style.marginLeft = '8px';
+                            (data.event_types || []).forEach(t => {
+                                const opt = document.createElement('option');
+                                opt.value = t;
+                                opt.textContent = `${t.replace('_', ' ')}`;
+                                if (t === s.event_type) opt.selected = true;
+                                select.appendChild(opt);
+                            });
+
+                            editContainer.appendChild(input);
+                            editContainer.appendChild(select);
+                            row.appendChild(editContainer);
+
+                            // Edit Actions
+                            const actions = document.createElement('div');
+                            actions.className = 'event-actions';
+
+                            const btnSave = document.createElement('button');
+                            btnSave.className = 'event-action-btn active-indicator';
+                            btnSave.innerHTML = '<i data-lucide="save" style="width: 12px; height: 12px; margin-right: 4px;"></i> Save';
+                            btnSave.onclick = () => saveEditEvent(s.session_id);
+
+                            const btnCancel = document.createElement('button');
+                            btnCancel.className = 'event-action-btn';
+                            btnCancel.innerHTML = '<i data-lucide="x" style="width: 12px; height: 12px; margin-right: 4px;"></i> Cancel';
+                            btnCancel.onclick = () => { editingSessionId = null; loadSessions(); };
+
+                            actions.appendChild(btnSave);
+                            actions.appendChild(btnCancel);
+                            row.appendChild(actions);
+
+                        } else {
+                            // Render normal event row
+                            const info = document.createElement('div');
+                            info.className = 'event-info';
+                            info.onclick = () => onSessionSwitched(s.session_id);
+
+                            info.innerHTML = `
+                                <i data-lucide="${EVENT_ICONS[s.event_type] || 'camera'}" style="width: 18px; height: 18px; margin-right: 6px; color: var(--accent);"></i>
+                                <span class="event-name-text">${s.name}</span>
+                                <span class="event-category-badge">${s.event_type.replace('_', ' ')}</span>
+                            `;
+                            row.appendChild(info);
+
+                            // Normal Actions
+                            const actions = document.createElement('div');
+                            actions.className = 'event-actions';
+
+                            // Active indicator or Switch button
+                            if (isActive) {
+                                const activeBadge = document.createElement('span');
+                                activeBadge.className = 'event-action-btn active-indicator';
+                                activeBadge.innerHTML = '<i data-lucide="check" style="width: 12px; height: 12px; margin-right: 4px;"></i> Active';
+                                actions.appendChild(activeBadge);
+                            } else {
+                                const btnActivate = document.createElement('button');
+                                btnActivate.className = 'event-action-btn';
+                                btnActivate.innerHTML = '<i data-lucide="play" style="width: 12px; height: 12px; margin-right: 4px;"></i> Set Active';
+                                btnActivate.onclick = () => onSessionSwitched(s.session_id);
+                                actions.appendChild(btnActivate);
+                            }
+
+                            // Edit
+                            const btnEdit = document.createElement('button');
+                            btnEdit.className = 'event-action-btn btn-edit';
+                            btnEdit.innerHTML = '<i data-lucide="edit-2" style="width: 12px; height: 12px; margin-right: 4px;"></i> Edit';
+                            btnEdit.onclick = (e) => {
+                                e.stopPropagation();
+                                editingSessionId = s.session_id;
+                                loadSessions();
+                            };
+                            actions.appendChild(btnEdit);
+
+                            // Copy Link
+                            const btnCopyLink = document.createElement('button');
+                            btnCopyLink.className = 'event-action-btn';
+                            btnCopyLink.id = `btn-link-${s.session_id}`;
+                            btnCopyLink.innerHTML = '<i data-lucide="link" style="width: 12px; height: 12px; margin-right: 4px;"></i> Copy Link';
+                            btnCopyLink.onclick = (e) => {
+                                e.stopPropagation();
+                                handleCopyLink(s.session_id);
+                            };
+                            actions.appendChild(btnCopyLink);
+
+                            // Copy QR
+                            const btnCopyQR = document.createElement('button');
+                            btnCopyQR.className = 'event-action-btn';
+                            btnCopyQR.id = `btn-qr-${s.session_id}`;
+                            btnCopyQR.innerHTML = '<i data-lucide="qr-code" style="width: 12px; height: 12px; margin-right: 4px;"></i> Copy QR';
+                            btnCopyQR.onclick = (e) => {
+                                e.stopPropagation();
+                                handleCopyQR(s.session_id);
+                            };
+                            actions.appendChild(btnCopyQR);
+
+                            // Delete (except default)
+                            if (s.session_id !== 'default') {
+                                const btnDelete = document.createElement('button');
+                                btnDelete.className = 'event-action-btn btn-delete';
+                                btnDelete.innerHTML = '<i data-lucide="trash-2" style="width: 12px; height: 12px; margin-right: 4px;"></i> Delete';
+                                btnDelete.onclick = (e) => {
+                                    e.stopPropagation();
+                                    deleteEvent(s.session_id, s.name);
+                                };
+                                actions.appendChild(btnDelete);
+                            }
+
+                            row.appendChild(actions);
+                        }
+
+                        listDiv.appendChild(row);
+                    });
+                    lucide.createIcons();
                 }
             } catch (e) {
                 console.error('Failed to load sessions:', e);
             }
         }
 
-        async function deleteActiveEvent() {
-            const active = getSessionId();
-            if (active === 'default') {
-                alert("The default event cannot be deleted.");
+        async function saveEditEvent(sessionId) {
+            const nameInput = document.getElementById(`edit-name-${sessionId}`);
+            const typeSelect = document.getElementById(`edit-type-${sessionId}`);
+            if (!nameInput) return;
+
+            const name = nameInput.value.trim();
+            const eventType = typeSelect ? typeSelect.value : 'trip';
+            if (!name) { alert("Please enter an event name."); return; }
+
+            try {
+                const res = await fetch('/api/update-session', {
+                    method: 'POST',
+                    headers: authHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({ session_id: sessionId, name: name, event_type: eventType })
+                });
+                if (handleAuthFailure(res)) return;
+                const data = await res.json();
+                if (data.status === 'success') {
+                    editingSessionId = null;
+                    loadSessions();
+                } else {
+                    alert("Failed to update event: " + (data.message || "Unknown error"));
+                }
+            } catch (e) {
+                alert("Error saving updates: " + e.message);
+            }
+        }
+
+        async function handleCopyLink(sessionId) {
+            const btn = document.getElementById(`btn-link-${sessionId}`);
+            try {
+                const res = await fetch(`/api/share-info?session_id=${sessionId}`, { headers: authHeaders() });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    const abs = data.share_url.startsWith('http') ? data.share_url : window.location.origin + data.share_url;
+                    await navigator.clipboard.writeText(abs);
+                    if (btn) {
+                        const origText = btn.textContent;
+                        btn.textContent = '✅ Copied!';
+                        setTimeout(() => { btn.textContent = origText; }, 2000);
+                    }
+                }
+            } catch (err) {
+                alert("Failed to copy link: " + err.message);
+            }
+        }
+
+        async function handleCopyQR(sessionId) {
+            const btn = document.getElementById(`btn-qr-${sessionId}`);
+            try {
+                const res = await fetch(`/api/share-info?session_id=${sessionId}`, { headers: authHeaders() });
+                const data = await res.json();
+                if (data.status === 'success' && data.qr_data_uri) {
+                    const response = await fetch(data.qr_data_uri);
+                    const blob = await response.blob();
+                    await navigator.clipboard.write([
+                        new ClipboardItem({
+                            [blob.type]: blob
+                        })
+                    ]);
+                    if (btn) {
+                        const origText = btn.textContent;
+                        btn.textContent = '✅ QR Copied!';
+                        setTimeout(() => { btn.textContent = origText; }, 2000);
+                    }
+                } else {
+                    throw new Error("QR data not available");
+                }
+            } catch (err) {
+                alert("Failed to copy QR code image. Fallback: " + err.message);
+            }
+        }
+
+        async function deleteEvent(sessionId, sessionName) {
+            if (sessionId === 'default') {
+                await uiAlert("The default event cannot be deleted.");
                 return;
             }
-            if (!confirm(`Are you sure you want to delete the active event? This will permanently delete all metadata, uploaded photos, and generated stories for this session. This action cannot be undone!`)) return;
+            if (!await uiConfirm(`Are you sure you want to delete the event "${sessionName}"? This will permanently delete all metadata, uploaded photos, and generated stories for this session. This action cannot be undone!`)) return;
 
             try {
                 const formData = new FormData();
-                formData.append('session_id', active);
+                formData.append('session_id', sessionId);
                 const res = await fetch('/api/delete-session', {
                     method: 'POST',
                     headers: authHeaders(),
@@ -1166,17 +1748,13 @@
                 });
                 const data = await res.json();
                 if (data.status === 'success') {
-                    // Clear the share card URL and hide the QR code before reloading
-                    const urlInput = document.getElementById('share-url');
-                    if (urlInput) urlInput.value = '';
-                    const qr = document.getElementById('share-qr');
-                    if (qr) {
-                        qr.src = '';
-                        qr.style.display = 'none';
+                    await uiAlert("Event deleted successfully!");
+                    if (sessionId === getSessionId()) {
+                        localStorage.setItem('mw_session_id', 'default');
+                        window.location.href = '/';
+                    } else {
+                        loadSessions();
                     }
-                    alert("Event deleted successfully!");
-                    localStorage.setItem('mw_session_id', 'default');
-                    window.location.href = '/';
                 } else {
                     alert("Failed to delete event: " + (data.message || "Unknown error"));
                 }
@@ -1185,20 +1763,16 @@
             }
         }
 
-        function onSessionSwitched(sel) {
-            localStorage.setItem('mw_session_id', sel.value);
+        function onSessionSwitched(sessionId) {
+            localStorage.setItem('mw_session_id', sessionId);
             // Full reload so every poller/list rebinds to the new session cleanly
             window.location.href = '/';
         }
 
-        function toggleCreateEvent(show) {
-            document.getElementById('create-event-form').style.display = show ? 'block' : 'none';
-            if (show) document.getElementById('new-event-name').focus();
-        }
-
         async function createEventSession() {
             const name = document.getElementById('new-event-name').value.trim();
-            const eventType = document.getElementById('new-event-type').value;
+            const selectedRadio = document.querySelector('input[name="new-event-category"]:checked');
+            const eventType = selectedRadio ? selectedRadio.value : 'trip';
             const status = document.getElementById('create-event-status');
             if (!name) { status.textContent = 'Please enter an event name.'; return; }
             status.textContent = 'Creating event...';
@@ -1222,48 +1796,136 @@
         }
 
         // --- Step Wizard Controller ---
-        let activeStep = 1;
-        let highestUnlockedStep = 1;
+        function updateGuidedTour(photoCount = null) {
+            const sid = getSessionId();
+            
+            const guideTitle = document.getElementById('tour-guide-title');
+            const guideText = document.getElementById('tour-guide-text');
+            
+            if (!guideTitle || !guideText) return;
 
-        function showWizardStep(stepNum) {
-            if (stepNum > highestUnlockedStep) {
-                // Keep locked if user clicks a future step they haven't unlocked
-                return;
-            }
-            activeStep = stepNum;
+            // Nodes
+            const node1 = document.getElementById('step-node-1');
+            const node2 = document.getElementById('step-node-2');
+            const node3 = document.getElementById('step-node-3');
+            const line1 = document.getElementById('step-line-1');
+            const line2 = document.getElementById('step-line-2');
             
-            // Show only the selected step
-            document.getElementById('step-1').style.display = stepNum === 1 ? 'block' : 'none';
+            // Cards
+            const card1 = document.getElementById('card-step-1');
+            const card2 = document.getElementById('card-step-2');
+            const card3 = document.getElementById('card-step-3');
+
+            // Reset classes and styles
+            node1.className = 'wizard-step-node';
+            node2.className = 'wizard-step-node';
+            node3.className = 'wizard-step-node';
+            line1.style.background = 'var(--border)';
+            line2.style.background = 'var(--border)';
             
-            const stepClean = document.getElementById('step-clean');
-            if (stepClean) {
-                stepClean.style.display = stepNum === 2 ? 'block' : 'none';
-            }
+            card1.style.borderColor = 'var(--border-color)';
+            card1.style.boxShadow = 'none';
+            card1.style.opacity = '1';
+            card1.style.pointerEvents = 'auto';
             
-            const stepCuration = document.getElementById('step-curation');
-            if (stepCuration) {
-                stepCuration.style.display = stepNum === 3 ? 'block' : 'none';
-            }
+            card2.style.borderColor = 'var(--border-color)';
+            card2.style.boxShadow = 'none';
+            card2.style.opacity = '1';
+            card2.style.pointerEvents = 'auto';
             
-            // Highlight nodes
-            for (let i = 1; i <= 3; i++) {
-                const node = document.getElementById(`step-node-${i}`);
-                const line = document.getElementById(`step-line-${i}`);
-                if (node) {
-                    node.classList.toggle('active', i === stepNum);
-                    node.classList.toggle('completed', i < highestUnlockedStep);
-                }
-                if (line) {
-                    line.classList.toggle('active', i < highestUnlockedStep);
+            card3.style.borderColor = 'var(--border-color)';
+            card3.style.boxShadow = 'none';
+            card3.style.opacity = '1';
+            card3.style.pointerEvents = 'auto';
+
+            // Badges
+            document.getElementById('badge-step-1').innerHTML = '';
+            document.getElementById('badge-step-2').innerHTML = '';
+            document.getElementById('badge-step-3').innerHTML = '';
+
+            const poolDetails = document.getElementById('photo-pool-details');
+
+            if (!sid || sid === 'default') {
+                // Step 1 is active (no custom event active yet)
+                node1.classList.add('active');
+                card1.style.borderColor = 'var(--accent)';
+                card1.style.boxShadow = '0 0 15px rgba(255, 255, 255, 0.05)';
+                document.getElementById('badge-step-1').innerHTML = '<span class="event-category-badge" style="background: rgba(0, 255, 100, 0.1); border-color: var(--accent); color: var(--accent); margin-left: auto;">👉 Active Step</span>';
+                
+                // Dim step 2 and 3
+                card2.style.opacity = '0.4';
+                card2.style.pointerEvents = 'none';
+                card3.style.opacity = '0.4';
+                card3.style.pointerEvents = 'none';
+                document.getElementById('badge-step-2').innerHTML = '<span class="event-category-badge" style="margin-left: auto; background: rgba(255,255,255,0.03); color: var(--text-muted); border-color: var(--border);">🔒 Locked</span>';
+                document.getElementById('badge-step-3').innerHTML = '<span class="event-category-badge" style="margin-left: auto; background: rgba(255,255,255,0.03); color: var(--text-muted); border-color: var(--border);">🔒 Locked</span>';
+
+                guideTitle.textContent = 'Step 1: Choose or Create Your Event';
+                guideText.innerHTML = '👋 <strong>Let\'s start here!</strong> Select one of the events from the <strong>All Events</strong> list below, or create a brand new one using the form!';
+                if (poolDetails) poolDetails.style.display = 'none';
+            } else if (photoCount === 0 || photoCount === null) {
+                // Step 2 is active (event is selected but no photos yet)
+                node1.classList.add('completed');
+                line1.style.background = 'var(--accent)';
+                node2.classList.add('active');
+                
+                card1.style.opacity = '1';
+                card2.style.borderColor = 'var(--accent)';
+                card2.style.boxShadow = '0 0 15px rgba(255, 255, 255, 0.05)';
+                card3.style.opacity = '0.4';
+                card3.style.pointerEvents = 'none';
+                
+                document.getElementById('badge-step-1').innerHTML = '<span class="event-category-badge" style="background: rgba(16, 185, 129, 0.1); border-color: var(--success); color: var(--success); margin-left: auto;">✓ Completed</span>';
+                document.getElementById('badge-step-2').innerHTML = '<span class="event-category-badge" style="background: rgba(0, 255, 100, 0.1); border-color: var(--accent); color: var(--accent); margin-left: auto;">👉 Active Step</span>';
+                document.getElementById('badge-step-3').innerHTML = '<span class="event-category-badge" style="margin-left: auto; background: rgba(255,255,255,0.03); color: var(--text-muted); border-color: var(--border);">🔒 Locked</span>';
+
+                guideTitle.textContent = 'Step 2: Add & Sort Your Pictures';
+                guideText.innerHTML = '👉 <strong>Add your photos here!</strong> Think of this step like spreading your photos on a kitchen table. You have complete control to look through them and hide any photos you\'d rather not include. This gives our system your personal touch!';
+                if (poolDetails) poolDetails.style.display = 'none';
+            } else {
+                // Step 3 is active (event selected and has photos)
+                node1.classList.add('completed');
+                line1.style.background = 'var(--accent)';
+                node2.classList.add('completed');
+                line2.style.background = 'var(--accent)';
+                node3.classList.add('active');
+                
+                card1.style.opacity = '1';
+                card2.style.opacity = '1';
+                card3.style.borderColor = 'var(--accent)';
+                card3.style.boxShadow = '0 0 15px rgba(255, 255, 255, 0.05)';
+                
+                document.getElementById('badge-step-1').innerHTML = '<span class="event-category-badge" style="background: rgba(16, 185, 129, 0.1); border-color: var(--success); color: var(--success); margin-left: auto;">✓ Completed</span>';
+                document.getElementById('badge-step-2').innerHTML = '<span class="event-category-badge" style="background: rgba(16, 185, 129, 0.1); border-color: var(--success); color: var(--success); margin-left: auto;">✓ Completed</span>';
+                document.getElementById('badge-step-3').innerHTML = '<span class="event-category-badge" style="background: rgba(0, 255, 100, 0.1); border-color: var(--accent); color: var(--accent); margin-left: auto;">👉 Active Step</span>';
+
+                guideTitle.textContent = 'Step 3: Let Our System Curate & Write';
+                guideText.innerHTML = '🎉 <strong>Let us do the heavy lifting!</strong> Now that you\'ve sorted your photos on the table, our smart curation system takes over like a professional designer. It scans your photos and chooses the absolute best highlights to write your storybook. <strong>Don\'t worry—this won\'t finalize anything yet!</strong> You will have a final step to review the selected photos, swap any you\'d like to change, and approve the final book!';
+                if (poolDetails) {
+                    poolDetails.style.display = 'block';
+                    loadUploadedPoolTray(); // Automatically load pool tray grid directly!
                 }
             }
         }
 
-        function unlockWizardStep(stepNum) {
-            if (stepNum > highestUnlockedStep) {
-                highestUnlockedStep = stepNum;
+        function showWizardStep(stepNum) {
+            let targetCard = null;
+            if (stepNum === 1) targetCard = document.getElementById('card-step-1');
+            if (stepNum === 2) targetCard = document.getElementById('card-step-2');
+            if (stepNum === 3) targetCard = document.getElementById('card-step-3');
+            
+            if (targetCard) {
+                targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                const origBorder = targetCard.style.borderColor;
+                targetCard.style.borderColor = '#ffffff';
+                setTimeout(() => {
+                    targetCard.style.borderColor = origBorder;
+                }, 800);
             }
-            showWizardStep(stepNum);
+        }
+
+        function unlockWizardStep(stepNum) {
+            // Stub for backwards compatibility
         }
 
         let currentFolder = "";
@@ -1313,19 +1975,16 @@
                     <div>📖 <strong>Journal size:</strong> ${summ.moments_count} Daily Moments</div>
                     <div>💰 <strong>Estimated cost:</strong> $${summ.estimated_cost.toFixed(4)}</div>
                 </div>
-                <div style="margin-top: 1.5rem; text-align: center;">
-                    <a href="${viewerHref()}" id="summary-viewer-btn" class="btn btn-primary" style="padding: 12px 30px; font-size: 1.1rem; box-shadow: 0 0 15px rgba(255, 123, 0, 0.4); text-decoration: none; border-radius: 8px;">📖 Open Curation Viewer</a>
-                    <button onclick="showStoryModal()" class="btn" style="padding: 12px 30px; font-size: 1.1rem; border-radius: 8px; margin-left: 10px; background: rgba(0, 255, 100, 0.1); border-color: rgba(0, 255, 100, 0.2); color: #10b981;">📝 Read ${getEventTypeName()} Story</button>
-                </div>
             `;
             summaryDiv.style.display = 'block';
         }
 
         // Auto-detect and sync with active backend tasks on page load/refresh
         window.addEventListener('DOMContentLoaded', async () => {
-            loadSessionBar();
+            loadSessions();
+            loadActiveShareCode();
             refreshPipelineOnlyCount();
-            loadShareCard();
+            refreshCurationReviewTray();
             applyLocalCapability();
             // Point the static viewer link at the active session
             const viewerLink = document.getElementById('btnViewerLink');
@@ -1439,6 +2098,7 @@
                         showPipelineSummary(progress.pipeline.summary);
                     }
                 }
+                lucide.createIcons();
             } catch (err) {
                 console.error("Error auto-syncing progress on load:", err);
             }
@@ -1759,32 +2419,18 @@
 
         let currentShareCode = '';
 
-        async function loadShareCard() {
+        async function loadActiveShareCode() {
             try {
-                const res = await fetch(withSession('/api/share-info'), { headers: authHeaders() });
-                if (res.status === 401) {
-                    document.getElementById('share-url').value = 'Admin token required to reveal the share link.';
-                    return;
-                }
-                const data = await res.json();
-                if (data.status !== 'success') return;
-                
-                // Parse share code from path
-                if (data.share_path) {
-                    const urlParams = new URLSearchParams(data.share_path.split('?')[1]);
-                    currentShareCode = urlParams.get('code') || '';
-                }
-
-                // Show absolute URL
-                const abs = data.share_url.startsWith('http') ? data.share_url : window.location.origin + data.share_url;
-                document.getElementById('share-url').value = abs;
-                if (data.qr_data_uri) {
-                    const qr = document.getElementById('share-qr');
-                    qr.src = data.qr_data_uri;
-                    qr.style.display = 'block';
+                const res = await fetch(`/api/share-info?session_id=${getSessionId()}`, { headers: authHeaders() });
+                if (res.status === 200) {
+                    const data = await res.json();
+                    if (data.status === 'success' && data.share_path) {
+                        const urlParams = new URLSearchParams(data.share_path.split('?')[1]);
+                        currentShareCode = urlParams.get('code') || '';
+                    }
                 }
             } catch (e) {
-                document.getElementById('share-url').value = 'Could not load share link.';
+                console.error("Failed to load active share code:", e);
             }
         }
 
@@ -1805,7 +2451,7 @@
             }
 
             if (!currentShareCode) {
-                await loadShareCard();
+                await loadActiveShareCode();
                 if (!currentShareCode) {
                     status.style.color = 'var(--danger)';
                     status.textContent = "Error: Share code not loaded. Cannot upload.";
@@ -1955,6 +2601,7 @@
                             document.getElementById('console-area').style.display = 'block';
                             
                             showPipelineSummary(progress.pipeline.summary);
+                            refreshCurationReviewTray();
                         } else {
                             alert("Curation pipeline encountered an error.");
                         }
@@ -1996,6 +2643,522 @@
                 body.textContent = 'Error loading story: ' + e.message;
             }
         }
+
+        function uiAlert(message) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('custom-modal');
+                const title = document.getElementById('modal-title');
+                const msg = document.getElementById('modal-message');
+                const cancelBtn = document.getElementById('modal-cancel-btn');
+                const confirmBtn = document.getElementById('modal-confirm-btn');
+                
+                title.textContent = 'Message';
+                msg.textContent = message;
+                cancelBtn.style.display = 'none'; // Only confirm button
+                confirmBtn.className = 'event-action-btn'; // Neutral style
+                confirmBtn.style.border = '1px solid #ffffff';
+                confirmBtn.style.background = '#ffffff';
+                confirmBtn.style.color = '#0d0f11';
+                confirmBtn.textContent = 'OK';
+                
+                modal.style.display = 'flex';
+                
+                confirmBtn.onclick = () => {
+                    modal.style.display = 'none';
+                    resolve();
+                };
+            });
+        }
+
+        function uiConfirm(message, confirmClass = 'event-action-btn btn-delete') {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('custom-modal');
+                const title = document.getElementById('modal-title');
+                const msg = document.getElementById('modal-message');
+                const cancelBtn = document.getElementById('modal-cancel-btn');
+                const confirmBtn = document.getElementById('modal-confirm-btn');
+                
+                title.textContent = 'Confirm Action';
+                msg.textContent = message;
+                cancelBtn.style.display = 'inline-block';
+                confirmBtn.className = confirmClass;
+                confirmBtn.textContent = 'OK';
+                
+                // Reset style triggers
+                if (confirmClass.includes('btn-delete')) {
+                    confirmBtn.style.background = '';
+                    confirmBtn.style.color = '';
+                    confirmBtn.style.border = '';
+                } else {
+                    confirmBtn.style.border = '1px solid #ffffff';
+                    confirmBtn.style.background = '#ffffff';
+                    confirmBtn.style.color = '#0d0f11';
+                }
+                
+                modal.style.display = 'flex';
+                
+                cancelBtn.onclick = () => {
+                    modal.style.display = 'none';
+                    resolve(false);
+                };
+                confirmBtn.onclick = () => {
+                    modal.style.display = 'none';
+                    resolve(true);
+                };
+            });
+        }
+
+        let fsBrowserMode = 'folder'; // 'folder' or 'files'
+        let fsCurrentPath = '';
+        let fsParentPath = '';
+        let fsSelectedItems = []; // selected file paths in 'files' mode
+
+        async function openFsBrowser(mode) {
+            fsBrowserMode = mode;
+            fsSelectedItems = [];
+            document.getElementById('fs-browser-modal').style.display = 'flex';
+            
+            const btn = document.getElementById('fs-action-btn');
+            if (mode === 'folder') {
+                btn.textContent = '✨ Add Folder to Album';
+                document.getElementById('fs-selection-summary').textContent = 'Add all pictures inside this folder to your album';
+            } else {
+                btn.textContent = '✨ Add Selected Photos';
+                document.getElementById('fs-selection-summary').textContent = 'No photos selected yet';
+            }
+            
+            await navigateFsPath('');
+        }
+
+        function closeFsBrowser() {
+            document.getElementById('fs-browser-modal').style.display = 'none';
+        }
+
+        async function navigateFsPath(path) {
+            const listContainer = document.getElementById('fs-item-list');
+            listContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; padding: 12px;">Loading directory...</div>';
+            
+            try {
+                const res = await fetch(`/api/local-fs/list?path=${encodeURIComponent(path)}`);
+                const data = await res.json();
+                if (data.status === 'success') {
+                    fsCurrentPath = data.current_path;
+                    fsParentPath = data.parent_path;
+                    document.getElementById('fs-current-path').value = fsCurrentPath;
+                    
+                    listContainer.innerHTML = '';
+                    
+                    if (data.items.length === 0) {
+                        listContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; padding: 12px;">No items found.</div>';
+                        return;
+                    }
+                    
+                    data.items.forEach(item => {
+                        const div = document.createElement('div');
+                        div.style.display = 'flex';
+                        div.style.alignItems = 'center';
+                        div.style.padding = '8px 12px';
+                        div.style.borderRadius = '4px';
+                        div.style.cursor = 'pointer';
+                        div.style.transition = 'all 0.2s';
+                        div.style.fontSize = '13px';
+                        div.style.color = 'var(--text-main)';
+                        div.style.background = 'rgba(255, 255, 255, 0.02)';
+                        div.style.border = '1px solid transparent';
+                        
+                        div.onmouseover = () => {
+                            div.style.background = 'rgba(255, 255, 255, 0.05)';
+                        };
+                        div.onmouseout = () => {
+                            if (!fsSelectedItems.includes(item.path)) {
+                                div.style.background = 'rgba(255, 255, 255, 0.02)';
+                                div.style.borderColor = 'transparent';
+                            }
+                        };
+                        
+                        const icon = document.createElement('i');
+                        icon.setAttribute('data-lucide', item.is_dir ? 'folder' : 'image');
+                        icon.style.width = '16px';
+                        icon.style.height = '16px';
+                        icon.style.marginRight = '8px';
+                        icon.style.color = item.is_dir ? 'var(--accent)' : 'var(--text-muted)';
+                        
+                        const nameSpan = document.createElement('span');
+                        nameSpan.textContent = item.name;
+                        nameSpan.style.flex = '1';
+                        
+                        div.appendChild(icon);
+                        div.appendChild(nameSpan);
+                        
+                        if (item.is_dir) {
+                            div.onclick = () => navigateFsPath(item.path);
+                        } else {
+                            if (fsBrowserMode === 'files') {
+                                // Add checkmark or selection indicator
+                                const check = document.createElement('i');
+                                check.setAttribute('data-lucide', 'check');
+                                check.style.width = '14px';
+                                check.style.height = '14px';
+                                check.style.marginLeft = '8px';
+                                check.style.color = 'var(--success)';
+                                check.style.display = 'none';
+                                div.appendChild(check);
+                                
+                                div.onclick = () => {
+                                    const idx = fsSelectedItems.indexOf(item.path);
+                                    if (idx === -1) {
+                                        fsSelectedItems.push(item.path);
+                                        check.style.display = 'inline-block';
+                                        div.style.background = 'rgba(16, 185, 129, 0.1)';
+                                        div.style.borderColor = 'rgba(16, 185, 129, 0.2)';
+                                    } else {
+                                        fsSelectedItems.splice(idx, 1);
+                                        check.style.display = 'none';
+                                        div.style.background = 'rgba(255, 255, 255, 0.02)';
+                                        div.style.borderColor = 'transparent';
+                                    }
+                                    document.getElementById('fs-selection-summary').textContent = `${fsSelectedItems.length} photos selected`;
+                                };
+                            } else {
+                                // In folder mode, files are not selectable
+                                div.style.opacity = '0.5';
+                                div.style.cursor = 'default';
+                            }
+                        }
+                        
+                        listContainer.appendChild(div);
+                    });
+                    
+                    lucide.createIcons();
+                } else {
+                    listContainer.innerHTML = `<div style="color: var(--danger); font-size: 13px; padding: 12px;">Error: ${data.message || data.detail || 'Unknown error'}</div>`;
+                }
+            } catch (err) {
+                listContainer.innerHTML = `<div style="color: var(--danger); font-size: 13px; padding: 12px;">Error: ${err.message}</div>`;
+            }
+        }
+
+        async function navigateFsParent() {
+            if (fsParentPath) {
+                await navigateFsPath(fsParentPath);
+            }
+        }
+
+        async function executeFsAction() {
+            const status = document.getElementById('upload-status');
+            status.style.color = 'var(--accent)';
+            status.textContent = 'Processing folder/file ingestion...';
+            
+            closeFsBrowser();
+            
+            try {
+                if (fsBrowserMode === 'folder') {
+                    const formData = new FormData();
+                    formData.append('session_id', getSessionId());
+                    formData.append('folder_path', fsCurrentPath);
+                    
+                    const res = await fetch('/api/local-fs/ingest', {
+                        method: 'POST',
+                        headers: authHeaders(),
+                        body: formData
+                    });
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        status.style.color = 'var(--success)';
+                        status.textContent = data.message;
+                        refreshPipelineOnlyCount();
+                        
+                        // Automatically expand pool tray and load
+                        const details = document.getElementById('photo-pool-details');
+                        if (details) {
+                            details.open = true;
+                            loadUploadedPoolTray();
+                        }
+                    } else {
+                        status.style.color = 'var(--danger)';
+                        status.textContent = "Ingest failed: " + data.message;
+                    }
+                } else {
+                    if (fsSelectedItems.length === 0) {
+                        status.style.color = 'var(--danger)';
+                        status.textContent = 'No photos were selected to ingest.';
+                        return;
+                    }
+                    
+                    const res = await fetch('/api/local-fs/ingest-files', {
+                        method: 'POST',
+                        headers: authHeaders({ 'Content-Type': 'application/json' }),
+                        body: JSON.stringify({
+                            session_id: getSessionId(),
+                            file_paths: fsSelectedItems
+                        })
+                    });
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        status.style.color = 'var(--success)';
+                        status.textContent = data.message;
+                        refreshPipelineOnlyCount();
+                        
+                        // Automatically expand pool tray and load
+                        const details = document.getElementById('photo-pool-details');
+                        if (details) {
+                            details.open = true;
+                            loadUploadedPoolTray();
+                        }
+                    } else {
+                        status.style.color = 'var(--danger)';
+                        status.textContent = "Ingest failed: " + data.message;
+                    }
+                }
+            } catch (err) {
+                status.style.color = 'var(--danger)';
+                status.textContent = 'Ingest error: ' + err.message;
+            }
+        }
+
+        // --- Step 3 Curation Review & Swap Tool ---
+        let curationView = 'curated';
+        let swappingOldPhoto = null;
+        let curationBookData = null; // Stores parsed book data
+
+        function switchCurationReviewTab(tab) {
+            curationView = tab;
+            document.getElementById('btn-curation-selected').classList.toggle('active-indicator', tab === 'curated');
+            document.getElementById('btn-curation-unselected').classList.toggle('active-indicator', tab === 'uncurated');
+            document.getElementById('btn-curation-excluded').classList.toggle('active-indicator', tab === 'excluded');
+            renderCurationReviewTray();
+        }
+
+        async function refreshCurationReviewTray() {
+            try {
+                const res = await fetch(withSession('/api/trip-book'), { headers: authHeaders() });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    curationBookData = data;
+                    document.getElementById('curation-highlights-review').style.display = 'block';
+                    
+                    // Check if narrative has been run yet
+                    const isNarrativeComplete = data.story && data.story !== 'Storybook synthesis pending approval...' && data.story !== 'Drafting storybook...';
+                    
+                    // The Proceed button should always be visible and ready for the user to generate/update the narrative highlights!
+                    document.getElementById('btnRunNarrativeOnly').style.display = 'flex';
+                    document.getElementById('btnRunNarrativeOnly').disabled = false;
+                    document.getElementById('btnRunNarrativeText').textContent = 'Love the Curated Highlights - Proceed to create Trip Highlights';
+                    
+                    if (isNarrativeComplete) {
+                        // Curation is fully finished including narrative!
+                        // Show console area and summary card
+                        document.getElementById('console-area').style.display = 'block';
+                        
+                        // Load log traces from backend if any, otherwise default completion trace
+                        const logBox = document.getElementById('log-box');
+                        if (logBox && (logBox.innerHTML.trim() === 'Welcome to the MemoryWeaver Curation terminal...' || logBox.innerHTML.trim() === '')) {
+                            try {
+                                const logRes = await fetch(withSession('/logs'));
+                                const logData = await logRes.json();
+                                if (logData.logs && logData.logs.length > 0) {
+                                    logBox.innerHTML = logData.logs.join('\n');
+                                } else {
+                                    logBox.innerHTML = '[SUCCESS] MemoryWeaver curation pipeline complete.\nAll highlights and chronological journal moments compiled successfully.';
+                                }
+                                logBox.scrollTop = logBox.scrollHeight;
+                            } catch (e) {
+                                logBox.innerHTML = '[SUCCESS] MemoryWeaver curation pipeline complete.\nAll highlights and chronological journal moments compiled successfully.';
+                            }
+                        }
+                        
+                        // Show pipeline summary if not already shown
+                        if (!document.getElementById('pipeline-summary')) {
+                            let detailedSumm = null;
+                            try {
+                                const progRes = await fetch(withSession('/api/progress'));
+                                const progData = await progRes.json();
+                                if (progData.pipeline && progData.pipeline.summary) {
+                                    detailedSumm = progData.pipeline.summary;
+                                }
+                            } catch (e) {}
+                            
+                            if (detailedSumm) {
+                                showPipelineSummary(detailedSumm);
+                            } else {
+                                const momentsCount = data.journal ? data.journal.length : 0;
+                                const summaryDiv = document.createElement('div');
+                                summaryDiv.id = 'pipeline-summary';
+                                summaryDiv.className = 'summary-card';
+                                summaryDiv.style.background = 'rgba(255, 123, 0, 0.05)';
+                                summaryDiv.style.border = '1px solid rgba(255, 123, 0, 0.2)';
+                                summaryDiv.style.borderRadius = '12px';
+                                summaryDiv.style.padding = '1.5rem';
+                                summaryDiv.style.marginTop = '1.5rem';
+                                summaryDiv.style.marginBottom = '1.5rem';
+                                
+                                summaryDiv.innerHTML = `
+                                    <div style="font-weight: 600; color: var(--accent); margin-bottom: 1rem; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                                        <span><span>✨</span> Curation Complete!</span>
+                                    </div>
+                                    <div id="pipeline-summary-details" style="font-size: 0.95rem; color: #d1d5db; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+                                        <div>📖 <strong>Journal size:</strong> ${momentsCount} Daily Moments</div>
+                                        <div>🚀 <strong>Status:</strong> Ready for review</div>
+                                    </div>
+                                `;
+                                const consoleArea = document.getElementById('console-area');
+                                if (consoleArea) {
+                                    consoleArea.parentNode.insertBefore(summaryDiv, consoleArea);
+                                }
+                            }
+                        }
+                    } else {
+                        // Curation is done (moderation/embeds/scores available) but narrative not run yet
+                        // Hide console-area and summary card by default
+                        document.getElementById('console-area').style.display = 'none';
+                        const summary = document.getElementById('pipeline-summary');
+                        if (summary) summary.remove();
+                    }
+                    
+                    renderCurationReviewTray();
+                } else {
+                    curationBookData = null;
+                    document.getElementById('curation-highlights-review').style.display = 'none';
+                }
+            } catch (err) {
+                console.error("Error loading curation review data:", err);
+                document.getElementById('curation-highlights-review').style.display = 'none';
+            }
+        }
+
+        async function renderCurationReviewTray() {
+            const tray = document.getElementById('curation-review-tray');
+            if (!tray) return;
+            tray.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1;">Loading review...</div>';
+            
+            try {
+                // 1. Fetch current pool photos
+                const res = await fetch(withSession('/api/list-uploads'), { headers: authHeaders() });
+                const listData = await res.json();
+                if (listData.status !== 'success') throw new Error(listData.message);
+                const allPhotos = listData.photos || [];
+
+                // 2. Fetch current session exclusions
+                const sRes = await fetch(`/api/sessions/${getSessionId()}`);
+                const sData = await sRes.json();
+                const excluded = sData.session ? (sData.session.excluded_photos || []) : [];
+
+                // 3. Build curated set
+                const curatedPhotos = new Set();
+                if (curationBookData) {
+                    if (curationBookData.journal) {
+                        curationBookData.journal.forEach(entry => {
+                            if (entry.photos) {
+                                entry.photos.forEach(p => {
+                                    // Add filename only if it's on disk
+                                    if (allPhotos.includes(p)) curatedPhotos.add(p);
+                                });
+                            }
+                        });
+                    }
+                    if (curationBookData.highlights) {
+                        curationBookData.highlights.forEach(h => {
+                            if (h.filename && allPhotos.includes(h.filename)) curatedPhotos.add(h.filename);
+                        });
+                    }
+                }
+
+                // Categorize
+                let photosToRender = [];
+                if (curationView === 'curated') {
+                    photosToRender = allPhotos.filter(x => curatedPhotos.has(x) && !excluded.includes(x));
+                } else if (curationView === 'uncurated') {
+                    photosToRender = allPhotos.filter(x => !curatedPhotos.has(x) && !excluded.includes(x));
+                } else {
+                    photosToRender = allPhotos.filter(x => excluded.includes(x));
+                }
+
+                // Update tab counters
+                const countCurated = allPhotos.filter(x => curatedPhotos.has(x) && !excluded.includes(x)).length;
+                const countUncurated = allPhotos.filter(x => !curatedPhotos.has(x) && !excluded.includes(x)).length;
+                const countExcluded = allPhotos.filter(x => excluded.includes(x)).length;
+
+                document.getElementById('btn-curation-selected').textContent = `Curated Highlights (${countCurated})`;
+                document.getElementById('btn-curation-unselected').textContent = `Other Photos (${countUncurated})`;
+                document.getElementById('btn-curation-excluded').textContent = `Hidden / Excluded (${countExcluded})`;
+
+                if (photosToRender.length === 0) {
+                    tray.innerHTML = `<div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1;">No photos in this category.</div>`;
+                    return;
+                }
+
+                tray.innerHTML = '';
+                photosToRender.forEach(filename => {
+                    const card = document.createElement('div');
+                    card.className = 'pool-photo-card';
+                    
+                    const img = document.createElement('img');
+                    img.src = `/media?filename=${encodeURIComponent(filename)}&session_id=${encodeURIComponent(getSessionId())}`;
+                    img.loading = 'lazy';
+                    card.appendChild(img);
+
+                    if (curationView === 'curated') {
+                        const btn = document.createElement('button');
+                        btn.className = 'overlay-btn exclude-btn';
+                        btn.innerHTML = '✕';
+                        btn.title = 'Move to Other Photos (Not Selected)';
+                        btn.onclick = (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            movePhoto(filename, 'demote');
+                        };
+                        card.appendChild(btn);
+                    } else if (curationView === 'uncurated') {
+                        const btn = document.createElement('button');
+                        btn.className = 'overlay-btn include-btn';
+                        btn.innerHTML = '✓';
+                        btn.title = 'Move to Curated Highlights';
+                        btn.onclick = (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            movePhoto(filename, 'promote');
+                        };
+                        card.appendChild(btn);
+                    } else if (curationView === 'excluded') {
+                        const btn = document.createElement('div');
+                        btn.className = 'overlay-btn';
+                        btn.style.opacity = '0.7';
+                        btn.style.cursor = 'not-allowed';
+                        btn.innerHTML = '🔒';
+                        btn.title = 'Excluded photos can only be managed in Step 2';
+                        card.appendChild(btn);
+                    }
+
+                    tray.appendChild(card);
+                });
+            } catch (err) {
+                console.error("Error rendering curation review tray:", err);
+                tray.innerHTML = `<div style="color: var(--danger); font-size: 13px; grid-column: 1/-1;">Error: ${err.message}</div>`;
+            }
+        }
+
+        async function movePhoto(filename, action) {
+            try {
+                const res = await fetch('/api/move-curated-photo', {
+                    method: 'POST',
+                    headers: authHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({
+                        session_id: getSessionId(),
+                        filename: filename,
+                        action: action
+                    })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    // Update review tray
+                    await refreshCurationReviewTray();
+                } else {
+                    uiAlert("Failed to move photo: " + data.message);
+                }
+            } catch (err) {
+                uiAlert("Error moving photo: " + err.message);
+            }
+        }
     </script>
 
     <!-- Story Modal -->
@@ -2007,6 +3170,51 @@
             </div>
             <div id="story-modal-body" style="padding: 24px; overflow-y: auto; color: #d1d5db; font-size: 1rem; line-height: 1.6; white-space: pre-wrap; text-align: left; font-family: 'Outfit', sans-serif;">
                 Loading story...
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Alert/Confirm Modal -->
+    <div id="custom-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h3 id="modal-title" style="margin: 0 0 12px 0; font-weight: 700; font-size: 1.1rem; color: #ffffff;">Confirm Action</h3>
+            <p id="modal-message" style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0 0 20px 0;">Are you sure?</p>
+            <div class="modal-actions" style="display: flex; gap: 8px; justify-content: flex-end;">
+                <button id="modal-cancel-btn" class="event-action-btn" style="min-width: 80px;">Cancel</button>
+                <button id="modal-confirm-btn" class="event-action-btn btn-delete" style="min-width: 80px;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Local Filesystem Browser Modal -->
+    <div id="fs-browser-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 600px; width: 95%; max-height: 80vh; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+                <h3 style="margin: 0; font-weight: 700; font-size: 1.1rem; color: #ffffff; display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="folder-open" style="width: 20px; height: 20px; color: var(--accent);"></i> 📁 Find Your Photos
+                </h3>
+                <button class="event-action-btn" onclick="closeFsBrowser()" style="padding: 4px 8px;">✕</button>
+            </div>
+            
+            <!-- Path navigation box -->
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <button class="event-action-btn" onclick="navigateFsParent()" title="Back to Previous Folder" style="padding: 8px 12px;">
+                    <i data-lucide="arrow-up" style="width: 14px; height: 14px;"></i>
+                </button>
+                <input type="text" id="fs-current-path" class="input-text" style="flex: 1; font-family: monospace; font-size: 12px; padding: 6px 12px;" />
+                <button class="event-action-btn" onclick="navigateFsPath(document.getElementById('fs-current-path').value)" style="padding: 8px 12px;">Go</button>
+            </div>
+
+            <!-- Directory listing -->
+            <div id="fs-item-list" style="flex: 1; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; padding: 8px; background: rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 4px; min-height: 200px;">
+                <!-- Dynamically populated list of items -->
+            </div>
+
+            <div style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 16px;">
+                <div style="font-size: 12px; color: var(--text-muted);" id="fs-selection-summary">No photos selected yet</div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="event-action-btn" onclick="closeFsBrowser()">Cancel</button>
+                    <button class="event-action-btn active-indicator" id="fs-action-btn" onclick="executeFsAction()" style="min-width: 120px;">✨ Add to Album</button>
             </div>
         </div>
     </div>

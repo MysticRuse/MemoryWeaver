@@ -5,16 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MemoryWeaver - Your Trip Journal</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,600;0,800;1,400&display=swap" rel="stylesheet">
-    <style>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
-            --bg-color: #080a0f;
-            --card-bg: #0e121a;
-            --border-color: rgba(255, 255, 255, 0.08);
-            --text-main: #ffffff;
-            --text-muted: #8b949e;
-            --accent: #ff6b00;
-            --accent-glow: rgba(255, 107, 0, 0.15);
+            --bg-color: #0d0f11;
+            --card-bg: #17191d;
+            --border-color: #282c34;
+            --text-main: #f8fafc;
+            --text-muted: #8a90a0;
+            --accent: #ffffff;
+            --accent-glow: rgba(255, 255, 255, 0.05);
+            --accent-grad: #ffffff;
         }
 
         * {
@@ -39,8 +40,14 @@
         .container {
             width: 100%;
             max-width: 1200px;
-            padding: 0 20px;
+            padding: 0 12px;
             box-sizing: border-box;
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                padding: 0 24px;
+            }
         }
 
         header {
@@ -52,7 +59,7 @@
             font-family: 'Outfit', sans-serif;
             font-size: 2.2rem;
             font-weight: 800;
-            color: #ffffff;
+            color: var(--text-main);
             margin-bottom: 6px;
             letter-spacing: -0.5px;
         }
@@ -73,42 +80,53 @@
         }
 
         .select-user {
-            padding: 10px 40px 10px 16px !important;
-            background: rgba(8, 11, 17, 0.6) !important;
+            padding: 10px 40px 10px 14px !important;
+            background: #17191d !important;
             border: 1px solid var(--border-color) !important;
             color: var(--text-main) !important;
-            border-radius: 8px !important;
+            border-radius: 6px !important;
             outline: none !important;
             font-family: 'Outfit', sans-serif !important;
             font-weight: 600 !important;
             cursor: pointer !important;
-            transition: border-color 0.2s !important;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
             appearance: none !important;
             -webkit-appearance: none !important;
-            background-image: url("data:image/svg+xml;utf8,<svg fill='%23ff6b00' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>") !important;
+            background-image: url("data:image/svg+xml;utf8,<svg fill='%2394a3b8' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>") !important;
             background-repeat: no-repeat !important;
             background-position: right 12px center !important;
+            min-height: 44px;
         }
 
         .select-user:focus {
-            border-color: var(--accent) !important;
+            border-color: #8a90a0 !important;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1) !important;
         }
 
         .nav-btn {
-            display: inline-block;
-            padding: 8px 18px;
-            background: #121620;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 18px;
+            background: #1c2024;
             border: 1px solid var(--border-color);
             color: var(--text-main);
             text-decoration: none;
-            border-radius: 8px;
+            border-radius: 6px;
             font-weight: 600;
-            transition: all 0.2s ease;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            min-height: 44px;
         }
 
         .nav-btn:hover {
-            border-color: #ffffff;
-            background: #171d2a;
+            background: #24292f;
+            border-color: #484f58;
+        }
+
+        .nav-btn:active {
+            transform: scale(0.98);
         }
 
         /* Highlights Section */
@@ -117,12 +135,12 @@
             font-size: 1.4rem;
             font-weight: 700;
             margin-bottom: 1.25rem;
-            border-left: 3px solid var(--accent);
+            border-left: 3px solid #ffffff;
             padding-left: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            color: #ffffff;
+            color: var(--text-main);
             letter-spacing: -0.3px;
         }
 
@@ -143,7 +161,7 @@
             position: relative;
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: 6px;
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -152,7 +170,9 @@
 
         .carousel-track {
             width: 100%;
-            height: 480px;
+            height: 56vw;
+            min-height: 240px;
+            max-height: 480px;
             position: relative;
             background: #000;
         }
@@ -185,13 +205,13 @@
             padding: 1.5rem;
             width: 100%;
             text-align: center;
-            background: rgba(13, 15, 20, 0.95);
+            background: rgba(26, 31, 38, 0.95);
             border-top: 1px solid var(--border-color);
             position: relative;
         }
 
         .carousel-meta h3 {
-            color: var(--accent);
+            color: var(--text-main);
             margin-bottom: 0.5rem;
             font-size: 1.3rem;
             text-transform: capitalize;
@@ -210,7 +230,7 @@
             font-size: 10px;
             font-weight: 700;
             color: var(--text-muted);
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.03);
             padding: 2px 8px;
             border-radius: 10px;
             border: 1px solid var(--border-color);
@@ -220,9 +240,9 @@
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(13, 15, 20, 0.9);
+            background: rgba(26, 31, 38, 0.9);
             border: 1px solid var(--border-color);
-            color: #fff;
+            color: var(--text-main);
             font-size: 1.8rem;
             width: 44px;
             height: 44px;
@@ -236,8 +256,9 @@
         }
 
         .carousel-control:hover {
-            background: var(--accent);
-            border-color: transparent;
+            background: #ffffff;
+            border-color: #ffffff;
+            color: #0d0f11;
         }
 
         .control-prev { left: 1rem; }
@@ -267,7 +288,7 @@
         .journal-card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: 6px;
             padding: 1.5rem;
             display: flex;
             flex-direction: column;
@@ -295,7 +316,7 @@
             height: auto;
             max-height: 520px;
             object-fit: contain;
-            border-radius: 12px;
+            border-radius: 6px;
             border: 1px solid var(--border-color);
             transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
         }
@@ -312,7 +333,7 @@
             width: auto;
             max-width: 100%;
             object-fit: contain;
-            border-radius: 12px;
+            border-radius: 6px;
             border: 1px solid var(--border-color);
             transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
         }
@@ -329,24 +350,24 @@
             width: auto;
             max-width: 100%;
             object-fit: contain;
-            border-radius: 12px;
+            border-radius: 6px;
             border: 1px solid var(--border-color);
             transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
         }
         
         .journal-thumbs img:hover {
             transform: scale(1.02);
-            border-color: var(--accent);
+            border-color: #ffffff;
         }
 
         .journal-body {
             position: relative;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
             padding-top: 1.2rem;
         }
 
         .journal-body h3 {
-            color: var(--accent);
+            color: var(--text-main);
             font-size: 1.25rem;
             margin-bottom: 0.6rem;
             text-transform: capitalize;
@@ -364,7 +385,7 @@
         .story-card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: 6px;
             padding: 2rem;
             position: sticky;
             top: 2rem;
@@ -380,16 +401,16 @@
             border-radius: 10px;
         }
         .story-card::-webkit-scrollbar-thumb {
-            background: rgba(255, 123, 0, 0.3);
+            background: rgba(255, 255, 255, 0.15);
             border-radius: 10px;
         }
         .story-card::-webkit-scrollbar-thumb:hover {
-            background: var(--accent);
+            background: rgba(255, 255, 255, 0.3);
         }
 
         .story-text {
             font-size: 1.1rem;
-            color: #d1d5db;
+            color: var(--text-main);
             line-height: 1.7;
         }
 
@@ -401,7 +422,7 @@
         .catchup-container {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: 6px;
             padding: 2rem;
             margin-bottom: 3rem;
         }
@@ -436,9 +457,9 @@
         }
 
         .catchup-item {
-            background: rgba(13, 15, 20, 0.6);
+            background: rgba(0, 0, 0, 0.02);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: 6px;
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -490,7 +511,7 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(10, 12, 18, 0.95);
+            background-color: rgba(10, 12, 18, 0.98);
             backdrop-filter: blur(12px);
             align-items: center;
             justify-content: center;
@@ -503,7 +524,7 @@
             max-width: 90%;
             max-height: 80vh;
             border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
             object-fit: contain;
             animation: zoom 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
@@ -517,7 +538,7 @@
             position: absolute;
             top: 25px;
             right: 35px;
-            color: #f3f4f6;
+            color: var(--text-main);
             font-size: 44px;
             font-weight: 300;
             transition: 0.2s;
@@ -544,22 +565,31 @@
             position: sticky;
             top: 0;
             z-index: 1000;
-            background: rgba(13, 15, 20, 0.7);
+            background: rgba(18, 21, 25, 0.85);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--border-color);
             width: 100%;
-            margin-bottom: 24px;
+            margin-bottom: 16px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
         }
 
         .nav-container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 16px 20px;
+            padding: 12px 16px;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            gap: 10px;
             align-items: center;
+        }
+
+        @media (min-width: 480px) {
+            .nav-container {
+                flex-direction: row;
+                justify-content: space-between;
+                padding: 16px 20px;
+            }
         }
 
         .nav-logo {
@@ -592,7 +622,7 @@
         }
 
         .nav-link:hover {
-            color: #fff;
+            color: var(--text-main);
             background: rgba(255, 255, 255, 0.04);
         }
 
@@ -615,10 +645,10 @@
 <body>
     <nav class="top-nav">
         <div class="nav-container">
-            <a href="/" class="nav-logo">🔮 MemoryWeaver</a>
+            <a href="/" class="nav-logo"><i data-lucide="sparkles" style="width: 18px; height: 18px; margin-right: 6px; color: var(--accent); vertical-align: middle;"></i>MemoryWeaver</a>
             <div class="nav-links">
-                <a href="/" class="nav-link">🛠️ Curator Hub</a>
-                <a href="/viewer" class="nav-link active" id="nav-viewer-link">📖 Trip Highlights</a>
+                <a href="/" class="nav-link"><i data-lucide="wrench" style="width: 14px; height: 14px; margin-right: 6px;"></i>Curator Hub</a>
+                <a href="/viewer" class="nav-link active" id="nav-viewer-link"><i data-lucide="book-open" style="width: 14px; height: 14px; margin-right: 6px;"></i>Trip Highlights</a>
             </div>
         </div>
     </nav>
@@ -636,13 +666,13 @@
             <h1 style="font-size: 2.8rem; margin-bottom: 5px;">Your Trip Highlights</h1>
             <div class="header-controls">
                 <select id="user-select" class="select-user" style="display: none;" onchange="handleUserChange()">
-                    <option value="all">👥 Full Journal (All Contributors)</option>
+                    <option value="all">Full Journal (All Contributors)</option>
                 </select>
             </div>
         </header>
 
         <div id="loading" class="empty-state">
-            <h2>Generating your Journal...</h2>
+            <h2><i data-lucide="loader-2" style="width: 24px; height: 24px; animation: spin 2s linear infinite; vertical-align: middle; margin-right: 8px;"></i>Generating your Journal...</h2>
             <p>Our agent pipeline is analyzing photos, performing safety moderation, clustering duplicates, and crafting your stories.</p>
         </div>
 
@@ -660,8 +690,8 @@
                     <span class="section-subtitle" id="highlightsSub">Showcasing all memories</span>
                 </h2>
                 <div class="carousel-view">
-                    <button class="carousel-control control-prev" id="prevBtn">&lt;</button>
-                    <button class="carousel-control control-next" id="nextBtn">&gt;</button>
+                    <button class="carousel-control control-prev" id="prevBtn"><i data-lucide="chevron-left" style="width: 24px; height: 24px;"></i></button>
+                    <button class="carousel-control control-next" id="nextBtn"><i data-lucide="chevron-right" style="width: 24px; height: 24px;"></i></button>
                     <div class="carousel-track" id="carouselTrack">
                         <!-- Dynamic slides -->
                     </div>
@@ -675,7 +705,7 @@
 
             <!-- Personalized Catch Up (Moments you missed) -->
             <div id="catchup-section" class="catchup-container" style="display: none;">
-                <h3 class="catchup-title">🔔 While You Were Away... (Moments You Missed)</h3>
+                <h3 class="catchup-title"><i data-lucide="bell" style="width: 18px; height: 18px; color: var(--accent);"></i> While You Were Away... (Moments You Missed)</h3>
                 <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1.5rem;" id="catchupIntro">
                     Since you didn't upload photos during these settings, the Memory Agent recommends these top-voted shots to catch up:
                 </p>
@@ -738,8 +768,9 @@
                 const res = await fetch('/api/sessions/' + encodeURIComponent(getSessionId()));
                 const data = await res.json();
                 if (data.status === 'success') {
-                    const emoji = { trip: '🧳', birthday: '🎂', wedding: '💍', sports_match: '⚽', reunion: '🤝', other: '📸' }[data.session.event_type] || '📸';
-                    document.querySelector('header h1').textContent = `${emoji} ${data.session.name}`;
+                    const iconName = { trip: 'compass', birthday: 'gift', wedding: 'heart', sports_match: 'award', reunion: 'users', other: 'camera' }[data.session.event_type] || 'camera';
+                    document.querySelector('header h1').innerHTML = `<i data-lucide="${iconName}" style="width: 32px; height: 32px; margin-right: 12px; vertical-align: middle; color: var(--accent);"></i>${data.session.name}`;
+                    lucide.createIcons();
                 }
             } catch (e) { /* keep the generic title on failure */ }
         }
@@ -901,7 +932,10 @@
                     dateText.style.fontSize = '12px';
                     dateText.style.color = 'var(--text-muted)';
                     dateText.style.fontWeight = 'normal';
-                    dateText.textContent = `📅 ${entry.date}`;
+                    dateText.style.display = 'inline-flex';
+                    dateText.style.alignItems = 'center';
+                    dateText.style.gap = '4px';
+                    dateText.innerHTML = `<i data-lucide="calendar" style="width: 12px; height: 12px;"></i> ${entry.date}`;
                     title.appendChild(dateText);
                 }
 
@@ -930,6 +964,7 @@
                 card.appendChild(body);
                 list.appendChild(card);
             });
+            lucide.createIcons();
         }
 
         function renderStory(text) {

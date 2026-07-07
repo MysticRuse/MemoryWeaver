@@ -353,6 +353,18 @@ def clear_session(session_id: str = "default"):
     """Admin-only: clears all uploaded photos, thumbnails, and generated artefacts for a session."""
     try:
         session_storage = StorageHelper(session_id=session_id)
+        
+        # Clear Google Cloud Storage prefix contents if GCS is enabled
+        if session_storage.use_gcs:
+            for folder in ("uploads/", "thumbs/", "artefacts/"):
+                prefix = session_storage.gcs_path(folder)
+                try:
+                    blobs = session_storage.bucket.list_blobs(prefix=prefix)
+                    for blob in blobs:
+                        blob.delete()
+                except Exception as e:
+                    print(f"Error deleting GCS prefix {prefix}: {e}")
+        
         import shutil
         shutil.rmtree(os.path.join(session_storage.local_base, "uploads"), ignore_errors=True)
         shutil.rmtree(os.path.join(session_storage.local_base, "thumbs"), ignore_errors=True)
@@ -444,6 +456,23 @@ def create_session(req: CreateSessionRequest):
     return {"status": "success", "session": public_view(session)}
 
 
+class UpdateSessionRequest(BaseModel):
+    session_id: str
+    name: str
+    event_type: str = "trip"
+
+
+@app.post("/api/update-session", dependencies=[Depends(require_admin_token)])
+def update_session(req: UpdateSessionRequest):
+    """Admin-only: updates name and event_type of a session."""
+    store = SessionStore()
+    session = store.update_session(req.session_id, {"name": req.name.strip(), "event_type": req.event_type})
+    if not session:
+        return {"status": "error", "message": "Session not found"}
+    return {"status": "success", "session": public_view(session)}
+
+
+
 @app.get("/api/sessions")
 def list_sessions():
     """Lists every saved event session, most recent first. share_code excluded -
@@ -495,12 +524,28 @@ def get_trip_stats(session_id: str = "default"):
         session_storage = StorageHelper(session_id=session_id)
         upload_dir = os.path.join(session_storage.local_base, "uploads")
         count = 0
+        active_count = 0
         if os.path.exists(upload_dir):
-            count = len([
+            files = [
                 f for f in os.listdir(upload_dir)
                 if os.path.isfile(os.path.join(upload_dir, f)) and not f.startswith('.')
-            ])
-        return {"status": "success", "total_uploaded": count, "session_id": session_id}
+            ]
+            count = len(files)
+            
+            # Fetch exclusions
+            from app.app_utils.sessions import SessionStore
+            store = SessionStore()
+            session = store.get_session(session_id)
+            excluded = set(session.get("excluded_photos", [])) if session else set()
+            
+            active_count = len([f for f in files if f not in excluded])
+            
+        return {
+            "status": "success",
+            "total_uploaded": count,
+            "active_count": active_count,
+            "session_id": session_id
+        }
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -604,14 +649,14 @@ def get_pipeline_logs(session_id: str = "default"):
     return {"status": "success", "logs": pipeline_logs_by_session.get(session_id, [])}
 
 
-def run_generation_background(session_id: str, limit: int):
+def run_generation_background(session_id: str, limit: int, stage: str = "curate"):
     """Asynchronous background worker for the 5-agent pipeline, scoped to one session."""
     import time
     start_time = time.time()
     state = _get_progress_state(session_id)
     try:
         pipeline_logs_by_session[session_id] = []
-        log_pipeline_step(session_id, "Initiating pipeline orchestration...")
+        log_pipeline_step(session_id, f"Initiating pipeline orchestration (stage: {stage})...")
 
         def pipeline_progress(current, total, phase):
             state["pipeline"]["current"] = current
@@ -623,7 +668,8 @@ def run_generation_background(session_id: str, limit: int):
             session_id=session_id,
             limit=limit,
             log=lambda msg: log_pipeline_step(session_id, msg),
-            progress_callback=pipeline_progress
+            progress_callback=pipeline_progress,
+            stage=stage
         )
 
         # ==========================================
@@ -662,10 +708,9 @@ def run_generation_background(session_id: str, limit: int):
         log_pipeline_step(session_id, f"CRITICAL ERROR: {str(e)}")
 
 @app.post("/generate", dependencies=[Depends(require_admin_token)])
-def run_generation_pipeline(background_tasks: BackgroundTasks, session_id: str = "default", limit: int = 50):
-    """Triggers the full multi-agent moderation, curation, memory and narration pipeline for one session."""
+def run_generation_pipeline(background_tasks: BackgroundTasks, session_id: str = "default", limit: int = 50, stage: str = "curate"):
+    """Triggers the curation stages (moderation, deduplication, scoring) for one session."""
     import time
-    # Synchronously reset to prevent frontend race condition
     state = _get_progress_state(session_id)
     state["pipeline"] = {
         "current": 0,
@@ -674,8 +719,302 @@ def run_generation_pipeline(background_tasks: BackgroundTasks, session_id: str =
         "phase": "initiating",
         "start_time": time.time()
     }
-    background_tasks.add_task(run_generation_background, session_id, limit)
-    return {"status": "success", "message": f"Pipeline started with target limit {limit} in the background.", "session_id": session_id}
+    background_tasks.add_task(run_generation_background, session_id, limit, stage)
+    return {"status": "success", "message": f"Pipeline stage {stage} started with target limit {limit} in the background.", "session_id": session_id}
+
+
+@app.post("/generate-narrative", dependencies=[Depends(require_admin_token)])
+def run_narrative_pipeline(background_tasks: BackgroundTasks, session_id: str = "default", limit: int = 50):
+    """Triggers Phase 4 and Phase 5 narrative compilation after user approves curated highlights."""
+    import time
+    state = _get_progress_state(session_id)
+    state["pipeline"] = {
+        "current": 0,
+        "total": 0,
+        "status": "running",
+        "phase": "journaling",
+        "start_time": time.time()
+    }
+    background_tasks.add_task(run_generation_background, session_id, limit, "narrate")
+    return {"status": "success", "message": "Narrator journaling and story generation started in the background.", "session_id": session_id}
+
+
+@app.get("/api/local-fs/list")
+def local_fs_list(path: str = ""):
+    """Lists directories and image files at a given local path to support a web-based file picker."""
+    try:
+        # Default to user's home directory if path is empty
+        if not path:
+            path = os.path.expanduser("~")
+        
+        path = os.path.abspath(path)
+        if not os.path.exists(path) or not os.path.isdir(path):
+            return {"status": "error", "message": "Invalid directory path"}
+            
+        items = []
+        try:
+            for f in os.listdir(path):
+                if f.startswith('.'):
+                    continue
+                full_path = os.path.join(path, f)
+                is_dir = os.path.isdir(full_path)
+                # Filter files to only show image files, or folders
+                if is_dir:
+                    items.append({"name": f, "path": full_path, "is_dir": True})
+                elif f.lower().endswith(('.jpg', '.jpeg', '.png', '.heic')):
+                    items.append({"name": f, "path": full_path, "is_dir": False})
+        except PermissionError:
+            return {"status": "error", "message": "Permission denied for this folder"}
+            
+        # Sort folders first, then files
+        items.sort(key=lambda x: (not x["is_dir"], x["name"].lower()))
+        
+        parent = os.path.dirname(path) if path != "/" else "/"
+        return {
+            "status": "success",
+            "current_path": path,
+            "parent_path": parent,
+            "items": items
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@app.post("/api/local-fs/ingest", dependencies=[Depends(require_admin_token)])
+def local_fs_ingest(session_id: str = Form(...), folder_path: str = Form(...)):
+    """Ingests all images from a local directory path on the backend directly, avoiding HTTP browser uploads."""
+    try:
+        if not folder_path or not os.path.exists(folder_path) or not os.path.isdir(folder_path):
+            return {"status": "error", "message": "Invalid directory path"}
+            
+        session_storage = StorageHelper(session_id=session_id)
+        upload_dir = os.path.join(session_storage.local_base, "uploads")
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        import shutil
+        supported = ('.jpg', '.jpeg', '.png', '.heic')
+        copied = 0
+        skipped = 0
+        
+        for f in os.listdir(folder_path):
+            if f.startswith('.'):
+                continue
+            if f.lower().endswith(supported):
+                src = os.path.join(folder_path, f)
+                dst = os.path.join(upload_dir, f)
+                if not os.path.exists(dst):
+                    shutil.copy2(src, dst)
+                    copied += 1
+                else:
+                    skipped += 1
+                    
+        return {
+            "status": "success",
+            "copied": copied,
+            "skipped": skipped,
+            "message": f"Successfully ingested {copied} photo(s) directly from disk. {skipped} duplicates skipped."
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+class IngestFilesRequest(AsyncIterator): # just dummy if we want but standard JSON body is simpler:
+    pass
+
+from pydantic import BaseModel
+class IngestFilesBody(BaseModel):
+    session_id: str
+    file_paths: list[str]
+
+@app.post("/api/local-fs/ingest-files", dependencies=[Depends(require_admin_token)])
+def local_fs_ingest_files(body: IngestFilesBody):
+    """Ingests a list of specific local image file paths on the backend directly."""
+    try:
+        session_storage = StorageHelper(session_id=body.session_id)
+        upload_dir = os.path.join(session_storage.local_base, "uploads")
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        import shutil
+        copied = 0
+        skipped = 0
+        
+        for src in body.file_paths:
+            if not os.path.exists(src) or not os.path.isfile(src):
+                continue
+            f = os.path.basename(src)
+            dst = os.path.join(upload_dir, f)
+            if not os.path.exists(dst):
+                shutil.copy2(src, dst)
+                copied += 1
+            else:
+                skipped += 1
+                
+        return {
+            "status": "success",
+            "copied": copied,
+            "skipped": skipped,
+            "message": f"Successfully ingested {copied} selected photo(s) directly from disk. {skipped} duplicates skipped."
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+class SwapPhotoBody(BaseModel):
+    session_id: str
+    old_photo: str
+    new_photo: str
+
+
+@app.post("/api/swap-curated-photo", dependencies=[Depends(require_admin_token)])
+def swap_curated_photo(body: SwapPhotoBody):
+    import json
+    try:
+        session_storage = StorageHelper(session_id=body.session_id)
+        artefacts_dir = os.path.join(session_storage.local_base, "artefacts")
+        
+        journal_path = os.path.join(artefacts_dir, "journal.json")
+        highlights_path = os.path.join(artefacts_dir, "highlights.json")
+        manifest_path = os.path.join(artefacts_dir, "manifest.json")
+        
+        if not os.path.exists(journal_path) or not os.path.exists(highlights_path):
+            raise HTTPException(status_code=400, detail="Curation has not been run for this session.")
+            
+        with open(journal_path, "r") as f:
+            journal = json.load(f)
+            
+        with open(highlights_path, "r") as f:
+            highlights = json.load(f)
+            
+        # 1. Update journal.json
+        for entry in journal:
+            if "photos" in entry:
+                entry["photos"] = [
+                    body.new_photo if p == body.old_photo else p
+                    for p in entry["photos"]
+                ]
+                
+        # 2. Update highlights.json
+        # Find new photo details in manifest.json
+        new_photo_record = None
+        if os.path.exists(manifest_path):
+            with open(manifest_path, "r") as f:
+                manifest = json.load(f)
+                for item in manifest:
+                    if item.get("filename") == body.new_photo:
+                        new_photo_record = item
+                        break
+                        
+        if not new_photo_record:
+            new_photo_record = {
+                "filename": body.new_photo,
+                "score": 0.0,
+                "scene_label": "other",
+                "caption": "User swapped highlight"
+            }
+            
+        # Replace old photo record in highlights
+        for i, hl in enumerate(highlights):
+            if hl.get("filename") == body.old_photo:
+                highlights[i] = new_photo_record
+                
+        # Save back
+        with open(journal_path, "w") as f:
+            json.dump(journal, f, indent=2)
+            
+        with open(highlights_path, "w") as f:
+            json.dump(highlights, f, indent=2)
+            
+        return {"status": "success", "message": f"Successfully swapped {body.old_photo} with {body.new_photo}."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+class MovePhotoBody(BaseModel):
+    session_id: str
+    filename: str
+    action: str  # "promote" or "demote"
+
+
+@app.post("/api/move-curated-photo", dependencies=[Depends(require_admin_token)])
+def move_curated_photo(body: MovePhotoBody):
+    import json
+    try:
+        session_storage = StorageHelper(session_id=body.session_id)
+        artefacts_dir = os.path.join(session_storage.local_base, "artefacts")
+        
+        journal_path = os.path.join(artefacts_dir, "journal.json")
+        highlights_path = os.path.join(artefacts_dir, "highlights.json")
+        manifest_path = os.path.join(artefacts_dir, "manifest.json")
+        
+        if not os.path.exists(journal_path) or not os.path.exists(highlights_path):
+            raise HTTPException(status_code=400, detail="Curation has not been run for this session.")
+            
+        with open(journal_path, "r") as f:
+            journal = json.load(f)
+            
+        with open(highlights_path, "r") as f:
+            highlights = json.load(f)
+            
+        if body.action == "demote":
+            # 1. Remove from journal
+            for entry in journal:
+                if "photos" in entry:
+                    entry["photos"] = [p for p in entry["photos"] if p != body.filename]
+            # 2. Remove from highlights
+            highlights = [hl for hl in highlights if hl.get("filename") != body.filename]
+            
+        elif body.action == "promote":
+            # 1. Get details from manifest
+            photo_record = None
+            if os.path.exists(manifest_path):
+                with open(manifest_path, "r") as f:
+                    manifest = json.load(f)
+                    for item in manifest:
+                        if item.get("filename") == body.filename:
+                            photo_record = item
+                            break
+            if not photo_record:
+                photo_record = {
+                    "filename": body.filename,
+                    "score": 0.0,
+                    "scene_label": "other",
+                    "caption": "Added highlight"
+                }
+                
+            # 2. Add to highlights if not present
+            if not any(hl.get("filename") == body.filename for hl in highlights):
+                highlights.append(photo_record)
+                
+            # 3. Add to journal entry matching date or first entry
+            photo_date = photo_record.get("date")
+            added_to_journal = False
+            if photo_date:
+                for entry in journal:
+                    if entry.get("date") == photo_date:
+                        if "photos" not in entry:
+                            entry["photos"] = []
+                        if body.filename not in entry["photos"]:
+                            entry["photos"].append(body.filename)
+                        added_to_journal = True
+                        break
+                        
+            if not added_to_journal and len(journal) > 0:
+                entry = journal[0]
+                if "photos" not in entry:
+                    entry["photos"] = []
+                if body.filename not in entry["photos"]:
+                    entry["photos"].append(body.filename)
+                    
+        # Save back
+        with open(journal_path, "w") as f:
+            json.dump(journal, f, indent=2)
+            
+        with open(highlights_path, "w") as f:
+            json.dump(highlights, f, indent=2)
+            
+        return {"status": "success", "message": f"Successfully {body.action}d {body.filename}."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 
 # Main execution

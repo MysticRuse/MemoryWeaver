@@ -5,16 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MemoryWeaver - Add Your Photos</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
-            --bg-dark: #080a0f;
-            --card-bg: #0e121a;
-            --accent: #ff6b00;
-            --text-main: #ffffff;
-            --text-muted: #8b949e;
-            --success: #10b981;
-            --danger: #ef4444;
-            --border-color: rgba(255, 255, 255, 0.08);
+            --bg-dark: #0d0f11;
+            --card-bg: #17191d;
+            --accent: #ffffff;
+            --text-main: #f8fafc;
+            --text-muted: #8a90a0;
+            --success: #f8fafc;
+            --danger: #f87171;
+            --border-color: #282c34;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -25,21 +26,29 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 32px 16px;
+            padding: 12px;
         }
         .wrap { width: 100%; max-width: 480px; }
         .card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 32px 24px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+            border-radius: 6px;
+            padding: 20px 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             margin-bottom: 20px;
+        }
+        @media (min-width: 480px) {
+            body {
+                padding: 32px 16px;
+            }
+            .card {
+                padding: 32px 24px;
+            }
         }
         h1 {
             font-size: 1.6rem;
             font-weight: 800;
-            color: #ffffff;
+            color: var(--text-main);
             margin-bottom: 8px;
             text-align: center;
             letter-spacing: -0.5px;
@@ -62,32 +71,34 @@
         }
         input[type="text"] {
             width: 100%;
-            padding: 12px 16px;
-            border-radius: 8px;
+            padding: 10px 14px;
+            border-radius: 6px;
             border: 1px solid var(--border-color);
-            background: #080a0f;
+            background: #17191d;
             color: var(--text-main);
             font-family: inherit;
-            font-size: 0.95rem;
+            font-size: 13px;
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            min-height: 44px;
         }
         input[type="text"]:focus {
-            border-color: var(--accent);
+            border-color: #8a90a0;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
         }
         .dropzone {
             margin-top: 20px;
             border: 1px dashed var(--border-color);
-            border-radius: 8px;
+            border-radius: 6px;
             padding: 36px 20px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             background: rgba(255, 255, 255, 0.01);
         }
         .dropzone:hover {
-            border-color: var(--accent);
-            background: rgba(255, 255, 255, 0.02);
+            border-color: #8a90a0;
+            background: rgba(255, 255, 255, 0.03);
         }
         .dz-icon {
             font-size: 2.2rem;
@@ -100,31 +111,36 @@
             justify-content: center;
             width: 100%;
             margin-top: 20px;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            background: var(--accent);
-            color: #ffffff;
+            padding: 10px 18px;
+            border: 1px solid #ffffff;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #0d0f11;
             font-family: inherit;
-            font-size: 0.95rem;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             text-align: center;
             text-decoration: none;
-            transition: opacity 0.2s;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            min-height: 44px;
         }
         .btn:hover:not(:disabled) {
-            opacity: 0.9;
+            background: #f8fafc;
+            border-color: #f8fafc;
+        }
+        .btn:active:not(:disabled) {
+            transform: scale(0.98);
         }
         .btn:disabled { opacity: 0.5; cursor: default; }
         .btn.secondary {
-            background: transparent;
+            background: #1c2024;
             border: 1px solid var(--border-color);
-            color: #ffffff;
+            color: var(--text-main);
         }
         .btn.secondary:hover {
-            background: rgba(255, 255, 255, 0.04);
-            border-color: #ffffff;
+            background: #24292f;
+            border-color: #484f58;
         }
         #status {
             margin-top: 18px;
@@ -166,7 +182,7 @@
             <input type="text" id="contributor-name" placeholder="e.g. Grandma Lena">
 
             <div class="dropzone" onclick="document.getElementById('file-input').click()">
-                <div class="dz-icon">📸</div>
+                <div class="dz-icon" style="color: var(--accent); margin-bottom: 12px;"><i data-lucide="image" style="width: 32px; height: 32px;"></i></div>
                 <div style="font-weight: 700; font-size: 1.1rem; color: #fff;">Tap to choose photos</div>
                 <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 6px;">JPEG, PNG, or HEIC - straight from your camera roll</div>
                 <input type="file" id="file-input" multiple accept=".jpg,.jpeg,.png,.heic,image/*" style="display: none;" onchange="uploadFiles(this.files)">
@@ -175,14 +191,14 @@
             <!-- Desktop-only convenience: webkitdirectory lets a browser pick an
                  entire folder. Hidden on phones (no iOS/Android support). -->
             <div class="dropzone" id="folder-zone" style="margin-top: 12px; padding: 24px 16px;" onclick="document.getElementById('folder-input').click()">
-                <div style="font-weight: 700; color: #fff; font-size: 1rem;">💻 On a computer? Upload a whole folder</div>
+                <div style="font-weight: 700; color: #fff; font-size: 1rem;"><i data-lucide="folder" style="width: 16px; height: 16px; margin-right: 6px; vertical-align: middle; color: var(--accent);"></i> On a computer? Upload a whole folder</div>
                 <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">Photos only (JPEG/PNG/HEIC) - other files are skipped</div>
                 <input type="file" id="folder-input" webkitdirectory style="display: none;" onchange="uploadFiles(this.files)">
             </div>
             <div id="status"></div>
 
             <!-- Appears only once the admin has generated the journal -->
-            <a class="btn secondary" id="viewer-link" style="display: none;">📖 The journal is ready - view it!</a>
+            <a class="btn secondary" id="viewer-link" style="display: none;"><i data-lucide="book-open" style="width: 14px; height: 14px; margin-right: 6px;"></i> The journal is ready - view it!</a>
         </div>
 
         <div class="card" id="error-card">
@@ -198,7 +214,7 @@
         const sessionId = decodeURIComponent(window.location.pathname.split('/').pop());
         const shareCode = new URLSearchParams(window.location.search).get('code') || '';
 
-        const EVENT_EMOJI = { trip: '🧳', birthday: '🎂', wedding: '💍', sports_match: '⚽', reunion: '🤝', other: '📸' };
+        const EVENT_ICONS = { trip: 'compass', birthday: 'gift', wedding: 'heart', sports_match: 'award', reunion: 'users', other: 'camera' };
 
         async function loadEvent() {
             try {
@@ -206,8 +222,10 @@
                 if (!res.ok) throw new Error('bad code');
                 const data = await res.json();
 
-                document.getElementById('event-title').textContent =
-                    `${EVENT_EMOJI[data.event_type] || '📸'} ${data.name}`;
+                const iconName = EVENT_ICONS[data.event_type] || 'camera';
+                document.getElementById('event-title').innerHTML =
+                    `<i data-lucide="${iconName}" style="width: 28px; height: 28px; color: var(--accent); margin-right: 8px; vertical-align: middle;"></i>${data.name}`;
+                lucide.createIcons();
                 document.getElementById('photo-count').textContent =
                     `${data.photo_count} photo(s) collected so far`;
 
