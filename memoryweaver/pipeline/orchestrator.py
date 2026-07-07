@@ -165,7 +165,12 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
                     progress["count"] += len(batch)
                     if progress_callback:
                         progress_callback(progress["count"], len(uncached_photos), "moderation")
-                return res_list
+                mapped = []
+                for idx, item in enumerate(batch):
+                    mod_res = res_list[idx].copy()
+                    mod_res["filename"] = item["filename"]
+                    mapped.append(mod_res)
+                return mapped
                 
             with ThreadPoolExecutor(max_workers=4) as executor:
                 batch_results = list(executor.map(process_mod_batch, batches))
