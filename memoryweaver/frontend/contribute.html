@@ -492,6 +492,43 @@
             document.getElementById('status').textContent = '';
         }
 
+        const PROMPTS_BY_TYPE = {
+            trip: [
+                { text: '🎙️ Custom Note', prompt: '' },
+                { text: '🌟 Favorite Memory', prompt: 'My favorite memory of today' },
+                { text: '😂 Funniest Moment', prompt: 'The funniest thing that happened today' },
+                { text: '🍽️ Local Food', prompt: 'Describe the best food we ate today' },
+                { text: '😮 Most Surprising', prompt: 'What was the most unexpected thing we saw today' }
+            ],
+            birthday: [
+                { text: '🎙️ Custom Note', prompt: '' },
+                { text: '🎂 Birthday Wish', prompt: 'My special birthday wish for you' },
+                { text: '🌟 Favorite Memory', prompt: 'My favorite memory of us together' },
+                { text: '🎁 Best Moment', prompt: 'The highlight of the party today' },
+                { text: '❤️ Message of Love', prompt: 'Something I appreciate most about you' }
+            ],
+            wedding: [
+                { text: '🎙️ Custom Note', prompt: '' },
+                { text: '💍 Special Message', prompt: 'A message of love and joy for the couple' },
+                { text: '🌟 Highlight Moment', prompt: 'My favorite part of the wedding day' },
+                { text: '💃 Fun story', prompt: 'A fun story from the dance floor or reception' },
+                { text: '🥂 Toast of Love', prompt: 'My toast to your beautiful future together' }
+            ],
+            reunion: [
+                { text: '🎙️ Custom Note', prompt: '' },
+                { text: '🌳 Family Story', prompt: 'A special family memory or story to share' },
+                { text: '🌟 Reunion Highlight', prompt: 'The best part of seeing everyone today' },
+                { text: '😂 Funniest Story', prompt: 'A hilarious story about our family from the past' },
+                { text: '❤️ Message of Hope', prompt: 'A message for the next generation' }
+            ],
+            other: [
+                { text: '🎙️ Custom Note', prompt: '' },
+                { text: '🌟 Favorite Moment', prompt: 'My favorite moment today' },
+                { text: '📸 Story Behind Photo', prompt: 'The story behind what is happening in this photo' },
+                { text: '✍️ Thoughts & Reflections', prompt: 'My reflections and thoughts today' }
+            ]
+        };
+
         async function loadEvent() {
             try {
                 const res = await fetch(`/api/session-public/${encodeURIComponent(sessionId)}?code=${encodeURIComponent(shareCode)}`);
@@ -504,6 +541,21 @@
                 lucide.createIcons();
                 document.getElementById('photo-count').textContent =
                     `${data.photo_count} memory items collected`;
+
+                // Render dynamic prompts based on type
+                const promptsContainer = document.getElementById('voice-prompts-container');
+                if (promptsContainer) {
+                    promptsContainer.innerHTML = '';
+                    const eventType = data.event_type || 'other';
+                    const prompts = PROMPTS_BY_TYPE[eventType] || PROMPTS_BY_TYPE['other'];
+                    prompts.forEach((p, idx) => {
+                        const btn = document.createElement('button');
+                        btn.className = `prompt-chip ${idx === 0 ? 'active' : ''}`;
+                        btn.textContent = p.text;
+                        btn.onclick = () => selectPrompt(btn, p.prompt);
+                        promptsContainer.appendChild(btn);
+                    });
+                }
 
                 const viewerLink = document.getElementById('viewer-link');
                 if (data.journal_ready && data.viewer_url) {

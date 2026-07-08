@@ -386,6 +386,68 @@
             border-color: #ffffff;
         }
 
+        /* Premium Inline media assets for families */
+        .inline-audio-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+        .audio-card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        .inline-audio-card audio {
+            width: 100%;
+            height: 32px;
+            border-radius: 4px;
+        }
+        
+        .inline-note-card {
+            background: rgba(224, 145, 107, 0.04);
+            border-left: 3px solid var(--accent-color);
+            border-radius: 4px 8px 8px 4px;
+            padding: 16px;
+            margin-top: 12px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: var(--text-main);
+            font-style: italic;
+        }
+        
+        .inline-doc-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .inline-doc-card a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .inline-doc-card a:hover {
+            text-decoration: underline;
+        }
+
         .journal-body {
             position: relative;
             border-top: 1px solid rgba(0, 0, 0, 0.05);
@@ -1007,21 +1069,46 @@
                 card.className = 'journal-card';
                 card.id = `journal-card-${entry.moment}`;
 
-                const thumbsContainer = document.createElement('div');
-                thumbsContainer.className = `journal-thumbs collage-${Math.min(entry.photos.length, 3)}`;
+                const imagesAndVideos = [];
+                const nonImageryAssets = [];
 
                 entry.photos.forEach(ph => {
-                    const img = document.createElement('img');
-                    img.alt = entry.moment;
-                    img.style.cursor = 'pointer';
-                    img.onerror = function() {
-                        this.onerror = null;
-                        this.src = mediaUrl(ph);
-                    };
-                    img.src = mediaUrl(ph);
-                    img.onclick = () => openLightbox(img.src, entry.moment);
-                    thumbsContainer.appendChild(img);
+                    const lower = ph.toLowerCase();
+                    if (lower.endsWith('.wav') || lower.endsWith('.mp3') || lower.endsWith('.m4a') || lower.endsWith('.webm') || lower.endsWith('.pdf') || lower.endsWith('.txt')) {
+                        nonImageryAssets.push(ph);
+                    } else {
+                        imagesAndVideos.push(ph);
+                    }
                 });
+
+                if (imagesAndVideos.length > 0) {
+                    const thumbsContainer = document.createElement('div');
+                    thumbsContainer.className = `journal-thumbs collage-${Math.min(imagesAndVideos.length, 3)}`;
+
+                    imagesAndVideos.forEach(ph => {
+                        const lower = ph.toLowerCase();
+                        if (lower.endsWith('.mp4') || lower.endsWith('.mov')) {
+                            const video = document.createElement('video');
+                            video.src = mediaUrl(ph);
+                            video.controls = true;
+                            video.muted = true;
+                            video.style.cursor = 'pointer';
+                            video.style.borderRadius = '6px';
+                            video.style.border = '1px solid var(--border-color)';
+                            video.style.height = imagesAndVideos.length === 1 ? 'auto' : '260px';
+                            video.style.maxWidth = '100%';
+                            thumbsContainer.appendChild(video);
+                        } else {
+                            const img = document.createElement('img');
+                            img.alt = entry.moment;
+                            img.style.cursor = 'pointer';
+                            img.src = mediaUrl(ph);
+                            img.onclick = () => openLightbox(img.src, entry.moment);
+                            thumbsContainer.appendChild(img);
+                        }
+                    });
+                    card.appendChild(thumbsContainer);
+                }
 
                 const body = document.createElement('div');
                 body.className = 'journal-body';
@@ -1054,6 +1141,66 @@
                 body.appendChild(title);
                 body.appendChild(txt);
 
+                // Append custom non-imagery media assets
+                nonImageryAssets.forEach(ph => {
+                    const lower = ph.toLowerCase();
+                    if (lower.endsWith('.wav') || lower.endsWith('.mp3') || lower.endsWith('.m4a') || lower.endsWith('.webm')) {
+                        const audioCard = document.createElement('div');
+                        audioCard.className = 'inline-audio-card';
+                        
+                        let cleanName = ph.replace(/_/g, ' ').replace(/\.[a-z0-9]+$/i, '');
+                        const hash = ph.split('_')[0];
+                        const uploaderName = contributorNames[hash] || 'Family Member';
+                        
+                        let promptTitle = cleanName.substring(hash.length + 1).trim();
+                        promptTitle = promptTitle.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                        
+                        audioCard.innerHTML = `
+                            <div class="audio-card-header">
+                                <i data-lucide="mic" style="width: 14px; height: 14px; color: var(--accent-color);"></i>
+                                <span>Spoken Story by ${uploaderName}: <strong>"${promptTitle || 'Voice Note'}"</strong></span>
+                            </div>
+                            <audio src="${mediaUrl(ph)}" controls></audio>
+                        `;
+                        body.appendChild(audioCard);
+                    } else if (lower.endsWith('.txt')) {
+                        const noteCard = document.createElement('div');
+                        noteCard.className = 'inline-note-card';
+                        
+                        const hash = ph.split('_')[0];
+                        const uploaderName = contributorNames[hash] || 'Family Member';
+                        
+                        noteCard.innerHTML = `
+                            <div style="font-size: 0.75rem; font-weight: 700; color: var(--accent-color); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 4px;">
+                                <i data-lucide="pen-line" style="width: 12px; height: 12px;"></i> Written Memory by ${uploaderName}
+                            </div>
+                            <div class="note-card-text">Loading story note...</div>
+                        `;
+                        
+                        fetch(mediaUrl(ph))
+                            .then(r => r.text())
+                            .then(t => {
+                                noteCard.querySelector('.note-card-text').textContent = t;
+                            });
+                        body.appendChild(noteCard);
+                    } else if (lower.endsWith('.pdf')) {
+                        const docCard = document.createElement('div');
+                        docCard.className = 'inline-doc-card';
+                        
+                        const hash = ph.split('_')[0];
+                        const uploaderName = contributorNames[hash] || 'Family Member';
+                        
+                        docCard.innerHTML = `
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i data-lucide="file-text" style="width: 20px; height: 20px; color: var(--accent-color);"></i>
+                                <span style="font-size: 0.85rem; font-weight: 600;">Trip Document (${uploaderName})</span>
+                            </div>
+                            <a href="${mediaUrl(ph)}" target="_blank"><i data-lucide="download" style="width: 12px; height: 12px;"></i> View Document</a>
+                        `;
+                        body.appendChild(docCard);
+                    }
+                });
+
                 // Add photo attribution labels in the entry card
                 const uploaders = new Set();
                 entry.photos.forEach(ph => {
@@ -1065,11 +1212,12 @@
                 if (uploaders.size > 0) {
                     const attribution = document.createElement('span');
                     attribution.className = 'photo-attribution';
+                    attribution.style.marginTop = '12px';
+                    attribution.style.display = 'block';
                     attribution.textContent = `Captured by: ${Array.from(uploaders).join(', ')}`;
                     body.appendChild(attribution);
                 }
 
-                card.appendChild(thumbsContainer);
                 card.appendChild(body);
                 list.appendChild(card);
             });
