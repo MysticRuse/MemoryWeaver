@@ -8,14 +8,14 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
-            --bg-color: #0d0f11;
-            --card-bg: #17191d;
-            --border-color: #282c34;
-            --text-main: #f8fafc;
-            --text-muted: #8a90a0;
-            --accent: #ffffff;
-            --accent-glow: rgba(255, 255, 255, 0.05);
-            --accent-grad: #ffffff;
+            --bg-color: #FBFBFA;
+            --card-bg: #FFFFFF;
+            --border-color: #E2E8F0;
+            --text-main: #303030;
+            --text-muted: #7E8A9F;
+            --accent: #EB2371;
+            --accent-glow: rgba(235, 35, 113, 0.05);
+            --accent-grad: #EB2371;
         }
 
         * {
@@ -81,7 +81,7 @@
 
         .select-user {
             padding: 10px 40px 10px 14px !important;
-            background: #17191d !important;
+            background: #ffffff !important;
             border: 1px solid var(--border-color) !important;
             color: var(--text-main) !important;
             border-radius: 6px !important;
@@ -99,30 +99,31 @@
         }
 
         .select-user:focus {
-            border-color: #8a90a0 !important;
-            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1) !important;
+            border-color: var(--accent) !important;
+            box-shadow: 0 0 0 2px var(--accent-glow) !important;
         }
 
         .nav-btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 10px 18px;
-            background: #1c2024;
+            padding: 10px 22px;
+            background: #ffffff;
             border: 1px solid var(--border-color);
             color: var(--text-main);
             text-decoration: none;
-            border-radius: 6px;
+            border-radius: 20px;
             font-weight: 600;
             font-size: 13px;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             min-height: 44px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
         .nav-btn:hover {
-            background: #24292f;
-            border-color: #484f58;
+            background: #f1f5f9;
+            border-color: #cbd5e1;
         }
 
         .nav-btn:active {
@@ -135,7 +136,7 @@
             font-size: 1.4rem;
             font-weight: 700;
             margin-bottom: 1.25rem;
-            border-left: 3px solid #ffffff;
+            border-left: 3px solid var(--accent);
             padding-left: 10px;
             display: flex;
             justify-content: space-between;
@@ -174,7 +175,7 @@
             min-height: 240px;
             max-height: 480px;
             position: relative;
-            background: #000;
+            background: #eaeaea;
         }
 
         .carousel-slide {
@@ -205,7 +206,7 @@
             padding: 1.5rem;
             width: 100%;
             text-align: center;
-            background: rgba(26, 31, 38, 0.95);
+            background: #ffffff;
             border-top: 1px solid var(--border-color);
             position: relative;
         }
@@ -237,7 +238,7 @@
         }
 
         .filter-tab-pill {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.02);
             border: 1px solid var(--border-color);
             color: var(--text-muted);
             padding: 8px 16px;
@@ -249,21 +250,21 @@
             user-select: none;
         }
         .filter-tab-pill:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.04);
             color: var(--text-main);
         }
         .filter-tab-pill.active {
             background: var(--accent);
             border-color: var(--accent);
             color: #ffffff;
-            box-shadow: 0 0 10px rgba(255, 123, 0, 0.4);
+            box-shadow: 0 4px 10px rgba(235, 35, 113, 0.2);
         }
 
         .carousel-control {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(26, 31, 38, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             border: 1px solid var(--border-color);
             color: var(--text-main);
             font-size: 1.8rem;
@@ -279,9 +280,9 @@
         }
 
         .carousel-control:hover {
-            background: #ffffff;
-            border-color: #ffffff;
-            color: #0d0f11;
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #ffffff;
         }
 
         .control-prev { left: 1rem; }
@@ -588,13 +589,13 @@
             position: sticky;
             top: 0;
             z-index: 1000;
-            background: rgba(18, 21, 25, 0.85);
+            background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--border-color);
             width: 100%;
             margin-bottom: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
         .nav-container {
@@ -619,9 +620,7 @@
             font-family: 'Playfair Display', serif;
             font-weight: 800;
             font-size: 1.4rem;
-            background: var(--accent-grad);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--accent);
             text-decoration: none;
             letter-spacing: 0.5px;
         }
@@ -646,13 +645,13 @@
 
         .nav-link:hover {
             color: var(--text-main);
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(0, 0, 0, 0.04);
         }
 
         .nav-link.active {
-            color: #000;
-            background: var(--accent-grad);
-            box-shadow: 0 4px 15px var(--accent-glow);
+            color: #ffffff;
+            background: var(--accent);
+            box-shadow: 0 4px 15px rgba(235, 35, 113, 0.25);
         }
 
         /* General layout overrides */

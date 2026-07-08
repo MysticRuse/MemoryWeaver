@@ -8,16 +8,16 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
-            --bg: #0d0f11;
-            --card-bg: #17191d;
-            --border: #282c34;
-            --text: #f8fafc;
-            --text-muted: #8a90a0;
-            --accent: #ffffff;
-            --accent-glow: rgba(255, 255, 255, 0.05);
-            --accent-grad: #ffffff;
-            --danger: #f87171;
-            --success: #f8fafc;
+            --bg: #FBFBFA;
+            --card-bg: #FFFFFF;
+            --border: #E2E8F0;
+            --text: #303030;
+            --text-muted: #7E8A9F;
+            --accent: #EB2371;
+            --accent-glow: rgba(235, 35, 113, 0.05);
+            --accent-grad: #EB2371;
+            --danger: #E11D48;
+            --success: #10B981;
         }
 
         body {
@@ -54,7 +54,7 @@
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
         }
 
         @media (min-width: 768px) {
@@ -99,13 +99,13 @@
             font-weight: 600;
             padding: 6px 14px;
             cursor: pointer;
-            border-radius: 6px;
+            border-radius: 20px;
             transition: all 0.2s;
         }
 
         .tab-btn.active {
-            color: #0d0f11;
-            background: #ffffff;
+            color: #ffffff;
+            background: var(--accent);
         }
 
         .tab-content {
@@ -159,23 +159,23 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            padding: 10px 18px;
-            border-radius: 6px;
+            padding: 10px 22px;
+            border-radius: 20px;
             font-family: 'Outfit', sans-serif;
             font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             border: 1px solid var(--border);
-            background: #1c2024;
+            background: #ffffff;
             color: var(--text);
             min-height: 44px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
         .btn:hover:not(:disabled) {
-            border-color: #484f58;
-            background: #24292f;
+            border-color: #cbd5e1;
+            background: #f1f5f9;
         }
 
         .btn:active:not(:disabled) {
@@ -183,14 +183,15 @@
         }
 
         .btn-primary {
-            background: #f8fafc;
-            border-color: #f8fafc;
-            color: #0d0f11;
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #ffffff;
+            box-shadow: 0 4px 10px rgba(235, 35, 113, 0.2);
         }
 
         .btn-primary:hover:not(:disabled) {
-            background: #ffffff;
-            border-color: #ffffff;
+            background: #d0155b;
+            border-color: #d0155b;
             opacity: 1;
         }
 
@@ -200,7 +201,7 @@
         }
 
         .selected-folder-info {
-            background: rgba(255, 255, 255, 0.02);
+            background: rgba(0, 0, 0, 0.02);
             border: 1px solid var(--border);
             padding: 14px;
             border-radius: 8px;
@@ -213,7 +214,7 @@
 
         /* Progress Bar UI */
         .progress-container {
-            background: rgba(255, 255, 255, 0.01);
+            background: rgba(0, 0, 0, 0.01);
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 12px;
@@ -232,7 +233,7 @@
         .progress-track {
             width: 100%;
             height: 6px;
-            background: rgba(255,255,255,0.04);
+            background: rgba(0,0,0,0.04);
             border-radius: 3px;
             overflow: hidden;
             border: 1px solid var(--border);
@@ -250,7 +251,7 @@
             margin-top: 20px;
             border: 1px solid var(--border);
             border-radius: 20px;
-            background: rgba(0, 0, 0, 0.15);
+            background: rgba(0, 0, 0, 0.015);
             padding: 20px;
         }
 
@@ -274,7 +275,7 @@
 
         .filter-toggle-buttons {
             display: flex;
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(0, 0, 0, 0.03);
             border: 1px solid var(--border);
             border-radius: 20px;
             padding: 2px;
@@ -294,7 +295,7 @@
 
         .toggle-btn.active.accepted-toggle {
             background: var(--success);
-            color: #000;
+            color: #fff;
         }
 
         .toggle-btn.active.rejected-toggle {
@@ -304,7 +305,7 @@
 
         .input-text, .search-input, .select-input {
             padding: 10px 14px !important;
-            background: #17191d !important;
+            background: #ffffff !important;
             border: 1px solid var(--border) !important;
             color: var(--text) !important;
             border-radius: 6px !important;
@@ -317,9 +318,9 @@
         }
 
         .input-text:focus, .search-input:focus, .select-input:focus {
-            border-color: #8a90a0 !important;
-            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1) !important;
-            background: #1e2127 !important;
+            border-color: var(--accent) !important;
+            box-shadow: 0 0 0 2px var(--accent-glow) !important;
+            background: #ffffff !important;
         }
 
         select.input-text, select.select-input {
@@ -341,7 +342,7 @@
         }
 
         .photo-card {
-            background: #1b2029;
+            background: #ffffff;
             border: 1px solid var(--border);
             border-radius: 14px;
             overflow: hidden;
@@ -349,17 +350,18 @@
             flex-direction: column;
             position: relative;
             transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
         }
 
         .photo-card:hover {
             transform: translateY(-4px);
             border-color: var(--accent);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            box-shadow: 0 8px 24px rgba(235, 35, 113, 0.12);
         }
 
         .photo-card.similar-highlight {
             border-color: #ffae00 !important;
-            box-shadow: 0 0 14px rgba(255, 174, 0, 0.6) !important;
+            box-shadow: 0 0 14px rgba(255, 174, 0, 0.3) !important;
             transform: scale(1.03);
             z-index: 10;
         }
@@ -368,7 +370,7 @@
             width: 100%;
             height: 120px;
             position: relative;
-            background: #000;
+            background: #eaeaea;
         }
 
         .photo-img-container img {
@@ -396,7 +398,7 @@
 
         .photo-badge {
             font-size: 9px;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.03);
             border: 1px solid var(--border);
             padding: 2px 6px;
             border-radius: 4px;
@@ -421,7 +423,7 @@
         }
 
         .btn-exclude {
-            background: rgba(231, 76, 60, 0.15);
+            background: rgba(225, 29, 72, 0.08);
             color: var(--danger);
         }
 
@@ -431,13 +433,13 @@
         }
 
         .btn-include {
-            background: rgba(46, 204, 113, 0.15);
+            background: rgba(16, 185, 129, 0.08);
             color: var(--success);
         }
 
         .btn-include:hover {
             background: var(--success);
-            color: #000;
+            color: #fff;
         }
 
         .photo-reason {
@@ -579,13 +581,13 @@
             position: sticky;
             top: 0;
             z-index: 1000;
-            background: rgba(13, 15, 20, 0.7);
+            background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--border);
             width: 100%;
             margin-bottom: 24px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
         .nav-container {
@@ -601,9 +603,7 @@
             font-family: 'Playfair Display', serif;
             font-weight: 800;
             font-size: 1.4rem;
-            background: var(--accent-grad);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--accent);
             text-decoration: none;
             letter-spacing: 0.5px;
         }
@@ -627,14 +627,14 @@
         }
 
         .nav-link:hover {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.04);
+            color: var(--text);
+            background: rgba(0, 0, 0, 0.04);
         }
 
         .nav-link.active {
-            color: #000;
-            background: var(--accent-grad);
-            box-shadow: 0 4px 15px var(--accent-glow);
+            color: #ffffff;
+            background: var(--accent);
+            box-shadow: 0 4px 15px rgba(235, 35, 113, 0.25);
         }
 
         /* Step Wizard Stepper UI */
@@ -643,7 +643,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 28px;
-            background: rgba(255, 255, 255, 0.02);
+            background: rgba(0, 0, 0, 0.01);
             border: 1px solid var(--border);
             border-radius: 20px;
             padding: 16px 24px;
@@ -674,7 +674,7 @@
             width: 30px;
             height: 30px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.03);
             border: 1px solid var(--border);
             color: var(--text-muted);
             font-weight: 800;
@@ -683,15 +683,15 @@
         }
 
         .wizard-step-node.active .step-node-num {
-            background: #ffffff;
-            color: #0d0f11;
-            border-color: #ffffff;
+            background: var(--accent);
+            color: #ffffff;
+            border-color: var(--accent);
         }
 
         .wizard-step-node.completed .step-node-num {
-            background: #24292f;
-            color: #ffffff;
-            border-color: #484f58;
+            background: #e2e8f0;
+            color: var(--text);
+            border-color: #cbd5e1;
         }
 
         .step-node-text {
@@ -702,7 +702,7 @@
         }
 
         .wizard-step-node.active .step-node-text {
-            color: #fff;
+            color: var(--accent);
         }
 
         .wizard-step-node.completed .step-node-text {
@@ -749,7 +749,7 @@
             border-radius: 8px;
             overflow: hidden;
             border: 1px solid var(--border);
-            background: #151515;
+            background: #e2e8f0;
             transition: transform 0.2s, border-color 0.2s;
         }
         .pool-photo-card:hover {
@@ -768,8 +768,8 @@
             position: absolute;
             top: 6px;
             right: 6px;
-            background: rgba(20, 20, 20, 0.85);
-            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--border);
             border-radius: 50%;
             width: 28px;
             height: 28px;
@@ -778,9 +778,9 @@
             align-items: center;
             justify-content: center;
             font-size: 13px;
-            color: #fff;
+            color: var(--text);
             transition: all 0.2s;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
             z-index: 2;
         }
         .pool-photo-card .overlay-btn:hover {
@@ -789,10 +789,12 @@
         .pool-photo-card .overlay-btn.exclude-btn:hover {
             background: var(--danger) !important;
             border-color: var(--danger) !important;
+            color: #fff !important;
         }
         .pool-photo-card .overlay-btn.include-btn:hover {
             background: var(--success) !important;
             border-color: var(--success) !important;
+            color: #fff !important;
         }
 
         /* Simplified Event Manager Styles */
@@ -805,8 +807,8 @@
         .event-type-radio-label {
             cursor: pointer;
             padding: 6px 14px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border);
             border-radius: 16px;
             font-size: 12px;
             font-weight: 500;
@@ -818,17 +820,17 @@
             gap: 6px;
         }
         .event-type-radio-label:hover {
-            border-color: rgba(255, 255, 255, 0.2);
-            color: #fff;
+            border-color: #cbd5e1;
+            color: var(--text);
         }
         .event-type-radio-input {
             display: none;
         }
         .event-type-radio-input:checked + .event-type-radio-label {
-            background: var(--accent-grad);
+            background: var(--accent);
             border-color: var(--accent);
-            color: #000;
-            box-shadow: 0 0 10px rgba(255, 107, 0, 0.2);
+            color: #ffffff;
+            box-shadow: 0 0 10px rgba(235, 35, 113, 0.2);
             font-weight: 600;
         }
         .event-list {
@@ -842,16 +844,16 @@
             align-items: center;
             justify-content: space-between;
             padding: 12px 16px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(0, 0, 0, 0.015);
+            border: 1px solid var(--border);
             border-radius: 12px;
             transition: all 0.2s;
             gap: 12px;
             flex-wrap: wrap;
         }
         .event-row:hover {
-            background: rgba(255, 255, 255, 0.04);
-            border-color: rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.03);
+            border-color: #cbd5e1;
         }
         .event-row.active {
             border-color: var(--accent);
@@ -868,13 +870,13 @@
         .event-name-text {
             font-weight: 600;
             font-size: 14px;
-            color: #fff;
+            color: var(--text);
         }
         .event-category-badge {
             font-size: 10px;
             padding: 2px 8px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border);
             border-radius: 10px;
             color: var(--text-muted);
             text-transform: uppercase;
@@ -892,9 +894,9 @@
             flex-wrap: wrap;
         }
         .event-action-btn {
-            background: #1c2024;
+            background: #ffffff;
             border: 1px solid var(--border);
-            color: var(--text-muted);
+            color: var(--text);
             padding: 6px 12px;
             font-size: 11px;
             border-radius: 4px;
@@ -906,38 +908,38 @@
             font-weight: 500;
         }
         .event-action-btn:hover {
-            background: #24292f;
-            border-color: #484f58;
+            background: #f1f5f9;
+            border-color: #cbd5e1;
             color: var(--text);
         }
         .event-action-btn:active {
             transform: scale(0.96);
         }
         .event-action-btn.active-indicator {
-            background: #ffffff;
-            border-color: #ffffff;
-            color: #0d0f11;
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #ffffff;
             font-weight: 600;
         }
         .event-action-btn.btn-delete {
-            color: #f87171;
-            background: rgba(248, 113, 113, 0.05);
-            border-color: rgba(248, 113, 113, 0.1);
+            color: var(--danger);
+            background: rgba(225, 29, 72, 0.05);
+            border-color: rgba(225, 29, 72, 0.1);
         }
         .event-action-btn.btn-delete:hover {
-            background: #ef4444;
-            border-color: #ef4444;
+            background: var(--danger);
+            border-color: var(--danger);
             color: #fff;
         }
         .event-action-btn.btn-edit {
-            color: #f8fafc;
-            background: #222630;
+            color: var(--text);
+            background: #ffffff;
             border-color: var(--border);
         }
         .event-action-btn.btn-edit:hover {
-            background: #2d3139;
-            border-color: #484f58;
-            color: #fff;
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+            color: var(--text);
         }
         .edit-event-input-container {
             display: flex;
