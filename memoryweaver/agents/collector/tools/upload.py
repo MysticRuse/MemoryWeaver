@@ -99,8 +99,9 @@ def process_and_save_upload(file_bytes: bytes, original_filename: str, contribut
     safe_filename = os.path.basename(original_filename)
     
     _, ext = os.path.splitext(safe_filename.lower())
-    if ext not in (".jpg", ".jpeg", ".png", ".heic"):
-        raise ValueError(f"Unsupported file format: {ext}. Only JPEG, PNG, and HEIC are allowed.")
+    SUPPORTED_EXTS = (".jpg", ".jpeg", ".png", ".heic", ".mp4", ".mov", ".m4a", ".mp3", ".webm", ".wav", ".pdf", ".txt")
+    if ext not in SUPPORTED_EXTS:
+        raise ValueError(f"Unsupported file format: {ext}. Only images (JPEG/PNG/HEIC), videos (MP4/MOV), voice (M4A/MP3/WEBM/WAV), documents (PDF), and text notes (.txt) are allowed.")
 
     # Calculate anonymous contributor ID hash (no PII logging)
     contributor_id = hashlib.sha256(contributor_name.strip().lower().encode()).hexdigest()[:12]

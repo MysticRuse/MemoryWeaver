@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rewind - Add Your Photos</title>
+    <title>Rewind - Add Your Memories</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Space+Grotesk:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -57,12 +57,16 @@
             margin-bottom: 8px;
             text-align: center;
             letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
         .sub {
             color: var(--text-muted);
             font-size: 0.9rem;
             line-height: 1.5;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             text-align: center;
         }
         label {
@@ -74,12 +78,12 @@
             letter-spacing: 1px;
             text-transform: uppercase;
         }
-        input[type="text"] {
+        input[type="text"], textarea {
             width: 100%;
             padding: 10px 14px;
             border-radius: 8px;
             border: 1px solid var(--border-color);
-            background: var(--card-bg);
+            background: var(--bg-dark);
             color: var(--text-main);
             font-family: inherit;
             font-size: 13px;
@@ -87,15 +91,62 @@
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             min-height: 44px;
         }
-        input[type="text"]:focus {
+        input[type="text"]:focus, textarea:focus {
             border-color: var(--accent);
             box-shadow: 0 0 0 2px var(--accent-glow);
         }
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        /* Ingress Tabs */
+        .ingress-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin: 16px 0;
+            gap: 4px;
+        }
+        .ingress-tab-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 10px 4px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            border-radius: 8px 8px 0 0;
+        }
+        .ingress-tab-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .ingress-tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+            background: rgba(224, 145, 107, 0.05);
+        }
+        .tab-panel {
+            display: none;
+        }
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* Dropzone */
         .dropzone {
-            margin-top: 20px;
+            margin-top: 12px;
             border: 1px dashed var(--border-color);
             border-radius: 8px;
-            padding: 36px 20px;
+            padding: 30px 16px;
             text-align: center;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -110,12 +161,14 @@
             margin-bottom: 10px;
             display: inline-block;
         }
+
+        /* Buttons */
         .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             width: 100%;
-            margin-top: 20px;
+            margin-top: 16px;
             padding: 10px 18px;
             border: 1px solid var(--accent);
             border-radius: 8px;
@@ -138,7 +191,7 @@
         .btn:active:not(:disabled) {
             transform: scale(0.98);
         }
-        .btn:disabled { opacity: 0.5; cursor: default; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
         .btn.secondary {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -149,6 +202,7 @@
             background: rgba(224, 145, 107, 0.12);
             border-color: rgba(224, 145, 107, 0.40);
         }
+
         #status {
             margin-top: 18px;
             font-size: 0.9rem;
@@ -161,8 +215,8 @@
             display: inline-block;
             margin: 0 auto 16px auto;
             padding: 3px 12px;
-            border-radius: 4px;
-            background: rgba(0, 0, 0, 0.03);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
             color: var(--text-muted);
             font-size: 0.8rem;
             font-weight: 600;
@@ -174,34 +228,146 @@
             justify-content: center;
         }
         #error-card { display: none; text-align: center; }
+
+        /* Recorder Styles */
+        .recorder-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+        .record-timer {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+        .recorder-controls {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            justify-content: center;
+        }
+        .record-btn-round {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #fff;
+        }
+        .record-btn-start {
+            background: var(--danger);
+        }
+        .record-btn-start:hover {
+            transform: scale(1.05);
+        }
+        .record-btn-pause {
+            background: var(--accent);
+            color: var(--on-accent);
+        }
+        .record-btn-stop {
+            background: var(--text-main);
+            color: var(--bg-dark);
+        }
+        .audio-preview {
+            width: 100%;
+            margin-top: 12px;
+        }
+        .recorder-status-text {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Note Draft indicator */
+        .draft-indicator {
+            font-size: 11px;
+            color: var(--success);
+            font-weight: 600;
+            margin-top: 4px;
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="wrap">
         <div class="card" id="main-card" style="display: none;">
             <h1 id="event-title">Loading event...</h1>
-            <p class="sub">Add your photos to the event album - they'll be woven into the live presentation.</p>
+            <p class="sub">Drop a photo, record a voice note, or write a memory. Everything gets woven into the trip journal.</p>
             <div class="pill-wrapper">
                 <span class="count-pill" id="photo-count"></span>
             </div>
 
             <label for="contributor-name">YOUR NAME (so we know who captured what)</label>
-            <input type="text" id="contributor-name" placeholder="e.g. Grandma Lena">
+            <input type="text" id="contributor-name" placeholder="e.g. Grandma Lena" oninput="saveName(this.value)">
 
-            <div class="dropzone" onclick="document.getElementById('file-input').click()">
-                <div class="dz-icon" style="color: var(--accent); margin-bottom: 12px;"><i data-lucide="image" style="width: 32px; height: 32px;"></i></div>
-                <div style="font-weight: 700; font-size: 1.1rem; color: #fff;">Tap to choose photos</div>
-                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 6px;">JPEG, PNG, or HEIC - straight from your camera roll</div>
-                <input type="file" id="file-input" multiple accept=".jpg,.jpeg,.png,.heic,image/*" style="display: none;" onchange="uploadFiles(this.files)">
+            <div class="ingress-tabs">
+                <button class="ingress-tab-btn active" onclick="switchTab('tab-upload')"><i data-lucide="image" style="width:14px;height:14px;"></i> Media File</button>
+                <button class="ingress-tab-btn" onclick="switchTab('tab-voice')"><i data-lucide="mic" style="width:14px;height:14px;"></i> Record Voice</button>
+                <button class="ingress-tab-btn" onclick="switchTab('tab-note')"><i data-lucide="pen-line" style="width:14px;height:14px;"></i> Write Note</button>
             </div>
 
-            <!-- Desktop-only convenience: webkitdirectory lets a browser pick an
-                 entire folder. Hidden on phones (no iOS/Android support). -->
-            <div class="dropzone" id="folder-zone" style="margin-top: 12px; padding: 24px 16px;" onclick="document.getElementById('folder-input').click()">
-                <div style="font-weight: 700; color: #fff; font-size: 1rem;"><i data-lucide="folder" style="width: 16px; height: 16px; margin-right: 6px; vertical-align: middle; color: var(--accent);"></i> On a computer? Upload a whole folder</div>
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">Photos only (JPEG/PNG/HEIC) - other files are skipped</div>
-                <input type="file" id="folder-input" webkitdirectory style="display: none;" onchange="uploadFiles(this.files)">
+            <!-- Tab: File Upload -->
+            <div class="tab-panel active" id="tab-upload">
+                <div class="dropzone" onclick="document.getElementById('file-input').click()">
+                    <div class="dz-icon" style="color: var(--accent); margin-bottom: 12px;"><i data-lucide="plus" style="width: 32px; height: 32px;"></i></div>
+                    <div style="font-weight: 700; font-size: 1.1rem; color: #fff;">Choose Files</div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 6px;">Photos, videos, or tickets (PDF)</div>
+                    <input type="file" id="file-input" multiple accept=".jpg,.jpeg,.png,.heic,.mp4,.mov,.pdf,image/*,video/*" style="display: none;" onchange="uploadFiles(this.files)">
+                </div>
+
+                <div class="dropzone" id="folder-zone" style="margin-top: 12px; padding: 24px 16px;" onclick="document.getElementById('folder-input').click()">
+                    <div style="font-weight: 700; color: #fff; font-size: 1.0rem;"><i data-lucide="folder" style="width: 16px; height: 16px; margin-right: 6px; vertical-align: middle; color: var(--accent);"></i> Upload entire folder</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">Supported media only - other files skipped</div>
+                    <input type="file" id="folder-input" webkitdirectory style="display: none;" onchange="uploadFiles(this.files)">
+                </div>
             </div>
+
+            <!-- Tab: Voice Recorder -->
+            <div class="tab-panel" id="tab-voice">
+                <div class="recorder-container">
+                    <span class="recorder-status-text" id="recorder-status">Ready to record</span>
+                    <div class="record-timer" id="record-timer">00:00</div>
+                    
+                    <div class="recorder-controls">
+                        <!-- Start Record -->
+                        <button class="record-btn-round record-btn-start" id="btn-record-start" onclick="startRecording()"><i data-lucide="mic" style="width: 20px; height: 20px;"></i></button>
+                        <!-- Pause Record -->
+                        <button class="record-btn-round record-btn-pause" id="btn-record-pause" style="display: none;" onclick="pauseRecording()"><i data-lucide="pause" style="width: 20px; height: 20px;"></i></button>
+                        <!-- Stop Record -->
+                        <button class="record-btn-round record-btn-stop" id="btn-record-stop" style="display: none;" onclick="stopRecording()"><i data-lucide="square" style="width: 20px; height: 20px;"></i></button>
+                    </div>
+
+                    <audio id="audio-player" class="audio-preview" controls style="display: none;"></audio>
+
+                    <div id="voice-upload-controls" style="display: none; width: 100%; gap: 12px; margin-top: 12px;">
+                        <button class="btn secondary" style="margin-top: 0; flex: 1;" onclick="discardVoice()"><i data-lucide="rotate-ccw" style="width:14px;height:14px;margin-right:4px;"></i> Redo</button>
+                        <button class="btn" style="margin-top: 0; flex: 1.5;" onclick="uploadVoice()"><i data-lucide="upload" style="width:14px;height:14px;margin-right:4px;"></i> Save Voice Note</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Write Note -->
+            <div class="tab-panel" id="tab-note">
+                <label for="note-body">Write your story or moment</label>
+                <textarea id="note-body" placeholder="e.g. Remember when we saw the sunrise over the valley? It was cold but totally worth it..." oninput="saveNoteDraft(this.value)"></textarea>
+                <div class="draft-indicator" id="draft-saved"><i data-lucide="check" style="width:10px;height:10px;vertical-align:middle;"></i> Draft saved to device</div>
+
+                <div style="display: flex; gap: 12px; margin-top: 12px;">
+                    <button class="btn secondary" style="margin-top: 0; flex: 1;" onclick="clearNoteDraft()"><i data-lucide="trash-2" style="width:14px;height:14px;margin-right:4px;"></i> Clear</button>
+                    <button class="btn" style="margin-top: 0; flex: 2;" id="btn-submit-note" onclick="submitNote()"><i data-lucide="send" style="width:14px;height:14px;margin-right:4px;"></i> Submit Story</button>
+                </div>
+            </div>
+
             <div id="status"></div>
 
             <!-- Appears only once the admin has generated the journal -->
@@ -209,20 +375,42 @@
         </div>
 
         <div class="card" id="error-card">
-            <h1 style="background: none; -webkit-text-fill-color: var(--text-main); font-size: 1.8rem;">🔗 Link problem</h1>
+            <h1><i data-lucide="lock" style="width: 24px; height: 24px; color: var(--danger); vertical-align: middle; margin-right: 8px;"></i> Link issue</h1>
             <p class="sub" id="error-msg" style="margin-top: 12px;">This share link is invalid or has expired. Ask the event organizer to send it again.</p>
         </div>
     </div>
 
     <script>
-        // Identity of this page comes entirely from the share link:
-        // /join/<session_id>?code=<share_code>. The code doubles as the upload
-        // credential - there is no login and no admin capability here.
         const sessionId = decodeURIComponent(window.location.pathname.split('/').pop());
         const shareCode = new URLSearchParams(window.location.search).get('code') || '';
-
         const EVENT_ICONS = { trip: 'compass', birthday: 'gift', wedding: 'heart', sports_match: 'award', reunion: 'users', other: 'camera' };
 
+        // Save name immediately
+        function saveName(val) {
+            localStorage.setItem('mw_contributor_name', val.trim());
+        }
+
+        // Switch Tabs
+        function switchTab(tabId) {
+            document.querySelectorAll('.ingress-tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+
+            // Find clicked button
+            const activeBtn = Array.from(document.querySelectorAll('.ingress-tab-btn')).find(b => 
+                b.getAttribute('onclick').includes(tabId)
+            );
+            if (activeBtn) activeBtn.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+
+            // Reset status
+            document.getElementById('status').textContent = '';
+        }
+
+        // Load Event info
         async function loadEvent() {
             try {
                 const res = await fetch(`/api/session-public/${encodeURIComponent(sessionId)}?code=${encodeURIComponent(shareCode)}`);
@@ -234,7 +422,7 @@
                     `<i data-lucide="${iconName}" style="width: 28px; height: 28px; color: var(--accent); margin-right: 8px; vertical-align: middle;"></i>${data.name}`;
                 lucide.createIcons();
                 document.getElementById('photo-count').textContent =
-                    `${data.photo_count} photo(s) collected so far`;
+                    `${data.photo_count} item(s) collected so far`;
 
                 const viewerLink = document.getElementById('viewer-link');
                 if (data.journal_ready && data.viewer_url) {
@@ -244,11 +432,13 @@
                 document.getElementById('main-card').style.display = 'block';
             } catch (e) {
                 document.getElementById('error-card').style.display = 'block';
+                lucide.createIcons();
             }
         }
 
-        const SUPPORTED_EXT = /\.(jpe?g|png|heic)$/i;
-        const BATCH_SIZE = 10; // folder picks can be hundreds of files - batch so no single request is huge
+        // --- File Uploader Logic ---
+        const SUPPORTED_EXT = /\.(jpe?g|png|heic|mp4|mov|pdf)$/i;
+        const BATCH_SIZE = 10;
 
         async function uploadFiles(fileList) {
             const all = Array.from(fileList);
@@ -259,12 +449,12 @@
             const status = document.getElementById('status');
             if (!files.length) {
                 status.style.color = 'var(--danger)';
-                status.textContent = 'No supported photos found (JPEG/PNG/HEIC only - videos aren\'t supported yet).';
+                status.textContent = 'No supported files found (JPEG/PNG/HEIC/MP4/MOV/PDF only).';
                 return;
             }
 
             const name = document.getElementById('contributor-name').value.trim() || 'Anonymous';
-            localStorage.setItem('mw_contributor_name', name);
+            saveName(name);
 
             let uploaded = 0;
             let failed = 0;
@@ -273,13 +463,13 @@
             try {
                 for (let i = 0; i < files.length; i += BATCH_SIZE) {
                     const batch = files.slice(i, i + BATCH_SIZE);
-                    status.textContent = `Uploading ${Math.min(i + batch.length, files.length)} of ${files.length} photo(s)...`;
+                    status.textContent = `Uploading ${Math.min(i + batch.length, files.length)} of ${files.length} memory item(s)...`;
 
                     const formData = new FormData();
                     formData.append('contributor_name', name);
                     formData.append('session_id', sessionId);
                     formData.append('share_code', shareCode);
-                    for (const f of batch) formData.append('photos', f);
+                    for (const f of batch) formData.append('photos', f); // Backend parameter named 'photos'
 
                     const res = await fetch('/upload', { method: 'POST', body: formData });
                     const data = await res.json();
@@ -291,11 +481,11 @@
                     }
                 }
                 status.style.color = failed ? 'var(--accent)' : 'var(--success)';
-                let msg = `✅ ${uploaded} photo(s) added - thank you! Add more anytime.`;
+                let msg = `✅ ${uploaded} item(s) uploaded successfully!`;
                 if (failed) msg += ` (${failed} failed)`;
                 if (skipped) msg += ` ${skipped} unsupported file(s) skipped.`;
                 status.textContent = msg;
-                loadEvent(); // refresh count + journal-ready state
+                loadEvent();
             } catch (e) {
                 status.style.color = 'var(--danger)';
                 status.textContent = uploaded
@@ -306,13 +496,197 @@
             document.getElementById('folder-input').value = '';
         }
 
-        // Folder picking isn't supported on iOS/Android - hide the zone there.
+        // --- Note Ingress with local Auto-Save ---
+        function saveNoteDraft(text) {
+            localStorage.setItem(`mw_note_draft_${sessionId}`, text);
+            const indicator = document.getElementById('draft-saved');
+            if (text.trim().length > 0) {
+                indicator.style.display = 'block';
+            } else {
+                indicator.style.display = 'none';
+            }
+        }
+
+        function clearNoteDraft() {
+            document.getElementById('note-body').value = '';
+            localStorage.removeItem(`mw_note_draft_${sessionId}`);
+            document.getElementById('draft-saved').style.display = 'none';
+            document.getElementById('status').textContent = '';
+        }
+
+        async function submitNote() {
+            const bodyText = document.getElementById('note-body').value.trim();
+            const status = document.getElementById('status');
+
+            if (!bodyText) {
+                status.style.color = 'var(--danger)';
+                status.textContent = 'Please write a note before submitting.';
+                return;
+            }
+
+            const name = document.getElementById('contributor-name').value.trim() || 'Anonymous';
+            saveName(name);
+
+            // Create virtual file
+            const blob = new Blob([bodyText], { type: 'text/plain' });
+            const file = new File([blob], 'story_note.txt', { type: 'text/plain' });
+
+            status.style.color = 'var(--accent)';
+            status.textContent = 'Saving note...';
+
+            try {
+                const formData = new FormData();
+                formData.append('contributor_name', name);
+                formData.append('session_id', sessionId);
+                formData.append('share_code', shareCode);
+                formData.append('photos', file); // upload text note as file
+
+                const res = await fetch('/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (res.ok && (data.status === 'success' || data.status === 'partial_success')) {
+                    status.style.color = 'var(--success)';
+                    status.textContent = '✅ Note saved and added to trip journal!';
+                    clearNoteDraft();
+                    loadEvent();
+                } else {
+                    throw new Error(data.detail || data.message || 'Saving note failed');
+                }
+            } catch (e) {
+                status.style.color = 'var(--danger)';
+                status.textContent = 'Failed to save note: ' + e.message;
+            }
+        }
+
+        // --- Voice Recorder In-Browser (MediaRecorder) ---
+        let mediaRecorder;
+        let audioChunks = [];
+        let audioBlob;
+        let isRecording = false;
+        let recordTimerInterval;
+        let recordSeconds = 0;
+
+        function updateRecordTimer() {
+            recordSeconds++;
+            const m = Math.floor(recordSeconds / 60).toString().padStart(2, '0');
+            const s = (recordSeconds % 60).toString().padStart(2, '0');
+            document.getElementById('record-timer').textContent = `${m}:${s}`;
+        }
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const player = document.getElementById('audio-player');
+                    player.src = audioUrl;
+                    player.style.display = 'block';
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                recordSeconds = 0;
+                document.getElementById('record-timer').textContent = '00:00';
+                clearInterval(recordTimerInterval);
+                recordTimerInterval = setInterval(updateRecordTimer, 1000);
+
+                document.getElementById('btn-record-start').style.display = 'none';
+                document.getElementById('btn-record-pause').style.display = 'none'; // simple start/stop
+                document.getElementById('btn-record-stop').style.display = 'inline-flex';
+                document.getElementById('recorder-status').textContent = 'Recording active... speak clearly';
+                document.getElementById('audio-player').style.display = 'none';
+                document.getElementById('voice-upload-controls').style.display = 'none';
+                document.getElementById('status').textContent = '';
+            } catch (e) {
+                alert('Audio capture permission is required to record voice notes.');
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                clearInterval(recordTimerInterval);
+                document.getElementById('btn-record-start').style.display = 'inline-flex';
+                document.getElementById('btn-record-stop').style.display = 'none';
+                document.getElementById('recorder-status').textContent = 'Recording finished - review below';
+                document.getElementById('voice-upload-controls').style.display = 'flex';
+            }
+        }
+
+        function discardVoice() {
+            audioBlob = null;
+            document.getElementById('audio-player').src = '';
+            document.getElementById('audio-player').style.display = 'none';
+            document.getElementById('voice-upload-controls').style.display = 'none';
+            document.getElementById('record-timer').textContent = '00:00';
+            document.getElementById('recorder-status').textContent = 'Recording discarded - ready to redo';
+            document.getElementById('status').textContent = '';
+        }
+
+        async function uploadVoice() {
+            const status = document.getElementById('status');
+            if (!audioBlob) {
+                status.style.color = 'var(--danger)';
+                status.textContent = 'No recording found to save.';
+                return;
+            }
+
+            const name = document.getElementById('contributor-name').value.trim() || 'Anonymous';
+            saveName(name);
+
+            const file = new File([audioBlob], 'voice_note.wav', { type: 'audio/wav' });
+
+            status.style.color = 'var(--accent)';
+            status.textContent = 'Saving voice note...';
+
+            try {
+                const formData = new FormData();
+                formData.append('contributor_name', name);
+                formData.append('session_id', sessionId);
+                formData.append('share_code', shareCode);
+                formData.append('photos', file);
+
+                const res = await fetch('/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (res.ok && (data.status === 'success' || data.status === 'partial_success')) {
+                    status.style.color = 'var(--success)';
+                    status.textContent = '✅ Voice note uploaded and processed!';
+                    discardVoice();
+                    loadEvent();
+                } else {
+                    throw new Error(data.detail || data.message || 'Voice upload failed');
+                }
+            } catch (e) {
+                status.style.color = 'var(--danger)';
+                status.textContent = 'Failed to upload voice note: ' + e.message;
+            }
+        }
+
+        // Folder picking isn't supported on iOS/Android - hide folder zones
         if (!('webkitdirectory' in document.createElement('input'))) {
             document.getElementById('folder-zone').style.display = 'none';
         }
 
+        // Load cached inputs
         document.getElementById('contributor-name').value = localStorage.getItem('mw_contributor_name') || '';
+        const savedNote = localStorage.getItem(`mw_note_draft_${sessionId}`);
+        if (savedNote) {
+            document.getElementById('note-body').value = savedNote;
+            document.getElementById('draft-saved').style.display = 'block';
+        }
+
         loadEvent();
+        lucide.createIcons();
     </script>
 </body>
 </html>
