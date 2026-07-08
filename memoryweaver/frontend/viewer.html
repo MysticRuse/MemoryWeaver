@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MemoryWeaver - Your Trip Journal</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,600;0,800;1,400&display=swap" rel="stylesheet">
+    <title>Rewind - Your Trip Journal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
-            --bg-color: #FBFBFA;
-            --card-bg: #FFFFFF;
-            --border-color: #E2E8F0;
-            --text-main: #303030;
-            --text-muted: #7E8A9F;
-            --accent: #EB2371;
-            --accent-glow: rgba(235, 35, 113, 0.05);
-            --accent-grad: #EB2371;
+            --bg-color: #0C0D0F;
+            --card-bg: #141518;
+            --border-color: #26282D;
+            --text-main: #F4F2EE;
+            --text-muted: #8A877F;
+            --accent: #E0916B;
+            --accent-glow: rgba(224, 145, 107, 0.12);
+            --accent-grad: #E0916B;
+            --on-accent: #151517;
         }
 
         * {
@@ -81,10 +82,10 @@
 
         .select-user {
             padding: 10px 40px 10px 14px !important;
-            background: #ffffff !important;
+            background: var(--card-bg) !important;
             border: 1px solid var(--border-color) !important;
             color: var(--text-main) !important;
-            border-radius: 6px !important;
+            border-radius: 8px !important;
             outline: none !important;
             font-family: 'Outfit', sans-serif !important;
             font-weight: 600 !important;
@@ -108,22 +109,22 @@
             align-items: center;
             justify-content: center;
             padding: 10px 22px;
-            background: #ffffff;
+            background: var(--card-bg);
             border: 1px solid var(--border-color);
             color: var(--text-main);
             text-decoration: none;
-            border-radius: 20px;
+            border-radius: 8px;
             font-weight: 600;
             font-size: 13px;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             min-height: 44px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .nav-btn:hover {
-            background: #f1f5f9;
-            border-color: #cbd5e1;
+            background: rgba(224, 145, 107, 0.12);
+            border-color: rgba(224, 145, 107, 0.40);
         }
 
         .nav-btn:active {
@@ -132,7 +133,7 @@
 
         /* Highlights Section */
         .section-title {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 1.4rem;
             font-weight: 700;
             margin-bottom: 1.25rem;
@@ -175,7 +176,7 @@
             min-height: 240px;
             max-height: 480px;
             position: relative;
-            background: #eaeaea;
+            background: var(--card-bg);
         }
 
         .carousel-slide {
@@ -206,7 +207,7 @@
             padding: 1.5rem;
             width: 100%;
             text-align: center;
-            background: #ffffff;
+            background: var(--surface2, #17191D);
             border-top: 1px solid var(--border-color);
             position: relative;
         }
@@ -216,6 +217,7 @@
             margin-bottom: 0.5rem;
             font-size: 1.3rem;
             text-transform: capitalize;
+            font-family: 'Space Grotesk', sans-serif;
         }
 
         .carousel-meta p {
@@ -231,18 +233,18 @@
             font-size: 10px;
             font-weight: 700;
             color: var(--text-muted);
-            background: rgba(0, 0, 0, 0.03);
+            background: rgba(255, 255, 255, 0.05);
             padding: 2px 8px;
-            border-radius: 10px;
+            border-radius: 8px;
             border: 1px solid var(--border-color);
         }
 
         .filter-tab-pill {
-            background: rgba(0, 0, 0, 0.02);
+            background: var(--surface2, #17191D);
             border: 1px solid var(--border-color);
             color: var(--text-muted);
             padding: 8px 16px;
-            border-radius: 20px;
+            border-radius: 8px;
             font-size: 13px;
             cursor: pointer;
             transition: all 0.2s;
@@ -250,21 +252,21 @@
             user-select: none;
         }
         .filter-tab-pill:hover {
-            background: rgba(0, 0, 0, 0.04);
+            background: rgba(224, 145, 107, 0.12);
             color: var(--text-main);
         }
         .filter-tab-pill.active {
             background: var(--accent);
             border-color: var(--accent);
-            color: #ffffff;
-            box-shadow: 0 4px 10px rgba(235, 35, 113, 0.2);
+            color: var(--on-accent);
+            box-shadow: 0 4px 10px var(--accent-glow);
         }
 
         .carousel-control {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.95);
+            background: var(--card-bg);
             border: 1px solid var(--border-color);
             color: var(--text-main);
             font-size: 1.8rem;
@@ -282,7 +284,7 @@
         .carousel-control:hover {
             background: var(--accent);
             border-color: var(--accent);
-            color: #ffffff;
+            color: var(--on-accent);
         }
 
         .control-prev { left: 1rem; }
@@ -589,13 +591,13 @@
             position: sticky;
             top: 0;
             z-index: 1000;
-            background: rgba(255, 255, 255, 0.85);
+            background: rgba(20, 21, 24, 0.85);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--border-color);
             width: 100%;
             margin-bottom: 16px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
 
         .nav-container {
@@ -617,12 +619,15 @@
         }
 
         .nav-logo {
-            font-family: 'Playfair Display', serif;
+            font-family: 'Space Grotesk', sans-serif;
             font-weight: 800;
             font-size: 1.4rem;
             color: var(--accent);
             text-decoration: none;
             letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .nav-links {
@@ -636,7 +641,7 @@
             font-weight: 600;
             font-size: 0.95rem;
             padding: 8px 18px;
-            border-radius: 20px;
+            border-radius: 8px;
             transition: all 0.3s;
             display: inline-flex;
             align-items: center;
@@ -645,13 +650,13 @@
 
         .nav-link:hover {
             color: var(--text-main);
-            background: rgba(0, 0, 0, 0.04);
+            background: rgba(255, 255, 255, 0.04);
         }
 
         .nav-link.active {
-            color: #ffffff;
+            color: var(--on-accent);
             background: var(--accent);
-            box-shadow: 0 4px 15px rgba(235, 35, 113, 0.25);
+            box-shadow: 0 4px 15px var(--accent-glow);
         }
 
         /* General layout overrides */
@@ -667,7 +672,7 @@
 <body>
     <nav class="top-nav">
         <div class="nav-container">
-            <a href="/" class="nav-logo"><i data-lucide="sparkles" style="width: 18px; height: 18px; margin-right: 6px; color: var(--accent); vertical-align: middle;"></i>MemoryWeaver</a>
+            <a href="/" class="nav-logo"><i data-lucide="rewind" style="fill: var(--accent); stroke: var(--accent);"></i> Rewind</a>
             <div class="nav-links">
                 <a href="/" class="nav-link"><i data-lucide="wrench" style="width: 14px; height: 14px; margin-right: 6px;"></i>Curator Hub</a>
                 <a href="/viewer" class="nav-link active" id="nav-viewer-link"><i data-lucide="book-open" style="width: 14px; height: 14px; margin-right: 6px;"></i>Trip Highlights</a>
@@ -684,7 +689,7 @@
 
     <div class="container">
         <header style="margin-top: 1rem;">
-            <p>MEMORYWEAVER PRESENTATION</p>
+            <p>REWIND PRESENTATION</p>
             <h1 style="font-size: 2.8rem; margin-bottom: 5px;">Your Trip Highlights</h1>
             <div class="header-controls">
                 <select id="user-select" class="select-user" style="display: none;" onchange="handleUserChange()">

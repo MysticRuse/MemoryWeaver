@@ -3,19 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MemoryWeaver - Add Your Photos</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <title>Rewind - Add Your Photos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Space+Grotesk:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
-            --bg-dark: #FBFBFA;
-            --card-bg: #FFFFFF;
-            --accent: #EB2371;
-            --text-main: #303030;
-            --text-muted: #7E8A9F;
+            --bg-dark: #0C0D0F;
+            --card-bg: #141518;
+            --accent: #E0916B;
+            --text-main: #F4F2EE;
+            --text-muted: #8A877F;
+            --accent-glow: rgba(224, 145, 107, 0.12);
+            --accent-tint-bg: rgba(224, 145, 107, 0.12);
+            --accent-tint-border: rgba(224, 145, 107, 0.40);
+            --on-accent: #151517;
             --success: #10B981;
             --danger: #E11D48;
-            --border-color: #E2E8F0;
+            --border-color: #26282D;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -32,9 +36,9 @@
         .card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 6px;
+            border-radius: 12px;
             padding: 20px 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             margin-bottom: 20px;
         }
         @media (min-width: 480px) {
@@ -46,6 +50,7 @@
             }
         }
         h1 {
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 1.6rem;
             font-weight: 800;
             color: var(--text-main);
@@ -72,9 +77,9 @@
         input[type="text"] {
             width: 100%;
             padding: 10px 14px;
-            border-radius: 6px;
+            border-radius: 8px;
             border: 1px solid var(--border-color);
-            background: #ffffff;
+            background: var(--card-bg);
             color: var(--text-main);
             font-family: inherit;
             font-size: 13px;
@@ -84,21 +89,21 @@
         }
         input[type="text"]:focus {
             border-color: var(--accent);
-            box-shadow: 0 0 0 2px rgba(235, 35, 113, 0.08);
+            box-shadow: 0 0 0 2px var(--accent-glow);
         }
         .dropzone {
             margin-top: 20px;
             border: 1px dashed var(--border-color);
-            border-radius: 6px;
+            border-radius: 8px;
             padding: 36px 20px;
             text-align: center;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-            background: rgba(0, 0, 0, 0.015);
+            background: rgba(255, 255, 255, 0.02);
         }
         .dropzone:hover {
-            border-color: #cbd5e1;
-            background: rgba(0, 0, 0, 0.03);
+            border-color: var(--accent-tint-border);
+            background: var(--accent-tint-bg);
         }
         .dz-icon {
             font-size: 2.2rem;
@@ -113,9 +118,9 @@
             margin-top: 20px;
             padding: 10px 18px;
             border: 1px solid var(--accent);
-            border-radius: 20px;
+            border-radius: 8px;
             background: var(--accent);
-            color: #ffffff;
+            color: var(--on-accent);
             font-family: inherit;
             font-size: 13px;
             font-weight: 600;
@@ -124,25 +129,25 @@
             text-decoration: none;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             min-height: 44px;
-            box-shadow: 0 4px 10px rgba(235, 35, 113, 0.2);
+            box-shadow: 0 4px 10px var(--accent-glow);
         }
         .btn:hover:not(:disabled) {
-            background: #d0155b;
-            border-color: #d0155b;
+            background: var(--accent_hover, #D9835A);
+            border-color: var(--accent_hover, #D9835A);
         }
         .btn:active:not(:disabled) {
             transform: scale(0.98);
         }
         .btn:disabled { opacity: 0.5; cursor: default; }
         .btn.secondary {
-            background: #ffffff;
+            background: var(--card-bg);
             border: 1px solid var(--border-color);
             color: var(--text-main);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .btn.secondary:hover {
-            background: #f1f5f9;
-            border-color: #cbd5e1;
+            background: rgba(224, 145, 107, 0.12);
+            border-color: rgba(224, 145, 107, 0.40);
         }
         #status {
             margin-top: 18px;

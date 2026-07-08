@@ -6,7 +6,7 @@ Update this file at the end of every loop (Section A, step 5).
 
 | Ticket | Phase | Spec file | State | Authority | Eval score | Notes |
 |---|---|---|---|---|---|---|
-| Design system (Rewind · Amaranth Pink) | — | DESIGN_SYSTEM.md | shipped | n/a | — | locked brand directives |
+| Design system (Rewind · Soft Clay) | — | DESIGN_SYSTEM.md | shipped | n/a | — | locked brand directives |
 | Data model (Workspace/Event/MediaItem) | P0 | P0_data_model.feature.md | shipped | action | 0.93 | schema migration done |
 | Eval + trajectory harness | P0 | HARNESS.md | shipped | n/a | — | OTel wired |
 | Photo parity (regression) | P1 | P1_multimedia_ingress.feature.md | shipped | action | 0.91 | existing path green |

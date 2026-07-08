@@ -10,23 +10,23 @@ The entire UI derives its brand color from a single token. Switching the accent
 must be a one-variable change.
 
 ```yaml
-accent:            "#EB2371"   # Amaranth Pink — the ONE brand color
-accent_hover:      "#D0155B"
-accent_pressed:    "#B50E4C"
-accent_tint_bg:    "rgba(235, 35, 113, 0.05)"   # selected media, active chip
-accent_tint_border:"rgba(235, 35, 113, 0.25)"
-on_accent:         "#FFFFFF"   # text/icon ON a pink surface
+accent:            "#E0916B"   # Soft Clay — the ONE brand color
+accent_hover:      "#D9835A"
+accent_pressed:    "#C9744B"
+accent_tint_bg:    "rgba(224,145,107,0.12)"   # selected media, active chip
+accent_tint_border:"rgba(224,145,107,0.40)"
+on_accent:         "#151517"   # text/icon ON a clay surface (near-black, not white)
 
 neutrals:
-  ink:      "#FBFBFA"   # app background (warm canvas)
-  surface:  "#FFFFFF"   # cards
-  surface2: "#FFFFFF"   # nested panels, inputs
-  line:     "#E2E8F0"   # borders / dividers
-  text:     "#303030"   # primary text (charcoal grey)
-  muted:    "#7E8A9F"   # secondary text (slate grey)
-  faint:    "#cbd5e1"   # labels, disabled
+  ink:      "#0C0D0F"   # app background
+  surface:  "#141518"   # cards / phone body
+  surface2: "#17191D"   # nested panels, inputs
+  line:     "#26282D"   # borders / dividers
+  text:     "#F4F2EE"   # primary text
+  muted:    "#8A877F"   # secondary text
+  faint:    "#615E57"   # labels, disabled
 ```
-Rule: primary actions use `accent` bg + `on_accent` text (never black text on pink).
+Rule: primary actions use `accent` bg + `on_accent` text (never white text on clay).
 Reserve `accent` for the ONE primary action / active state per view — everything
 else is neutral. No gradients.
 
@@ -71,10 +71,10 @@ shadow only on floating surfaces, not inline cards.
 
 ## 6. Accessibility
 - Body text ≥ 12.5px mobile; never below 24px on any 1920×1080 slide/marketing frame.
-- Maintain ≥ 4.5:1 contrast for text; `on_accent` (#FFFFFF) on Amaranth Pink passes.
+- Maintain ≥ 4.5:1 contrast for text; `on_accent` (#151517) on Soft Clay passes.
 - All interactive targets ≥ 44px; visible focus state required.
 
 ## 7. How implementers apply this
 Expose the tokens once (CSS custom properties / a single theme object) and read
 everywhere. Brand color changes = edit `--accent` (+ its 4 derived values) only.
-No component may hardcode `#EB2371`.
+No component may hardcode `#E0916B`.

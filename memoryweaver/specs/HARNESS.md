@@ -69,7 +69,7 @@ System prompt (identity) > `specs/HARNESS.md` (global rules) >
 When they conflict, the higher level wins.
 
 ## 7. UI directives (binding)
-Product name is **Rewind**; accent is **Amaranth Pink `#EB2371`**. Every screen must
+Product name is **Rewind**; accent is **Soft Clay `#E0916B`**. Every screen must
 read from `specs/DESIGN_SYSTEM.md` — one accent token, two fonts (Space Grotesk +
 Outfit), **Lucide icons only (no emoji)**, crisp radii (card 12 / tile 10 / pill 8).
 Reference implementation: turn `5a` in `Rewind Flow.dc.html`. Do not hardcode the

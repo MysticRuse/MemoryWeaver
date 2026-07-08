@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MemoryWeaver - Curator Hub</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,600;0,800;1,400&display=swap" rel="stylesheet">
+    <title>Rewind - Curator Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
-            --bg: #FBFBFA;
-            --card-bg: #FFFFFF;
-            --border: #E2E8F0;
-            --text: #303030;
-            --text-muted: #7E8A9F;
-            --accent: #EB2371;
-            --accent-glow: rgba(235, 35, 113, 0.05);
-            --accent-grad: #EB2371;
+            --bg: #0C0D0F;
+            --card-bg: #141518;
+            --border: #26282D;
+            --text: #F4F2EE;
+            --text-muted: #8A877F;
+            --accent: #E0916B;
+            --accent-glow: rgba(224, 145, 107, 0.12);
+            --accent-grad: #E0916B;
+            --on-accent: #151517;
             --danger: #E11D48;
             --success: #10B981;
         }
@@ -54,7 +55,7 @@
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
 
         @media (min-width: 768px) {
@@ -69,7 +70,7 @@
         }
 
         header h1 {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 2.2rem;
             font-weight: 800;
             color: var(--text);
@@ -99,12 +100,12 @@
             font-weight: 600;
             padding: 6px 14px;
             cursor: pointer;
-            border-radius: 20px;
+            border-radius: 8px;
             transition: all 0.2s;
         }
 
         .tab-btn.active {
-            color: #ffffff;
+            color: var(--on-accent);
             background: var(--accent);
         }
 
@@ -137,13 +138,14 @@
             height: 26px;
             border-radius: 50%;
             background: var(--accent);
-            color: #fff;
+            color: var(--on-accent);
             font-weight: 700;
             margin-right: 10px;
             font-size: 12px;
         }
 
         .step-title {
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 1.15rem;
             font-weight: 700;
             display: flex;
@@ -160,22 +162,22 @@
             justify-content: center;
             gap: 8px;
             padding: 10px 22px;
-            border-radius: 20px;
+            border-radius: 8px;
             font-family: 'Outfit', sans-serif;
             font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             border: 1px solid var(--border);
-            background: #ffffff;
+            background: var(--surface2, #17191D);
             color: var(--text);
             min-height: 44px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .btn:hover:not(:disabled) {
-            border-color: #cbd5e1;
-            background: #f1f5f9;
+            border-color: rgba(224, 145, 107, 0.40);
+            background: rgba(224, 145, 107, 0.12);
         }
 
         .btn:active:not(:disabled) {
@@ -185,13 +187,13 @@
         .btn-primary {
             background: var(--accent);
             border-color: var(--accent);
-            color: #ffffff;
-            box-shadow: 0 4px 10px rgba(235, 35, 113, 0.2);
+            color: var(--on-accent);
+            box-shadow: 0 4px 10px var(--accent-glow);
         }
 
         .btn-primary:hover:not(:disabled) {
-            background: #d0155b;
-            border-color: #d0155b;
+            background: var(--accent_hover, #D9835A);
+            border-color: var(--accent_hover, #D9835A);
             opacity: 1;
         }
 
@@ -581,13 +583,13 @@
             position: sticky;
             top: 0;
             z-index: 1000;
-            background: rgba(255, 255, 255, 0.85);
+            background: rgba(20, 21, 24, 0.85);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--border);
             width: 100%;
             margin-bottom: 24px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
 
         .nav-container {
@@ -600,12 +602,15 @@
         }
 
         .nav-logo {
-            font-family: 'Playfair Display', serif;
+            font-family: 'Space Grotesk', sans-serif;
             font-weight: 800;
             font-size: 1.4rem;
             color: var(--accent);
             text-decoration: none;
             letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .nav-links {
@@ -619,7 +624,7 @@
             font-weight: 600;
             font-size: 0.95rem;
             padding: 8px 18px;
-            border-radius: 20px;
+            border-radius: 8px;
             transition: all 0.3s;
             display: inline-flex;
             align-items: center;
@@ -628,13 +633,13 @@
 
         .nav-link:hover {
             color: var(--text);
-            background: rgba(0, 0, 0, 0.04);
+            background: rgba(255, 255, 255, 0.04);
         }
 
         .nav-link.active {
-            color: #ffffff;
+            color: var(--on-accent);
             background: var(--accent);
-            box-shadow: 0 4px 15px rgba(235, 35, 113, 0.25);
+            box-shadow: 0 4px 15px var(--accent-glow);
         }
 
         /* Step Wizard Stepper UI */
@@ -643,9 +648,9 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 28px;
-            background: rgba(0, 0, 0, 0.01);
+            background: rgba(255, 255, 255, 0.02);
             border: 1px solid var(--border);
-            border-radius: 20px;
+            border-radius: 12px;
             padding: 16px 24px;
         }
 
@@ -674,7 +679,7 @@
             width: 30px;
             height: 30px;
             border-radius: 50%;
-            background: rgba(0, 0, 0, 0.03);
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border);
             color: var(--text-muted);
             font-weight: 800;
@@ -684,14 +689,14 @@
 
         .wizard-step-node.active .step-node-num {
             background: var(--accent);
-            color: #ffffff;
+            color: var(--on-accent);
             border-color: var(--accent);
         }
 
         .wizard-step-node.completed .step-node-num {
-            background: #e2e8f0;
-            color: var(--text);
-            border-color: #cbd5e1;
+            background: #26282D;
+            color: var(--text-muted);
+            border-color: #26282D;
         }
 
         .step-node-text {
@@ -706,7 +711,7 @@
         }
 
         .wizard-step-node.completed .step-node-text {
-            color: var(--text);
+            color: var(--text-muted);
         }
 
         .wizard-step-line {
@@ -953,16 +958,16 @@
 <body>
     <nav class="top-nav">
         <div class="nav-container">
-            <a href="/" class="nav-logo">🔮 MemoryWeaver</a>
+            <a href="/" class="nav-logo"><i data-lucide="rewind" style="fill: var(--accent); stroke: var(--accent);"></i> Rewind</a>
             <div class="nav-links">
-                <a href="/" class="nav-link active">🛠️ Curator Hub</a>
-                <a href="/viewer" class="nav-link" id="nav-viewer-link">📖 Trip Highlights</a>
+                <a href="/" class="nav-link active"><i data-lucide="wrench"></i> Curator Hub</a>
+                <a href="/viewer" class="nav-link" id="nav-viewer-link"><i data-lucide="book-open"></i> Trip Highlights</a>
             </div>
         </div>
     </nav>
     <div class="container">
         <header style="margin-top: 1rem;">
-            <p>MEMORYWEAVER MANAGER</p>
+            <p>REWIND MANAGER</p>
             <h1 style="font-size: 2.4rem; margin-bottom: 5px;">Curator Hub</h1>
         </header>
 
