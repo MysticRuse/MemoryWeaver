@@ -1,0 +1,95 @@
+# YAML chosen for structured/nested config (Day 5: >3 nesting depth → YAML).
+# Human-readable version: "Rewind Build Plan.dc.html".
+
+project: rewind                     # product name (repo dir stays memoryweaver/)
+owner_role: orchestrator          # human owns specs/gates/reviews
+implementer: claude_code | antigravity
+
+ticket_states: [backlog, spec, building, eval_hitl, shipped]
+
+authority_tiers: [read_only, draft, action_allowed]   # promote only after eval coverage
+
+eval_dimensions:                  # Day 4 — every ticket scored on these
+  - intent_satisfaction
+  - functional_correctness
+  - visual_behavioral
+  - cost_latency
+  - code_quality
+  - trajectory_quality
+  - self_repair
+
+phases:
+  - id: P0
+    name: Foundations & harness
+    weeks: 2
+    goal: Build the factory (spec + eval + observability + security) and the data model.
+    wireframes: [1g]
+    ships:
+      - data_model: "Workspace -> Event -> MediaItem(type)"
+      - eval_gate: "LLM-as-judge + pytest"
+      - observability: "OpenTelemetry trajectory"
+      - security_baseline: "sandbox + CI (SAST/SCA)"
+    specs: [00_phase_plan.yaml, HARNESS.md, DESIGN_SYSTEM.md, P0_data_model.feature.md]
+    exit: Any feature spec completes the loop unattended and passes the gate.
+
+  - id: P1
+    name: Multi-media ingress
+    weeks: 2
+    goal: Contributors drop any media type, no login.
+    wireframes: [1a, 1c-collect]
+    ships: [contributor_multimedia_capture, mime_aware_storage, exif_strip_all, audio_transcription_tool, doc_ocr_label]
+    specs: [P1_multimedia_ingress.feature.md]
+    eval_gate:
+      transcription_wer_max: 0.15
+      checks: [each_type_uploads, injection_guard_pass, size_type_allowlist]
+    security: [mime_validation, size_caps, path_traversal, pii_hashing, exif_strip]
+    exit: Mixed-media pool visible to organizer.
+
+  - id: P2
+    name: Scalable curation
+    weeks: 3
+    goal: 1000+ mixed items stay browsable and curatable.
+    wireframes: [1c, 1d]
+    ships: [type_filters, auto_grouping, virtualized_grid, video_keyframe_clip, audio_anchoring, memory_missed_moments, a2a_hire_video_agent]
+    specs: [P2_workspace_pool.feature.md, P2_curation_pipeline.feature.md]
+    eval_gate:
+      curation_llm_judge_min: 0.85
+      dedup: [precision, recall]
+      p95_latency_budget_s: 180
+    security: [seven_pillar_review_external_a2a, egress_governance]
+    exit: 1000-item event curated within budget; HITL approves.
+
+  - id: P3
+    name: Multimedia keepsake
+    weeks: 2
+    goal: Journal weaves every media type.
+    wireframes: [1e, 2a, 2b, 2c]
+    ships: [viewer_inline_video, viewer_tap_to_play_audio, speaker_naming_ui, doc_attachments, sub_event_tabs, pdf_print]
+    specs: [P3_viewer.feature.md, P3_narration_skills.feature.md]
+    eval_gate:
+      narration_llm_judge_min: 0.85
+      audio_anchor_accuracy_min: 0.9
+      visual: print_snapshot_multimodal
+    exit: Shareable book renders + prints with all media types.
+
+  - id: P4
+    name: Organizer scale — workspaces & teams
+    weeks: 3
+    goal: Many events, shared workspaces, roles, recurring series.
+    wireframes: [1b]
+    ships: [events_dashboard, workspaces, roles_iam, recurring_events, templates, search]
+    specs: [P4_workspaces.feature.md, P4_iam_roles.feature.md]
+    eval_gate: {checks: [rbac_tests, tenant_isolation_tests, audit_log_complete]}
+    security: [iam_least_privilege_jit, tenant_partitioning, immutable_audit_trail]
+    exit: Multi-tenant workspace passes isolation tests.
+
+  - id: P5
+    name: Monetization & AaaS
+    weeks: 2
+    goal: Turn the keepsake into revenue.
+    wireframes: [1f]
+    ships: [plans_entitlements, stripe_billing, printed_book_order, a2a_marketplace_listing, ap2_mandates]
+    specs: [P5_billing.feature.md, P5_aaas.feature.md]
+    eval_gate: {checks: [stripe_test_mode, ap2_mandate_handshake, entitlement_gating]}
+    security: [no_card_data_frontend, webhook_signature_verify, ap2_human_mandates]
+    exit: Test-mode purchase + entitlement gate + agent discoverable on A2A.
