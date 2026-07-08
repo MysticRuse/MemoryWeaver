@@ -501,6 +501,75 @@
             text-align: left;
         }
 
+        /* Trajectory / A2UI Step Dashboard */
+        .trajectory-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.8rem;
+            color: var(--text);
+            line-height: 1.4;
+        }
+        .trajectory-step:last-child {
+            border-bottom: none;
+        }
+        .step-time {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            min-width: 55px;
+        }
+        .step-agent-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+        .agent-collector {
+            background: rgba(224, 145, 107, 0.12);
+            color: var(--accent);
+            border: 1px solid rgba(224, 145, 107, 0.3);
+        }
+        .agent-moderator {
+            background: rgba(225, 29, 72, 0.12);
+            color: #E11D48;
+            border: 1px solid rgba(225, 29, 72, 0.3);
+        }
+        .agent-curator {
+            background: rgba(59, 130, 246, 0.12);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        .agent-memory {
+            background: rgba(168, 85, 247, 0.12);
+            color: #a855f7;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+        .agent-narrator {
+            background: rgba(16, 185, 129, 0.12);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .agent-system {
+            background: rgba(245, 158, 11, 0.12);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        .agent-orchestrator {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
         .spinner {
             display: inline-block;
             width: 16px;
@@ -2656,17 +2725,89 @@
             if (fill) fill.style.width = '100%';
         }
 
+        function renderLogs(logs) {
+            const logBox = document.getElementById('log-box');
+            if (!logBox) return;
+            
+            // Backup text content fallback
+            if (logs.length === 0) {
+                logBox.innerHTML = '<div style="color: var(--text-muted); padding: 12px; font-size: 0.8rem;">Waiting for pipeline orchestration...</div>';
+                return;
+            }
+            
+            logBox.innerHTML = '';
+            logs.forEach(line => {
+                const match = line.match(/^\[(\d{2}:\d{2}:\d{2})\]\s*(.*)$/);
+                if (match) {
+                    const timeStr = match[1];
+                    const content = match[2];
+                    
+                    let agentClass = 'agent-orchestrator';
+                    let agentName = 'Orchestrator';
+                    let icon = 'terminal';
+                    
+                    const contentLower = content.toLowerCase();
+                    if (contentLower.includes('collector') || contentLower.includes('ingress') || contentLower.includes('saving')) {
+                        agentClass = 'agent-collector';
+                        agentName = 'Collector';
+                        icon = 'image';
+                    } else if (contentLower.includes('moderator') || contentLower.includes('safety') || contentLower.includes('compliance') || contentLower.includes('blurred') || contentLower.includes('screenshot')) {
+                        agentClass = 'agent-moderator';
+                        agentName = 'Moderator';
+                        icon = 'shield-alert';
+                    } else if (contentLower.includes('curator') || contentLower.includes('clustering') || contentLower.includes('embeddings') || contentLower.includes('duplicate') || contentLower.includes('sharpness')) {
+                        agentClass = 'agent-curator';
+                        agentName = 'Curator';
+                        icon = 'combine';
+                    } else if (contentLower.includes('memory') || contentLower.includes('bank') || contentLower.includes('profile')) {
+                        agentClass = 'agent-memory';
+                        agentName = 'Memory';
+                        icon = 'database';
+                    } else if (contentLower.includes('narrator') || contentLower.includes('compile') || contentLower.includes('story') || contentLower.includes('journal')) {
+                        agentClass = 'agent-narrator';
+                        agentName = 'Narrator';
+                        icon = 'pen-line';
+                    } else if (contentLower.includes('performance') || contentLower.includes('api cost') || contentLower.includes('elapsed time')) {
+                        agentClass = 'agent-system';
+                        agentName = 'System Report';
+                        icon = 'bar-chart-2';
+                    }
+                    
+                    const step = document.createElement('div');
+                    step.className = 'trajectory-step';
+                    step.innerHTML = `
+                        <span class="step-time">${timeStr}</span>
+                        <span class="step-agent-badge ${agentClass}">
+                            <i data-lucide="${icon}" style="width: 10px; height: 10px;"></i>
+                            ${agentName}
+                        </span>
+                        <span style="flex: 1; word-break: break-word;">${content}</span>
+                    `;
+                    logBox.appendChild(step);
+                } else {
+                    const step = document.createElement('div');
+                    step.className = 'trajectory-step';
+                    step.innerHTML = `
+                        <span class="step-time">--:--:--</span>
+                        <span class="step-agent-badge agent-orchestrator">Orchestrator</span>
+                        <span style="flex: 1; word-break: break-word;">${line}</span>
+                    `;
+                    logBox.appendChild(step);
+                }
+            });
+            lucide.createIcons();
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
         function startLogPolling() {
             if (pollingInterval) clearInterval(pollingInterval);
-            const logBox = document.getElementById('log-box');
             
             pollingInterval = setInterval(async () => {
                 try {
                     const res = await fetch(withSession('/logs'));
                     const data = await res.json();
                     const logs = data.logs || [];
-                    logBox.innerHTML = logs.join('\n');
-                    logBox.scrollTop = logBox.scrollHeight;
+                    renderLogs(logs);
                     
                     const progRes = await fetch(withSession('/api/progress'));
                     const progress = await progRes.json();
@@ -3040,13 +3181,12 @@
                                 const logRes = await fetch(withSession('/logs'));
                                 const logData = await logRes.json();
                                 if (logData.logs && logData.logs.length > 0) {
-                                    logBox.innerHTML = logData.logs.join('\n');
+                                    renderLogs(logData.logs);
                                 } else {
-                                    logBox.innerHTML = '[SUCCESS] MemoryWeaver curation pipeline complete.\nAll highlights and chronological journal moments compiled successfully.';
+                                    logBox.innerHTML = '<div style="color: var(--success); padding: 12px; font-weight: 500;">[SUCCESS] MemoryWeaver curation pipeline complete. All highlights and chronological journal moments compiled successfully.</div>';
                                 }
-                                logBox.scrollTop = logBox.scrollHeight;
                             } catch (e) {
-                                logBox.innerHTML = '[SUCCESS] MemoryWeaver curation pipeline complete.\nAll highlights and chronological journal moments compiled successfully.';
+                                logBox.innerHTML = '<div style="color: var(--success); padding: 12px; font-weight: 500;">[SUCCESS] MemoryWeaver curation pipeline complete. All highlights and chronological journal moments compiled successfully.</div>';
                             }
                         }
                         
