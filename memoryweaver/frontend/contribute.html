@@ -4,162 +4,202 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rewind - Add Your Memories</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Space+Grotesk:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
-            --bg-dark: #0C0D0F;
-            --card-bg: #141518;
+            --bg: #0C0D0F;
+            --surface: #141518;
+            --surface-hover: #17191D;
+            --border: #26282D;
             --accent: #E0916B;
-            --text-main: #F4F2EE;
-            --text-muted: #8A877F;
-            --accent-glow: rgba(224, 145, 107, 0.12);
-            --accent-tint-bg: rgba(224, 145, 107, 0.12);
-            --accent-tint-border: rgba(224, 145, 107, 0.40);
+            --accent-hover: #D9835A;
             --on-accent: #151517;
-            --success: #10B981;
+            --text: #F4F2EE;
+            --text-muted: #8A877F;
             --danger: #E11D48;
-            --border-color: #26282D;
+            --success: #10B981;
+            --accent-glow: rgba(224, 145, 107, 0.08);
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
         body {
             font-family: 'Outfit', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
+            background-color: var(--bg);
+            color: var(--text);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 12px;
+            padding: 24px 16px;
         }
-        .wrap { width: 100%; max-width: 480px; }
+
+        .wrap {
+            width: 100%;
+            max-width: 440px;
+        }
+
         .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
+            background: var(--surface);
+            border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 20px 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            margin-bottom: 20px;
+            padding: 32px 24px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        @media (min-width: 480px) {
-            body {
-                padding: 32px 16px;
-            }
-            .card {
-                padding: 32px 24px;
-            }
-        }
+
         h1 {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 1.6rem;
-            font-weight: 800;
-            color: var(--text-main);
-            margin-bottom: 8px;
-            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
             letter-spacing: -0.5px;
+            text-align: center;
+            margin-bottom: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
         }
+
         .sub {
             color: var(--text-muted);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             line-height: 1.5;
-            margin-bottom: 20px;
             text-align: center;
+            margin-bottom: 24px;
+            font-weight: 400;
         }
+
+        .count-pill {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            margin: 0 auto 24px auto;
+        }
+
+        .pill-wrapper {
+            display: flex;
+            justify-content: center;
+        }
+
         label {
             display: block;
             font-size: 0.7rem;
-            font-weight: 700;
+            font-weight: 600;
             color: var(--text-muted);
-            margin: 20px 0 8px;
-            letter-spacing: 1px;
+            margin-bottom: 8px;
+            letter-spacing: 0.05em;
             text-transform: uppercase;
         }
+
         input[type="text"], textarea {
             width: 100%;
-            padding: 10px 14px;
+            padding: 12px 14px;
             border-radius: 8px;
-            border: 1px solid var(--border-color);
-            background: var(--bg-dark);
-            color: var(--text-main);
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
             font-family: inherit;
-            font-size: 13px;
+            font-size: 0.85rem;
             outline: none;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-            min-height: 44px;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
+
         input[type="text"]:focus, textarea:focus {
             border-color: var(--accent);
             box-shadow: 0 0 0 2px var(--accent-glow);
         }
+
         textarea {
-            resize: vertical;
-            min-height: 120px;
+            resize: none;
+            min-height: 110px;
+            line-height: 1.5;
         }
 
         /* Ingress Tabs */
         .ingress-tabs {
             display: flex;
-            border-bottom: 1px solid var(--border-color);
-            margin: 16px 0;
-            gap: 4px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 4px;
+            margin: 20px 0;
         }
+
         .ingress-tab-btn {
             flex: 1;
             background: none;
             border: none;
             color: var(--text-muted);
             font-family: inherit;
-            font-size: 12px;
-            font-weight: 700;
-            padding: 10px 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 8px 0;
             cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 4px;
-            border-radius: 8px 8px 0 0;
+            gap: 6px;
+            border-radius: 6px;
         }
+
         .ingress-tab-btn:hover {
-            color: var(--text-main);
-            background: rgba(255, 255, 255, 0.02);
+            color: var(--text);
         }
+
         .ingress-tab-btn.active {
-            color: var(--accent);
-            border-bottom-color: var(--accent);
-            background: rgba(224, 145, 107, 0.05);
+            color: var(--on-accent);
+            background: var(--accent);
         }
+
         .tab-panel {
             display: none;
+            animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
+
         .tab-panel.active {
             display: block;
         }
 
         /* Dropzone */
         .dropzone {
-            margin-top: 12px;
-            border: 1px dashed var(--border-color);
+            border: 1px dashed var(--border);
             border-radius: 8px;
-            padding: 30px 16px;
+            padding: 36px 20px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-            background: rgba(255, 255, 255, 0.02);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            background: rgba(255, 255, 255, 0.01);
         }
+
         .dropzone:hover {
-            border-color: var(--accent-tint-border);
-            background: var(--accent-tint-bg);
+            border-color: var(--accent);
+            background: var(--accent-glow);
         }
-        .dz-icon {
-            font-size: 2.2rem;
-            margin-bottom: 10px;
-            display: inline-block;
+
+        .dz-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-top: 8px;
+        }
+
+        .dz-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
         }
 
         /* Buttons */
@@ -169,132 +209,139 @@
             justify-content: center;
             width: 100%;
             margin-top: 16px;
-            padding: 10px 18px;
-            border: 1px solid var(--accent);
+            padding: 12px 20px;
+            border: none;
             border-radius: 8px;
             background: var(--accent);
             color: var(--on-accent);
             font-family: inherit;
-            font-size: 13px;
-            font-weight: 600;
+            font-size: 0.8rem;
+            font-weight: 700;
             cursor: pointer;
-            text-align: center;
-            text-decoration: none;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             min-height: 44px;
-            box-shadow: 0 4px 10px var(--accent-glow);
         }
+
         .btn:hover:not(:disabled) {
-            background: var(--accent_hover, #D9835A);
-            border-color: var(--accent_hover, #D9835A);
+            background: var(--accent-hover);
         }
+
         .btn:active:not(:disabled) {
             transform: scale(0.98);
         }
-        .btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
-        .btn.secondary {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
         }
+
+        .btn.secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
         .btn.secondary:hover {
-            background: rgba(224, 145, 107, 0.12);
-            border-color: rgba(224, 145, 107, 0.40);
+            background: rgba(255, 255, 255, 0.03);
+            border-color: var(--text-muted);
         }
 
         #status {
-            margin-top: 18px;
-            font-size: 0.9rem;
+            margin-top: 20px;
+            font-size: 0.8rem;
             font-weight: 500;
-            min-height: 1.2em;
             text-align: center;
             line-height: 1.4;
+            min-height: 1.4em;
         }
-        .count-pill {
-            display: inline-block;
-            margin: 0 auto 16px auto;
-            padding: 3px 12px;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-align: center;
-            border: 1px solid var(--border-color);
-        }
-        .pill-wrapper {
-            display: flex;
-            justify-content: center;
-        }
-        #error-card { display: none; text-align: center; }
 
-        /* Recorder Styles */
+        /* Minimalist Voice Recorder */
         .recorder-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px;
-            padding: 16px;
-            background: rgba(255, 255, 255, 0.01);
-            border: 1px solid var(--border-color);
+            padding: 24px 16px;
+            border: 1px solid var(--border);
             border-radius: 8px;
+            background: rgba(255, 255, 255, 0.01);
         }
+
+        .recorder-status-text {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
         .record-timer {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 1.8rem;
+            font-size: 2.2rem;
             font-weight: 700;
-            color: var(--text-main);
+            color: var(--text);
+            margin-bottom: 20px;
         }
-        .recorder-controls {
-            display: flex;
-            gap: 12px;
-            width: 100%;
-            justify-content: center;
-        }
+
         .record-btn-round {
-            width: 50px;
-            height: 50px;
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
             border: none;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.2s;
-            color: #fff;
-        }
-        .record-btn-start {
-            background: var(--danger);
-        }
-        .record-btn-start:hover {
-            transform: scale(1.05);
-        }
-        .record-btn-pause {
-            background: var(--accent);
-            color: var(--on-accent);
-        }
-        .record-btn-stop {
-            background: var(--text-main);
-            color: var(--bg-dark);
-        }
-        .audio-preview {
-            width: 100%;
-            margin-top: 12px;
-        }
-        .recorder-status-text {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            font-weight: 500;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
-        /* Note Draft indicator */
+        .record-btn-start {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .record-btn-start:hover {
+            transform: scale(1.06);
+            background: #f43f5e;
+        }
+
+        .record-btn-stop {
+            background: var(--text);
+            color: var(--bg);
+        }
+
+        .record-btn-stop:hover {
+            transform: scale(1.06);
+        }
+
+        .audio-preview {
+            width: 100%;
+            margin-top: 16px;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        /* Note Ingress Draft indicator */
         .draft-indicator {
-            font-size: 11px;
+            font-size: 0.7rem;
             color: var(--success);
             font-weight: 600;
-            margin-top: 4px;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
             display: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #error-card {
+            display: none;
+            text-align: center;
         }
     </style>
 </head>
@@ -302,32 +349,34 @@
     <div class="wrap">
         <div class="card" id="main-card" style="display: none;">
             <h1 id="event-title">Loading event...</h1>
-            <p class="sub">Drop a photo, record a voice note, or write a memory. Everything gets woven into the trip journal.</p>
+            <p class="sub">Add a photo, record a memory, or write a note. Everything gets woven into the trip keepsake.</p>
+            
             <div class="pill-wrapper">
                 <span class="count-pill" id="photo-count"></span>
             </div>
 
-            <label for="contributor-name">YOUR NAME (so we know who captured what)</label>
+            <label for="contributor-name">Your Name</label>
             <input type="text" id="contributor-name" placeholder="e.g. Grandma Lena" oninput="saveName(this.value)">
 
             <div class="ingress-tabs">
-                <button class="ingress-tab-btn active" onclick="switchTab('tab-upload')"><i data-lucide="image" style="width:14px;height:14px;"></i> Media File</button>
-                <button class="ingress-tab-btn" onclick="switchTab('tab-voice')"><i data-lucide="mic" style="width:14px;height:14px;"></i> Record Voice</button>
-                <button class="ingress-tab-btn" onclick="switchTab('tab-note')"><i data-lucide="pen-line" style="width:14px;height:14px;"></i> Write Note</button>
+                <button class="ingress-tab-btn active" onclick="switchTab('tab-upload')"><i data-lucide="image" style="width:13px;height:13px;"></i> Media File</button>
+                <button class="ingress-tab-btn" onclick="switchTab('tab-voice')"><i data-lucide="mic" style="width:13px;height:13px;"></i> Record</button>
+                <button class="ingress-tab-btn" onclick="switchTab('tab-note')"><i data-lucide="pen-line" style="width:13px;height:13px;"></i> Write Story</button>
             </div>
 
-            <!-- Tab: File Upload -->
+            <!-- Tab: Media Upload -->
             <div class="tab-panel active" id="tab-upload">
                 <div class="dropzone" onclick="document.getElementById('file-input').click()">
-                    <div class="dz-icon" style="color: var(--accent); margin-bottom: 12px;"><i data-lucide="plus" style="width: 32px; height: 32px;"></i></div>
-                    <div style="font-weight: 700; font-size: 1.1rem; color: #fff;">Choose Files</div>
-                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 6px;">Photos, videos, or tickets (PDF)</div>
+                    <div style="color: var(--accent);"><i data-lucide="plus" style="width: 28px; height: 28px; margin: 0 auto;"></i></div>
+                    <div class="dz-title">Choose photos or videos</div>
+                    <div class="dz-desc">JPEG, PNG, HEIC, MP4, MOV, or PDF</div>
                     <input type="file" id="file-input" multiple accept=".jpg,.jpeg,.png,.heic,.mp4,.mov,.pdf,image/*,video/*" style="display: none;" onchange="uploadFiles(this.files)">
                 </div>
 
-                <div class="dropzone" id="folder-zone" style="margin-top: 12px; padding: 24px 16px;" onclick="document.getElementById('folder-input').click()">
-                    <div style="font-weight: 700; color: #fff; font-size: 1.0rem;"><i data-lucide="folder" style="width: 16px; height: 16px; margin-right: 6px; vertical-align: middle; color: var(--accent);"></i> Upload entire folder</div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">Supported media only - other files skipped</div>
+                <div class="dropzone" id="folder-zone" style="margin-top: 12px; padding: 20px;" onclick="document.getElementById('folder-input').click()">
+                    <div style="font-weight: 600; color: var(--text); font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <i data-lucide="folder" style="width: 14px; height: 14px; color: var(--accent);"></i> Upload entire folder
+                    </div>
                     <input type="file" id="folder-input" webkitdirectory style="display: none;" onchange="uploadFiles(this.files)">
                 </div>
             </div>
@@ -338,45 +387,39 @@
                     <span class="recorder-status-text" id="recorder-status">Ready to record</span>
                     <div class="record-timer" id="record-timer">00:00</div>
                     
-                    <div class="recorder-controls">
-                        <!-- Start Record -->
-                        <button class="record-btn-round record-btn-start" id="btn-record-start" onclick="startRecording()"><i data-lucide="mic" style="width: 20px; height: 20px;"></i></button>
-                        <!-- Pause Record -->
-                        <button class="record-btn-round record-btn-pause" id="btn-record-pause" style="display: none;" onclick="pauseRecording()"><i data-lucide="pause" style="width: 20px; height: 20px;"></i></button>
-                        <!-- Stop Record -->
+                    <div style="display: flex; justify-content: center;">
+                        <button class="record-btn-round record-btn-start" id="btn-record-start" onclick="startRecording()"><i data-lucide="mic" style="width: 22px; height: 22px;"></i></button>
                         <button class="record-btn-round record-btn-stop" id="btn-record-stop" style="display: none;" onclick="stopRecording()"><i data-lucide="square" style="width: 20px; height: 20px;"></i></button>
                     </div>
 
                     <audio id="audio-player" class="audio-preview" controls style="display: none;"></audio>
 
-                    <div id="voice-upload-controls" style="display: none; width: 100%; gap: 12px; margin-top: 12px;">
-                        <button class="btn secondary" style="margin-top: 0; flex: 1;" onclick="discardVoice()"><i data-lucide="rotate-ccw" style="width:14px;height:14px;margin-right:4px;"></i> Redo</button>
-                        <button class="btn" style="margin-top: 0; flex: 1.5;" onclick="uploadVoice()"><i data-lucide="upload" style="width:14px;height:14px;margin-right:4px;"></i> Save Voice Note</button>
+                    <div id="voice-upload-controls" style="display: none; width: 100%; gap: 10px; margin-top: 16px;">
+                        <button class="btn secondary" style="margin-top: 0; flex: 1;" onclick="discardVoice()"><i data-lucide="rotate-ccw" style="width:13px;height:13px;margin-right:4px;"></i> Redo</button>
+                        <button class="btn" style="margin-top: 0; flex: 1.5;" onclick="uploadVoice()"><i data-lucide="upload" style="width:13px;height:13px;margin-right:4px;"></i> Save</button>
                     </div>
                 </div>
             </div>
 
             <!-- Tab: Write Note -->
             <div class="tab-panel" id="tab-note">
-                <label for="note-body">Write your story or moment</label>
-                <textarea id="note-body" placeholder="e.g. Remember when we saw the sunrise over the valley? It was cold but totally worth it..." oninput="saveNoteDraft(this.value)"></textarea>
-                <div class="draft-indicator" id="draft-saved"><i data-lucide="check" style="width:10px;height:10px;vertical-align:middle;"></i> Draft saved to device</div>
+                <textarea id="note-body" placeholder="Share a special memory or story from this moment..." oninput="saveNoteDraft(this.value)"></textarea>
+                <div class="draft-indicator" id="draft-saved"><i data-lucide="check" style="width:11px;height:11px;color:var(--success);"></i> Draft saved locally</div>
 
-                <div style="display: flex; gap: 12px; margin-top: 12px;">
-                    <button class="btn secondary" style="margin-top: 0; flex: 1;" onclick="clearNoteDraft()"><i data-lucide="trash-2" style="width:14px;height:14px;margin-right:4px;"></i> Clear</button>
-                    <button class="btn" style="margin-top: 0; flex: 2;" id="btn-submit-note" onclick="submitNote()"><i data-lucide="send" style="width:14px;height:14px;margin-right:4px;"></i> Submit Story</button>
+                <div style="display: flex; gap: 10px; margin-top: 12px;">
+                    <button class="btn secondary" style="margin-top: 0; flex: 1;" onclick="clearNoteDraft()"><i data-lucide="trash-2" style="width:13px;height:13px;margin-right:4px;"></i> Clear</button>
+                    <button class="btn" style="margin-top: 0; flex: 2;" id="btn-submit-note" onclick="submitNote()"><i data-lucide="send" style="width:13px;height:13px;margin-right:4px;"></i> Submit</button>
                 </div>
             </div>
 
             <div id="status"></div>
 
-            <!-- Appears only once the admin has generated the journal -->
-            <a class="btn secondary" id="viewer-link" style="display: none;"><i data-lucide="book-open" style="width: 14px; height: 14px; margin-right: 6px;"></i> The journal is ready - view it!</a>
+            <a class="btn secondary" id="viewer-link" style="display: none; margin-top: 24px;"><i data-lucide="book-open" style="width: 14px; height: 14px; margin-right: 6px;"></i> Keepsake ready - view highlights</a>
         </div>
 
         <div class="card" id="error-card">
-            <h1><i data-lucide="lock" style="width: 24px; height: 24px; color: var(--danger); vertical-align: middle; margin-right: 8px;"></i> Link issue</h1>
-            <p class="sub" id="error-msg" style="margin-top: 12px;">This share link is invalid or has expired. Ask the event organizer to send it again.</p>
+            <h1><i data-lucide="lock" style="width: 22px; height: 22px; color: var(--danger); vertical-align: middle; margin-right: 8px;"></i> Link expired</h1>
+            <p class="sub" id="error-msg" style="margin-top: 12px;">Ask the event organizer for a new invite link.</p>
         </div>
     </div>
 
@@ -385,12 +428,10 @@
         const shareCode = new URLSearchParams(window.location.search).get('code') || '';
         const EVENT_ICONS = { trip: 'compass', birthday: 'gift', wedding: 'heart', sports_match: 'award', reunion: 'users', other: 'camera' };
 
-        // Save name immediately
         function saveName(val) {
             localStorage.setItem('mw_contributor_name', val.trim());
         }
 
-        // Switch Tabs
         function switchTab(tabId) {
             document.querySelectorAll('.ingress-tab-btn').forEach(btn => {
                 btn.classList.remove('active');
@@ -399,18 +440,14 @@
                 panel.classList.remove('active');
             });
 
-            // Find clicked button
             const activeBtn = Array.from(document.querySelectorAll('.ingress-tab-btn')).find(b => 
                 b.getAttribute('onclick').includes(tabId)
             );
             if (activeBtn) activeBtn.classList.add('active');
             document.getElementById(tabId).classList.add('active');
-
-            // Reset status
             document.getElementById('status').textContent = '';
         }
 
-        // Load Event info
         async function loadEvent() {
             try {
                 const res = await fetch(`/api/session-public/${encodeURIComponent(sessionId)}?code=${encodeURIComponent(shareCode)}`);
@@ -419,15 +456,15 @@
 
                 const iconName = EVENT_ICONS[data.event_type] || 'camera';
                 document.getElementById('event-title').innerHTML =
-                    `<i data-lucide="${iconName}" style="width: 28px; height: 28px; color: var(--accent); margin-right: 8px; vertical-align: middle;"></i>${data.name}`;
+                    `<i data-lucide="${iconName}" style="width: 24px; height: 24px; color: var(--accent); margin-right: 8px; vertical-align: middle;"></i>${data.name}`;
                 lucide.createIcons();
                 document.getElementById('photo-count').textContent =
-                    `${data.photo_count} item(s) collected so far`;
+                    `${data.photo_count} memory items collected`;
 
                 const viewerLink = document.getElementById('viewer-link');
                 if (data.journal_ready && data.viewer_url) {
                     viewerLink.href = data.viewer_url;
-                    viewerLink.style.display = 'block';
+                    viewerLink.style.display = 'flex';
                 }
                 document.getElementById('main-card').style.display = 'block';
             } catch (e) {
@@ -436,7 +473,7 @@
             }
         }
 
-        // --- File Uploader Logic ---
+        // --- Upload Logic ---
         const SUPPORTED_EXT = /\.(jpe?g|png|heic|mp4|mov|pdf)$/i;
         const BATCH_SIZE = 10;
 
@@ -449,7 +486,7 @@
             const status = document.getElementById('status');
             if (!files.length) {
                 status.style.color = 'var(--danger)';
-                status.textContent = 'No supported files found (JPEG/PNG/HEIC/MP4/MOV/PDF only).';
+                status.textContent = 'Supported types only (JPEG/PNG/HEIC/MP4/MOV/PDF).';
                 return;
             }
 
@@ -463,13 +500,13 @@
             try {
                 for (let i = 0; i < files.length; i += BATCH_SIZE) {
                     const batch = files.slice(i, i + BATCH_SIZE);
-                    status.textContent = `Uploading ${Math.min(i + batch.length, files.length)} of ${files.length} memory item(s)...`;
+                    status.textContent = `Uploading ${Math.min(i + batch.length, files.length)} of ${files.length}...`;
 
                     const formData = new FormData();
                     formData.append('contributor_name', name);
                     formData.append('session_id', sessionId);
                     formData.append('share_code', shareCode);
-                    for (const f of batch) formData.append('photos', f); // Backend parameter named 'photos'
+                    for (const f of batch) formData.append('photos', f);
 
                     const res = await fetch('/upload', { method: 'POST', body: formData });
                     const data = await res.json();
@@ -481,30 +518,23 @@
                     }
                 }
                 status.style.color = failed ? 'var(--accent)' : 'var(--success)';
-                let msg = `✅ ${uploaded} item(s) uploaded successfully!`;
+                let msg = `Saved ${uploaded} memory item(s). Thank you!`;
                 if (failed) msg += ` (${failed} failed)`;
-                if (skipped) msg += ` ${skipped} unsupported file(s) skipped.`;
                 status.textContent = msg;
                 loadEvent();
             } catch (e) {
                 status.style.color = 'var(--danger)';
-                status.textContent = uploaded
-                    ? `Uploaded ${uploaded}, then failed: ${e.message}`
-                    : 'Upload failed: ' + e.message;
+                status.textContent = 'Upload failed: ' + e.message;
             }
             document.getElementById('file-input').value = '';
             document.getElementById('folder-input').value = '';
         }
 
-        // --- Note Ingress with local Auto-Save ---
+        // --- Note Draft Persistence ---
         function saveNoteDraft(text) {
             localStorage.setItem(`mw_note_draft_${sessionId}`, text);
             const indicator = document.getElementById('draft-saved');
-            if (text.trim().length > 0) {
-                indicator.style.display = 'block';
-            } else {
-                indicator.style.display = 'none';
-            }
+            indicator.style.display = text.trim().length > 0 ? 'flex' : 'none';
         }
 
         function clearNoteDraft() {
@@ -527,7 +557,6 @@
             const name = document.getElementById('contributor-name').value.trim() || 'Anonymous';
             saveName(name);
 
-            // Create virtual file
             const blob = new Blob([bodyText], { type: 'text/plain' });
             const file = new File([blob], 'story_note.txt', { type: 'text/plain' });
 
@@ -539,14 +568,14 @@
                 formData.append('contributor_name', name);
                 formData.append('session_id', sessionId);
                 formData.append('share_code', shareCode);
-                formData.append('photos', file); // upload text note as file
+                formData.append('photos', file);
 
                 const res = await fetch('/upload', { method: 'POST', body: formData });
                 const data = await res.json();
 
                 if (res.ok && (data.status === 'success' || data.status === 'partial_success')) {
                     status.style.color = 'var(--success)';
-                    status.textContent = '✅ Note saved and added to trip journal!';
+                    status.textContent = 'Saved note to the trip keepsake!';
                     clearNoteDraft();
                     loadEvent();
                 } else {
@@ -554,11 +583,11 @@
                 }
             } catch (e) {
                 status.style.color = 'var(--danger)';
-                status.textContent = 'Failed to save note: ' + e.message;
+                status.textContent = 'Failed: ' + e.message;
             }
         }
 
-        // --- Voice Recorder In-Browser (MediaRecorder) ---
+        // --- Minimalist Voice Recording ---
         let mediaRecorder;
         let audioChunks = [];
         let audioBlob;
@@ -599,9 +628,8 @@
                 recordTimerInterval = setInterval(updateRecordTimer, 1000);
 
                 document.getElementById('btn-record-start').style.display = 'none';
-                document.getElementById('btn-record-pause').style.display = 'none'; // simple start/stop
                 document.getElementById('btn-record-stop').style.display = 'inline-flex';
-                document.getElementById('recorder-status').textContent = 'Recording active... speak clearly';
+                document.getElementById('recorder-status').textContent = 'Recording memory...';
                 document.getElementById('audio-player').style.display = 'none';
                 document.getElementById('voice-upload-controls').style.display = 'none';
                 document.getElementById('status').textContent = '';
@@ -617,7 +645,7 @@
                 clearInterval(recordTimerInterval);
                 document.getElementById('btn-record-start').style.display = 'inline-flex';
                 document.getElementById('btn-record-stop').style.display = 'none';
-                document.getElementById('recorder-status').textContent = 'Recording finished - review below';
+                document.getElementById('recorder-status').textContent = 'Listen below';
                 document.getElementById('voice-upload-controls').style.display = 'flex';
             }
         }
@@ -628,7 +656,7 @@
             document.getElementById('audio-player').style.display = 'none';
             document.getElementById('voice-upload-controls').style.display = 'none';
             document.getElementById('record-timer').textContent = '00:00';
-            document.getElementById('recorder-status').textContent = 'Recording discarded - ready to redo';
+            document.getElementById('recorder-status').textContent = 'Ready to record';
             document.getElementById('status').textContent = '';
         }
 
@@ -644,7 +672,6 @@
             saveName(name);
 
             const file = new File([audioBlob], 'voice_note.wav', { type: 'audio/wav' });
-
             status.style.color = 'var(--accent)';
             status.textContent = 'Saving voice note...';
 
@@ -660,7 +687,7 @@
 
                 if (res.ok && (data.status === 'success' || data.status === 'partial_success')) {
                     status.style.color = 'var(--success)';
-                    status.textContent = '✅ Voice note uploaded and processed!';
+                    status.textContent = 'Saved voice note to the trip keepsake!';
                     discardVoice();
                     loadEvent();
                 } else {
@@ -668,21 +695,19 @@
                 }
             } catch (e) {
                 status.style.color = 'var(--danger)';
-                status.textContent = 'Failed to upload voice note: ' + e.message;
+                status.textContent = 'Failed: ' + e.message;
             }
         }
 
-        // Folder picking isn't supported on iOS/Android - hide folder zones
         if (!('webkitdirectory' in document.createElement('input'))) {
             document.getElementById('folder-zone').style.display = 'none';
         }
 
-        // Load cached inputs
         document.getElementById('contributor-name').value = localStorage.getItem('mw_contributor_name') || '';
         const savedNote = localStorage.getItem(`mw_note_draft_${sessionId}`);
         if (savedNote) {
             document.getElementById('note-body').value = savedNote;
-            document.getElementById('draft-saved').style.display = 'block';
+            document.getElementById('draft-saved').style.display = 'flex';
         }
 
         loadEvent();
