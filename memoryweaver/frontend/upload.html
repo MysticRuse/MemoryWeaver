@@ -2312,11 +2312,87 @@
             
             const imgContainer = document.createElement('div');
             imgContainer.className = 'photo-img-container';
+            imgContainer.style.display = 'flex';
+            imgContainer.style.alignItems = 'center';
+            imgContainer.style.justifyContent = 'center';
+            imgContainer.style.background = '#17191D';
             
-            const img = document.createElement('img');
-            img.src = withSession(`/api/serve-raw?filename=${encodeURIComponent(item.filename)}`);
-            img.loading = 'lazy';
-            imgContainer.appendChild(img);
+            const filenameLower = item.filename.toLowerCase();
+            if (filenameLower.endsWith('.mp4') || filenameLower.endsWith('.mov')) {
+                const video = document.createElement('video');
+                video.src = withSession(`/media?filename=${encodeURIComponent(item.filename)}`);
+                video.controls = true;
+                video.muted = true;
+                video.style.width = '100%';
+                video.style.height = '100%';
+                video.style.objectFit = 'cover';
+                imgContainer.appendChild(video);
+            } else if (filenameLower.endsWith('.m4a') || filenameLower.endsWith('.mp3') || filenameLower.endsWith('.webm') || filenameLower.endsWith('.wav')) {
+                imgContainer.style.flexDirection = 'column';
+                imgContainer.style.padding = '12px 8px';
+                
+                const icon = document.createElement('div');
+                icon.innerHTML = `<i data-lucide="mic" style="width: 24px; height: 24px; color: var(--accent); margin-bottom: 4px;"></i>`;
+                
+                const aud = document.createElement('audio');
+                aud.src = withSession(`/media?filename=${encodeURIComponent(item.filename)}`);
+                aud.controls = true;
+                aud.style.width = '100%';
+                aud.style.maxHeight = '28px';
+                
+                imgContainer.appendChild(icon);
+                imgContainer.appendChild(aud);
+            } else if (filenameLower.endsWith('.pdf')) {
+                imgContainer.style.flexDirection = 'column';
+                const icon = document.createElement('div');
+                icon.innerHTML = `<i data-lucide="file-text" style="width: 28px; height: 28px; color: var(--accent); margin-bottom: 4px;"></i>`;
+                
+                const link = document.createElement('a');
+                link.href = withSession(`/media?filename=${encodeURIComponent(item.filename)}`);
+                link.target = '_blank';
+                link.style.fontSize = '10px';
+                link.style.color = 'var(--accent)';
+                link.style.textDecoration = 'none';
+                link.style.fontWeight = '700';
+                link.textContent = 'View PDF';
+                
+                imgContainer.appendChild(icon);
+                imgContainer.appendChild(link);
+            } else if (filenameLower.endsWith('.txt')) {
+                imgContainer.style.flexDirection = 'column';
+                imgContainer.style.padding = '8px';
+                
+                const icon = document.createElement('div');
+                icon.innerHTML = `<i data-lucide="pen-line" style="width: 20px; height: 20px; color: var(--accent); margin-bottom: 4px;"></i>`;
+                
+                const preview = document.createElement('div');
+                preview.style.fontSize = '9px';
+                preview.style.color = 'var(--text-muted)';
+                preview.style.textAlign = 'center';
+                preview.style.overflow = 'hidden';
+                preview.style.display = '-webkit-box';
+                preview.style.webkitLineClamp = '3';
+                preview.style.webkitBoxOrient = 'vertical';
+                preview.style.wordBreak = 'break-word';
+                preview.textContent = 'Story note text file';
+                
+                fetch(withSession(`/media?filename=${encodeURIComponent(item.filename)}`))
+                    .then(r => r.text())
+                    .then(t => {
+                        preview.textContent = t;
+                    });
+                
+                imgContainer.appendChild(icon);
+                imgContainer.appendChild(preview);
+            } else {
+                const img = document.createElement('img');
+                img.src = withSession(`/media?filename=${encodeURIComponent(item.filename)}`);
+                img.loading = 'lazy';
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'cover';
+                imgContainer.appendChild(img);
+            }
             
             const body = document.createElement('div');
             body.className = 'photo-card-body';

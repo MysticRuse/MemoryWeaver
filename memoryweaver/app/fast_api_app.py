@@ -162,19 +162,33 @@ def require_admin_token(x_mw_token: str | None = Header(None)):
 
 @app.get("/media")
 def serve_media(filename: str, session_id: str = "default"):
-    """Serves a curated photo as a metadata-free JPEG (max 1600px long edge).
-
-    Re-encoding through PIL drops EXIF entirely (GPS, device serials), which is
-    what makes this safe to expose while the raw uploads directory stays private.
+    """Serves curated media. Non-images (video/voice/docs) are returned directly,
+    while photos are re-encoded to JPEG to drop metadata (EXIF).
     """
     from PIL import Image
     import io
+    from fastapi.responses import FileResponse
 
     safe_filename = os.path.basename(filename)  # path-traversal guard
     session_storage = StorageHelper(session_id=session_id)
     full_path = os.path.join(session_storage.local_base, "uploads", safe_filename)
     if not os.path.exists(full_path):
-        raise HTTPException(status_code=404, detail="Photo not found")
+        raise HTTPException(status_code=404, detail="Media not found")
+
+    _, ext = os.path.splitext(safe_filename.lower())
+    if ext in (".mp4", ".mov", ".m4a", ".mp3", ".webm", ".wav", ".pdf", ".txt"):
+        mime_types = {
+            ".mp4": "video/mp4",
+            ".mov": "video/quicktime",
+            ".m4a": "audio/mp4",
+            ".mp3": "audio/mpeg",
+            ".webm": "audio/webm",
+            ".wav": "audio/wav",
+            ".pdf": "application/pdf",
+            ".txt": "text/plain; charset=utf-8"
+        }
+        media_type = mime_types.get(ext, "application/octet-stream")
+        return FileResponse(path=full_path, media_type=media_type)
 
     try:
         with Image.open(full_path) as im:

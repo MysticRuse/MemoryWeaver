@@ -202,6 +202,40 @@
             margin-top: 4px;
         }
 
+        /* Prompt Chips for guided speech-to-story prompts */
+        .prompt-chips {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 16px;
+            scrollbar-width: none;
+        }
+        .prompt-chips::-webkit-scrollbar {
+            display: none;
+        }
+        .prompt-chip {
+            white-space: nowrap;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .prompt-chip:hover {
+            color: var(--text);
+            border-color: var(--text-muted);
+        }
+        .prompt-chip.active {
+            background: var(--accent-tint-bg);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
         /* Buttons */
         .btn {
             display: inline-flex;
@@ -383,7 +417,17 @@
 
             <!-- Tab: Voice Recorder -->
             <div class="tab-panel" id="tab-voice">
+                <label style="margin-bottom: 8px;">Pick a storytelling prompt (optional):</label>
+                <div class="prompt-chips" id="voice-prompts-container">
+                    <button class="prompt-chip active" onclick="selectPrompt(this, '')">🎙️ Custom Note</button>
+                    <button class="prompt-chip" onclick="selectPrompt(this, 'My favorite memory of today')">🌟 Favorite Memory</button>
+                    <button class="prompt-chip" onclick="selectPrompt(this, 'The funniest thing that happened')">😂 Funniest Moment</button>
+                    <button class="prompt-chip" onclick="selectPrompt(this, 'Tell a story about someone featured here')">👤 Family Story</button>
+                    <button class="prompt-chip" onclick="selectPrompt(this, 'What was the most surprising thing you saw')">😮 Most Surprising</button>
+                </div>
+
                 <div class="recorder-container">
+                    <div id="active-prompt-banner" style="display: none; font-size: 0.8rem; font-weight: 600; color: var(--accent); background: var(--accent-glow); border: 1px solid var(--accent-tint-border); border-radius: 8px; padding: 6px 12px; margin-bottom: 12px; text-align: center; width: 100%;"></div>
                     <span class="recorder-status-text" id="recorder-status">Ready to record</span>
                     <div class="record-timer" id="record-timer">00:00</div>
                     
@@ -660,6 +704,25 @@
             document.getElementById('status').textContent = '';
         }
 
+        let activePrompt = "";
+
+        function selectPrompt(elem, promptText) {
+            document.querySelectorAll('.prompt-chip').forEach(chip => {
+                chip.classList.remove('active');
+            });
+            elem.classList.add('active');
+
+            activePrompt = promptText;
+
+            const banner = document.getElementById('active-prompt-banner');
+            if (promptText) {
+                banner.textContent = `Topic: "${promptText}"`;
+                banner.style.display = 'block';
+            } else {
+                banner.style.display = 'none';
+            }
+        }
+
         async function uploadVoice() {
             const status = document.getElementById('status');
             if (!audioBlob) {
@@ -671,7 +734,13 @@
             const name = document.getElementById('contributor-name').value.trim() || 'Anonymous';
             saveName(name);
 
-            const file = new File([audioBlob], 'voice_note.wav', { type: 'audio/wav' });
+            // Slugify prompt text for filename injection
+            const promptSlug = activePrompt 
+                ? activePrompt.toLowerCase().replace(/[^a-z0-9]+/g, '_').substring(0, 30) + '_' 
+                : '';
+            const filename = `${promptSlug}voice_note.wav`;
+            const file = new File([audioBlob], filename, { type: 'audio/wav' });
+            
             status.style.color = 'var(--accent)';
             status.textContent = 'Saving voice note...';
 
