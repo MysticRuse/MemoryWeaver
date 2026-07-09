@@ -1554,7 +1554,11 @@
                 const sData = await sRes.json();
                 const excluded = sData.session ? (sData.session.excluded_photos || []) : [];
                 
-                const allPhotos = data.photos || [];
+                const rawPhotos = data.photos || [];
+                const allPhotos = rawPhotos.map(x => {
+                    if (typeof x === 'string') return { filename: x, date: "" };
+                    return { filename: x.filename || "", date: x.date || "" };
+                });
                 const includedCount = allPhotos.filter(x => !excluded.includes(x.filename)).length;
                 const excludedCount = allPhotos.filter(x => excluded.includes(x.filename)).length;
 
@@ -3435,7 +3439,11 @@
                 const res = await fetch(withSession('/api/list-uploads'), { headers: authHeaders() });
                 const listData = await res.json();
                 if (listData.status !== 'success') throw new Error(listData.message);
-                const allPhotos = listData.photos || [];
+                const rawPhotos = listData.photos || [];
+                const allPhotos = rawPhotos.map(x => {
+                    if (typeof x === 'string') return { filename: x, date: "" };
+                    return { filename: x.filename || "", date: x.date || "" };
+                });
                 const allPhotoNames = allPhotos.map(x => x.filename);
                 const photoDateMap = {};
                 allPhotos.forEach(x => {
