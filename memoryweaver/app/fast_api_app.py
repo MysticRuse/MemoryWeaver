@@ -998,15 +998,17 @@ async def save_photo_voice(
         
         should_synthesize = False
         if transcription and not is_sync_request and not audio and not delete_audio:
-            # Check if voice file doesn't exist on disk
-            has_voice_file = False
-            if old_voice_note:
+            is_edited = (transcribe_updated == "true")
+            
+            # Check if a valid playable voice file already exists
+            has_valid_voice_file = False
+            if old_voice_note and old_voice_note.endswith('.wav'):
                 upload_dir = os.path.join(session_storage.local_base, "uploads")
                 if os.path.exists(os.path.join(upload_dir, old_voice_note)):
-                    has_voice_file = True
+                    has_valid_voice_file = True
             
-            is_edited = (transcribe_updated == "true")
-            if not has_voice_file or transcription != old_transcription or is_edited:
+            # Synthesize if: no valid file, text changed, user explicitly saved, or old file is webm (broken)
+            if not has_valid_voice_file or transcription != old_transcription or is_edited:
                 should_synthesize = True
                 
         print(f"DEBUG SAVE old_transcription={old_transcription}, old_voice_note={old_voice_note}, is_sync={is_sync_request}, should_synthesize={should_synthesize}")

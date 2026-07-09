@@ -2587,7 +2587,8 @@
             formData.append('filename', selectedFilename);
             formData.append('transcription', transcriptionText);
             formData.append('duration', recordingDuration);
-            formData.append('transcribe_updated', isTranscriptionDirty ? 'true' : 'false');
+            // Always mark as updated on explicit user saves — the user intentionally clicked Save
+            formData.append('transcribe_updated', 'true');
             if (audioBlob) {
                 formData.append('audio', audioBlob, 'recording.webm');
             }
@@ -2621,6 +2622,15 @@
                             playback.style.display = 'block';
                             if (rerecordBtn) rerecordBtn.style.display = 'inline-flex';
                             if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+                            
+                            // Update timer from server-returned duration
+                            if (data.voice_duration && data.voice_duration > 0) {
+                                recordingDuration = data.voice_duration;
+                                const mins = String(Math.floor(recordingDuration / 60)).padStart(2, '0');
+                                const secs = String(Math.round(recordingDuration % 60)).padStart(2, '0');
+                                const timerEl = document.getElementById('voice-timer');
+                                if (timerEl) timerEl.textContent = `${mins}:${secs} / 01:00`;
+                            }
                         } else {
                             playback.src = '';
                             playback.style.display = 'none';
