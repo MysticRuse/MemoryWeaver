@@ -903,19 +903,45 @@
             gap: 4px;
             user-select: none;
         }
-        .pool-photo-card .photo-date-label {
+        .photo-date-calendar-badge {
             position: absolute;
             bottom: 8px;
             left: 8px;
-            background: rgba(255, 255, 255, 0.95);
-            color: #303030;
-            padding: 3px 8px;
-            border-radius: 6px;
+            background: #FFFFFF;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            width: 36px;
+            height: 38px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 5;
+            user-select: none;
+        }
+        .photo-date-calendar-month {
+            background: #EB2371;
+            color: #FFFFFF;
+            font-size: 8px;
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 9px;
-            font-weight: 700;
-            border: 1.5px solid #A0A0A0;
-            z-index: 2;
+            font-weight: 800;
+            text-align: center;
+            padding: 1px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1;
+        }
+        .photo-date-calendar-day {
+            color: var(--text);
+            font-size: 13px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 800;
+            text-align: center;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            background: #FFFFFF;
         }
         .pool-photo-card.selected-card {
             border: 3px solid var(--accent) !important;
@@ -2516,13 +2542,35 @@
                         card.appendChild(cTag);
                     }
 
-                    // Add date tag to bottom left corner
-                    if (captureDate) {
-                        const dTag = document.createElement('span');
-                        dTag.className = 'photo-date-label';
-                        dTag.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4.5px; vertical-align: -1px; display: inline-block;"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>${captureDate}`;
-                        dTag.title = `Taken on ${captureDate}`;
-                        card.appendChild(dTag);
+                    // Add date tag to bottom left corner as a visual desk calendar sheet icon
+                    if (captureDate && captureDate !== '-' && captureDate !== 'Unknown') {
+                        const dateParts = captureDate.split(' ')[0].split('-');
+                        let monthStr = 'DATE';
+                        let dayStr = '01';
+                        if (dateParts.length === 3) {
+                            const monthNum = parseInt(dateParts[1], 10);
+                            dayStr = dateParts[2];
+                            const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+                            monthStr = months[monthNum - 1] || 'DATE';
+                        } else if (dateParts.length === 1 && dateParts[0]) {
+                            dayStr = dateParts[0].substring(0, 5);
+                        }
+                        
+                        const cBadge = document.createElement('div');
+                        cBadge.className = 'photo-date-calendar-badge';
+                        cBadge.title = `Captured on ${captureDate}`;
+                        
+                        const cMonth = document.createElement('div');
+                        cMonth.className = 'photo-date-calendar-month';
+                        cMonth.textContent = monthStr;
+                        
+                        const cDay = document.createElement('div');
+                        cDay.className = 'photo-date-calendar-day';
+                        cDay.textContent = dayStr;
+                        
+                        cBadge.appendChild(cMonth);
+                        cBadge.appendChild(cDay);
+                        card.appendChild(cBadge);
                     }
                     
                     tray.appendChild(card);
