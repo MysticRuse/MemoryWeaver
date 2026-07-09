@@ -408,6 +408,15 @@ def clear_session(session_id: str = "default"):
             except Exception as e:
                 print(f"Error deleting local memory_bank.json: {e}")
         
+        # Delete local photos_metadata.json if exists
+        try:
+            session_dir = os.path.join(session_storage.local_base, "sessions", session_id)
+            meta_path = os.path.join(session_dir, "photos_metadata.json")
+            if os.path.exists(meta_path):
+                os.remove(meta_path)
+        except Exception as e:
+            print(f"Error deleting photos_metadata.json: {e}")
+            
         # Reset progress states
         state = _get_progress_state(session_id)
         state["pipeline"] = {"current": 0, "total": 0, "status": "idle", "phase": "initiating", "start_time": 0.0}
@@ -628,24 +637,165 @@ def get_photo_date(file_path: str) -> str:
         return "Unknown Date"
 
 
-@app.get("/api/list-uploads", dependencies=[Depends(require_admin_token)])
-def list_uploads(session_id: str = "default"):
-    """Lists the filenames and metadata of all uploaded photos in a session."""
+def analyze_all_photos_background(session_id: str):
+    """Iterates through all uploaded photos in a session, running the photographer critique in the background
+    to pre-cache analysis results for when the user clicks them in the UI.
+    """
     try:
         session_storage = StorageHelper(session_id=session_id)
         upload_dir = os.path.join(session_storage.local_base, "uploads")
+        if not os.path.exists(upload_dir):
+            return
+            
+        file_list = sorted([
+            f for f in os.listdir(upload_dir)
+            if os.path.isfile(os.path.join(upload_dir, f)) and not f.startswith('.')
+        ])
+        
+        # Only process images (skip audio notes etc)
+        valid_extensions = {".jpg", ".jpeg", ".png", ".webp"}
+        image_files = [f for f in file_list if os.path.splitext(f.lower())[1] in valid_extensions]
+        
+        if not image_files:
+            return
+            
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            return
+            
+        # Load active metadata cache mapping
+        import json
+        session_dir = os.path.join(session_storage.local_base, "sessions", session_id)
+        metadata_file = os.path.join(session_dir, "photos_metadata.json")
+        photos_meta = {}
+        if os.path.exists(metadata_file):
+            try:
+                with open(metadata_file, "r") as f:
+                    photos_meta = json.load(f)
+            except Exception:
+                pass
+                
+        from google import genai
+        from PIL import Image
+        client = None
+        
+        # For each image, if gemini_analysis is missing, run it!
+        for filename in image_files:
+            if filename in photos_meta and photos_meta[filename].get("gemini_analysis"):
+                # Already analyzed, skip
+                continue
+                
+            # Initialize client lazily only if we need to do work
+            if not client:
+                client = genai.Client(api_key=api_key)
+                
+            full_path = os.path.join(upload_dir, filename)
+            if not os.path.exists(full_path):
+                continue
+                
+            try:
+                with Image.open(full_path) as img:
+                    if img.mode not in ('RGB', 'RGBA'):
+                        img = img.convert('RGB')
+                        
+                    prompt = (
+                        "You are a professional photographer reviewing a user's travel photo. "
+                        "Analyze this photo and provide your feedback in JSON format with these exact keys:\n"
+                        "{\n"
+                        "  \"summary\": \"Brief description of what is seen in the photo\",\n"
+                        "  \"rating\": \"A rating out of 10 (e.g. 8.5/10)\",\n"
+                        "  \"analysis\": \"An encouraging critique highlighting the strengths of the image (composition, lighting, mood) followed by clear, actionable tips on how the user could enhance their score or improve details when capturing a similar photo in the future\"\n"
+                        "}"
+                    )
+                    response = client.models.generate_content(
+                        model='gemini-2.5-flash',
+                        contents=[img, prompt]
+                    )
+                    text = response.text
+                    if "```json" in text:
+                        text = text.split("```json")[1].split("```")[0].strip()
+                    elif "```" in text:
+                        text = text.split("```")[1].split("```")[0].strip()
+                    gemini_analysis = json.loads(text.strip())
+                    
+                    # Refresh metadata from disk to avoid overwrite races
+                    if os.path.exists(metadata_file):
+                        try:
+                            with open(metadata_file, "r") as f:
+                                current_meta = json.load(f)
+                        except Exception:
+                            current_meta = photos_meta
+                    else:
+                        current_meta = photos_meta
+                        
+                    if filename not in current_meta:
+                        current_meta[filename] = {}
+                    current_meta[filename]["gemini_analysis"] = gemini_analysis
+                    
+                    os.makedirs(session_dir, exist_ok=True)
+                    with open(metadata_file, "w") as f:
+                        json.dump(current_meta, f, indent=4)
+                        
+                    # Keep local in-memory dict sync
+                    photos_meta = current_meta
+                    
+            except Exception as e:
+                print(f"Background analysis failed for {filename}: {e}")
+                
+    except Exception as e:
+        print(f"Failed background photos analysis task: {e}")
+
+
+@app.get("/api/list-uploads", dependencies=[Depends(require_admin_token)])
+def list_uploads(background_tasks: BackgroundTasks, session_id: str = "default"):
+    """Lists the filenames and metadata of all uploaded photos in a session."""
+    background_tasks.add_task(analyze_all_photos_background, session_id)
+    try:
+        import json
+        session_storage = StorageHelper(session_id=session_id)
+        upload_dir = os.path.join(session_storage.local_base, "uploads")
+        
+        # Load enhanced choices
+        photos_meta = {}
+        try:
+            session_dir = os.path.join(session_storage.local_base, "sessions", session_id)
+            metadata_file = os.path.join(session_dir, "photos_metadata.json")
+            if os.path.exists(metadata_file):
+                with open(metadata_file, "r") as f:
+                    photos_meta = json.load(f)
+        except Exception:
+            pass
+            
         photos = []
         if os.path.exists(upload_dir):
             file_list = sorted([
                 f for f in os.listdir(upload_dir)
-                if os.path.isfile(os.path.join(upload_dir, f)) and not f.startswith('.')
+                if os.path.isfile(os.path.join(upload_dir, f)) 
+                and not f.startswith('.')
+                and not f.lower().endswith('_enhanced.jpg')
+                and not f.lower().endswith('_original.jpg')
             ])
             for f in file_list:
                 full_path = os.path.join(upload_dir, f)
                 date_str = get_photo_date(full_path)
+                
+                is_enhanced = False
+                has_voice_note = False
+                voice_note = None
+                voice_duration = 0.0
+                if f in photos_meta:
+                    is_enhanced = photos_meta[f].get("is_enhanced", False)
+                    has_voice_note = bool(photos_meta[f].get("voice_note"))
+                    voice_note = photos_meta[f].get("voice_note")
+                    voice_duration = photos_meta[f].get("voice_duration", 0.0)
+                
                 photos.append({
                     "filename": f,
-                    "date": date_str
+                    "date": date_str,
+                    "is_enhanced": is_enhanced,
+                    "has_voice_note": has_voice_note,
+                    "voice_note": voice_note,
+                    "voice_duration": voice_duration
                 })
         return {"status": "success", "photos": photos, "session_id": session_id}
     except Exception as e:
@@ -690,7 +840,9 @@ def get_photo_metadata(filename: str, session_id: str = "default", force_refresh
         # 4. Load caption/transcription metadata if exists
         transcription = ""
         voice_note = None
+        voice_duration = 0.0
         gemini_analysis = None
+        is_enhanced = False
         try:
             import json
             session_dir = os.path.join(session_storage.local_base, "sessions", session_id)
@@ -701,7 +853,9 @@ def get_photo_metadata(filename: str, session_id: str = "default", force_refresh
                     if filename in photos_meta:
                         transcription = photos_meta[filename].get("transcription", "")
                         voice_note = photos_meta[filename].get("voice_note")
+                        voice_duration = photos_meta[filename].get("voice_duration", 0.0)
                         gemini_analysis = photos_meta[filename].get("gemini_analysis")
+                        is_enhanced = photos_meta[filename].get("is_enhanced", False)
         except Exception:
             pass
             
@@ -719,11 +873,15 @@ def get_photo_metadata(filename: str, session_id: str = "default", force_refresh
                         
                         prompt = (
                             "You are a professional photographer reviewing a user's travel photo. "
-                            "Analyze this photo and provide your feedback in JSON format with these exact keys:\n"
+                            "Analyze this photo and provide your feedback in JSON format. Keep the feedback concise, short and punchy. Use these exact keys:\n"
                             "{\n"
-                            "  \"summary\": \"Brief description of what is seen in the photo\",\n"
+                            "  \"summary\": \"Brief description of what is seen in the photo (max 2 sentences)\",\n"
                             "  \"rating\": \"A rating out of 10 (e.g. 8.5/10)\",\n"
-                            "  \"analysis\": \"An encouraging critique highlighting the strengths of the image (composition, lighting, mood) followed by clear, actionable tips on how the user could enhance their score or improve details when capturing a similar photo in the future\"\n"
+                            "  \"critique\": \"A short, encouraging critique highlighting composition/mood (max 3 sentences)\",\n"
+                            "  \"tips\": [\n"
+                            "    \"Short actionable pro tip 1\",\n"
+                            "    \"Short actionable pro tip 2\"\n"
+                            "  ]\n"
                             "}"
                         )
                         response = client.models.generate_content(
@@ -756,13 +914,15 @@ def get_photo_metadata(filename: str, session_id: str = "default", force_refresh
                     gemini_analysis = {
                         "summary": "Could not complete visual summary.",
                         "rating": "N/A",
-                        "analysis": f"Analysis failed: {str(e)}"
+                        "critique": f"Analysis failed: {str(e)}",
+                        "tips": []
                     }
             else:
                 gemini_analysis = {
                     "summary": "Gemini API key is not set.",
                     "rating": "N/A",
-                    "analysis": "Please set GEMINI_API_KEY environment variable to enable automatic visual ratings."
+                    "critique": "Please set GEMINI_API_KEY environment variable to enable automatic visual ratings.",
+                    "tips": []
                 }
             
         return {
@@ -778,9 +938,20 @@ def get_photo_metadata(filename: str, session_id: str = "default", force_refresh
                 "longitude": lon
             },
             "location": location_desc,
+            "altitude": metadata.get("altitude"),
+            "heading": metadata.get("heading"),
+            "aperture": metadata.get("aperture"),
+            "shutter_speed": metadata.get("shutter_speed"),
+            "iso": metadata.get("iso"),
+            "focal_length": metadata.get("focal_length"),
+            "lens": metadata.get("lens"),
+            "software": metadata.get("software"),
+            "color_space": metadata.get("color_space"),
             "transcription": transcription,
             "voice_note": voice_note,
-            "gemini_analysis": gemini_analysis
+            "voice_duration": voice_duration,
+            "gemini_analysis": gemini_analysis,
+            "is_enhanced": is_enhanced
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -791,10 +962,15 @@ async def save_photo_voice(
     session_id: str = Form(...),
     filename: str = Form(...),
     transcription: str = Form(""),
-    audio: UploadFile = File(None)
+    audio: UploadFile = File(None),
+    delete_audio: bool = Form(False),
+    duration: float = Form(0.0),
+    transcribe_updated: str = Form("false"),
+    is_sync: str = Form("false")
 ):
     """Saves transcription caption and voice recordings linked to a photo."""
     try:
+        print(f"DEBUG SAVE: filename={filename}, transcription={transcription}, delete_audio={delete_audio}, duration={duration}, has_audio={audio is not None}, transcribe_updated={transcribe_updated}, is_sync={is_sync}")
         session_storage = StorageHelper(session_id=session_id)
         session_dir = os.path.join(session_storage.local_base, "sessions", session_id)
         os.makedirs(session_dir, exist_ok=True)
@@ -810,6 +986,28 @@ async def save_photo_voice(
             except Exception:
                 pass
                 
+        # Detect if we should synthesize audio dynamically
+        old_transcription = photos_meta.get(filename, {}).get("transcription", "")
+        old_voice_note = photos_meta.get(filename, {}).get("voice_note")
+        
+        # Determine if this is a background duration sync request
+        is_sync_request = (is_sync == "true")
+        
+        should_synthesize = False
+        if transcription and not is_sync_request and not audio and not delete_audio:
+            # Check if voice file doesn't exist on disk
+            has_voice_file = False
+            if old_voice_note:
+                upload_dir = os.path.join(session_storage.local_base, "uploads")
+                if os.path.exists(os.path.join(upload_dir, old_voice_note)):
+                    has_voice_file = True
+            
+            is_edited = (transcribe_updated == "true")
+            if not has_voice_file or transcription != old_transcription or is_edited:
+                should_synthesize = True
+                
+        print(f"DEBUG SAVE old_transcription={old_transcription}, old_voice_note={old_voice_note}, is_sync={is_sync_request}, should_synthesize={should_synthesize}")
+
         # If audio is uploaded, save it to the session uploads directory
         audio_filename = None
         if audio:
@@ -821,7 +1019,95 @@ async def save_photo_voice(
             with open(audio_path, "wb") as f:
                 content = await audio.read()
                 f.write(content)
-                
+        elif should_synthesize:
+            # Voice Cloning / Speech Synthesis via Gemini API
+            api_key = os.getenv("GEMINI_API_KEY")
+            if api_key:
+                try:
+                    from google import genai
+                    from google.genai import types
+                    import base64
+                    
+                    client = genai.Client(api_key=api_key)
+                    contents = []
+                    
+                    # Look for old voice note to use as cloning reference
+                    ref_audio_path = None
+                    if old_voice_note:
+                        upload_dir = os.path.join(session_storage.local_base, "uploads")
+                        ref_audio_path = os.path.join(upload_dir, old_voice_note)
+                        
+                    if ref_audio_path and os.path.exists(ref_audio_path):
+                        with open(ref_audio_path, "rb") as f:
+                            ref_bytes = f.read()
+                        contents.append(
+                            types.Part.from_bytes(
+                                data=ref_bytes,
+                                mime_type="audio/webm"
+                            )
+                        )
+                        contents.append(
+                            "You are a voice cloning model. Listen to the speaker's voice in the provided audio file. "
+                            "Read the following text out loud in the exact same voice, gender, pitch, accent, and speed "
+                            "as the speaker in the audio. Return ONLY the synthesized speech: " + transcription
+                        )
+                    else:
+                        contents.append(
+                            "Synthesize the following text as natural spoken audio: " + transcription
+                        )
+                        
+                    response = client.models.generate_content(
+                        model="gemini-2.0-flash",
+                        contents=contents,
+                        config=types.GenerateContentConfig(
+                            response_modalities=["AUDIO"],
+                            speech_config=types.SpeechConfig(
+                                voice_config=types.VoiceConfig(
+                                    prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                                        voice_name="Puck"
+                                    )
+                                )
+                            )
+                        )
+                    )
+                    
+                    # Extract synthesized audio bytes
+                    synthesized_bytes = None
+                    for part in response.candidates[0].content.parts:
+                        if part.inline_data:
+                            raw_data = part.inline_data.data
+                            if isinstance(raw_data, str):
+                                synthesized_bytes = base64.b64decode(raw_data)
+                            else:
+                                synthesized_bytes = raw_data
+                            break
+                            
+                    if synthesized_bytes:
+                        print(f"Synthesized voice bytes: {len(synthesized_bytes)} bytes")
+                        base_name, _ = os.path.splitext(filename)
+                        audio_filename = f"voice_{base_name}.webm"
+                        upload_dir = os.path.join(session_storage.local_base, "uploads")
+                        os.makedirs(upload_dir, exist_ok=True)
+                        audio_path = os.path.join(upload_dir, audio_filename)
+                        with open(audio_path, "wb") as f:
+                            f.write(synthesized_bytes)
+                            
+                        # Estimate wav duration if possible, otherwise let client update it
+                        est_duration = 0.0
+                        try:
+                            import wave
+                            import io
+                            with wave.open(io.BytesIO(synthesized_bytes), 'rb') as wav:
+                                est_duration = wav.getnframes() / float(wav.getframerate())
+                        except Exception:
+                            pass
+                            
+                        duration = est_duration
+                    else:
+                        print("Failed to find inline_data with audio bytes in Gemini response.")
+                except Exception as e:
+                    print(f"Failed voice synthesis: {e}")
+                    
         # Update metadata mapping
         if filename not in photos_meta:
             photos_meta[filename] = {}
@@ -829,11 +1115,31 @@ async def save_photo_voice(
         photos_meta[filename]["transcription"] = transcription
         if audio_filename:
             photos_meta[filename]["voice_note"] = audio_filename
+            photos_meta[filename]["voice_duration"] = duration
+            
+        if delete_audio:
+            if "voice_note" in photos_meta[filename]:
+                old_voice = photos_meta[filename]["voice_note"]
+                photos_meta[filename].pop("voice_note", None)
+                photos_meta[filename].pop("voice_duration", None)
+                try:
+                    upload_dir = os.path.join(session_storage.local_base, "uploads")
+                    old_path = os.path.join(upload_dir, old_voice)
+                    if os.path.exists(old_path):
+                        os.remove(old_path)
+                except Exception as e:
+                    print(f"Error removing voice note file {old_voice}: {e}")
             
         with open(metadata_file, "w") as f:
             json.dump(photos_meta, f, indent=4)
             
-        return {"status": "success", "message": "Voice note and transcription saved successfully."}
+        return {
+            "status": "success", 
+            "message": "Voice note and transcription saved successfully.",
+            "voice_note": audio_filename or photos_meta.get(filename, {}).get("voice_note"),
+            "transcription": transcription,
+            "voice_duration": photos_meta.get(filename, {}).get("voice_duration", 0.0)
+        }
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -936,6 +1242,194 @@ def run_photo_action(req: PhotoActionRequest):
                 result_text = response.text.strip()
                 
         return {"status": "success", "result": result_text}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+def apply_enhancements(image_path, out_path, brightness: float, contrast: float, saturation: float, sharpness: float, warmth: float):
+    """
+    Applies brightness, contrast, saturation, sharpness, and warmth enhancements.
+    All factors are floats, where 1.0 means no change.
+    """
+    from PIL import Image, ImageEnhance
+    with Image.open(image_path) as img:
+        if img.mode not in ('RGB', 'RGBA'):
+            img = img.convert('RGB')
+            
+        # 1. Brightness
+        if brightness != 1.0:
+            enhancer = ImageEnhance.Brightness(img)
+            img = enhancer.enhance(brightness)
+            
+        # 2. Contrast
+        if contrast != 1.0:
+            enhancer = ImageEnhance.Contrast(img)
+            img = enhancer.enhance(contrast)
+            
+        # 3. Saturation (Color)
+        if saturation != 1.0:
+            enhancer = ImageEnhance.Color(img)
+            img = enhancer.enhance(saturation)
+            
+        # 4. Sharpness
+        if sharpness != 1.0:
+            enhancer = ImageEnhance.Sharpness(img)
+            img = enhancer.enhance(sharpness)
+            
+        # 5. Warmth (shifting red channel up and blue channel down)
+        if warmth != 1.0:
+            r, g, b = img.split()
+            r_data = r.point(lambda i: min(255, max(0, int(i * warmth))))
+            b_data = b.point(lambda i: min(255, max(0, int(i * (2.0 - warmth)))))
+            img = Image.merge('RGB', (r_data, g, b_data))
+            
+        img.save(out_path, format="JPEG", quality=95)
+
+
+class MagicEnhanceRequest(BaseModel):
+    filename: str
+    session_id: str = "default"
+
+
+@app.post("/api/magic-enhance", dependencies=[Depends(require_admin_token)])
+def run_magic_enhance(req: MagicEnhanceRequest):
+    """Dynamically analyzes and applies professional editing enhancements to a photo using Gemini and Pillow."""
+    try:
+        import json
+        session_storage = StorageHelper(session_id=req.session_id)
+        safe_filename = os.path.basename(req.filename)
+        upload_dir = os.path.join(session_storage.local_base, "uploads")
+        original_path = os.path.join(upload_dir, safe_filename)
+        
+        if not os.path.exists(original_path):
+            raise HTTPException(status_code=404, detail="Original photo not found")
+            
+        # Define enhanced output filename
+        base, ext = os.path.splitext(safe_filename)
+        enhanced_filename = f"{base}_enhanced.jpg"
+        enhanced_path = os.path.join(upload_dir, enhanced_filename)
+        
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            return {"status": "error", "message": "Gemini API key is not set."}
+            
+        from google import genai
+        from PIL import Image as PILImage
+        client = genai.Client(api_key=api_key)
+        
+        with PILImage.open(original_path) as img:
+            if img.mode not in ('RGB', 'RGBA'):
+                img = img.convert('RGB')
+                
+            prompt = (
+                "You are an expert digital photo editor. Analyze this photo and suggest the optimal "
+                "Lightroom-style adjustment factors to make it look visually stunning, vibrant, and balanced. "
+                "Respond in JSON format with these exact keys:\n"
+                "{\n"
+                "  \"brightness\": 1.0, # factor between 0.75 and 1.25\n"
+                "  \"contrast\": 1.0, # factor between 0.8 and 1.25\n"
+                "  \"saturation\": 1.0, # factor between 0.7 and 1.3\n"
+                "  \"sharpness\": 1.0, # factor between 0.9 and 1.4\n"
+                "  \"warmth\": 1.0, # factor between 0.9 and 1.1\n"
+                "  \"enhanced_rating\": \"A rating out of 10 for the enhanced photo (e.g. 9.2/10)\",\n"
+                "  \"explanation\": \"A short description of why these edits were made (e.g. 'Boosted shadows to recover details and added warmth for a golden hour look')\"\n"
+                "}"
+            )
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=[img, prompt]
+            )
+            text = response.text
+            if "```json" in text:
+                text = text.split("```json")[1].split("```")[0].strip()
+            elif "```" in text:
+                text = text.split("```")[1].split("```")[0].strip()
+            factors = json.loads(text.strip())
+            
+            brightness = float(factors.get("brightness", 1.0))
+            contrast = float(factors.get("contrast", 1.0))
+            saturation = float(factors.get("saturation", 1.0))
+            sharpness = float(factors.get("sharpness", 1.0))
+            warmth = float(factors.get("warmth", 1.0))
+            enhanced_rating = str(factors.get("enhanced_rating", "9.0/10"))
+            explanation = factors.get("explanation", "Photo enhanced successfully.")
+            
+            # Apply dynamic enhancements to the image copy
+            apply_enhancements(original_path, enhanced_path, brightness, contrast, saturation, sharpness, warmth)
+            
+            return {
+                "status": "success",
+                "original_filename": safe_filename,
+                "enhanced_filename": enhanced_filename,
+                "explanation": explanation,
+                "enhanced_rating": enhanced_rating,
+                "factors": {
+                    "brightness": brightness,
+                    "contrast": contrast,
+                    "saturation": saturation,
+                    "sharpness": sharpness,
+                    "warmth": warmth
+                }
+            }
+    except Exception as e:
+        return {"status": "error", "message": f"Magic enhance failed: {str(e)}"}
+
+
+class SelectPhotoVersionRequest(BaseModel):
+    filename: str
+    version: str  # "original" or "enhanced"
+    session_id: str = "default"
+
+
+@app.post("/api/select-photo-version", dependencies=[Depends(require_admin_token)])
+def select_photo_version(req: SelectPhotoVersionRequest):
+    """Saves the selected version (original vs enhanced) as the primary photo."""
+    try:
+        import shutil
+        import json
+        session_storage = StorageHelper(session_id=req.session_id)
+        safe_filename = os.path.basename(req.filename)
+        upload_dir = os.path.join(session_storage.local_base, "uploads")
+        
+        original_path = os.path.join(upload_dir, safe_filename)
+        backup_filename = f"{os.path.splitext(safe_filename)[0]}_original.jpg"
+        backup_path = os.path.join(upload_dir, backup_filename)
+        enhanced_filename = f"{os.path.splitext(safe_filename)[0]}_enhanced.jpg"
+        enhanced_path = os.path.join(upload_dir, enhanced_filename)
+        
+        is_enhanced_flag = False
+        if req.version == "enhanced":
+            if not os.path.exists(enhanced_path):
+                raise HTTPException(status_code=404, detail="Enhanced version not found. Run enhance first.")
+            # Backup original if not already backed up
+            if not os.path.exists(backup_path):
+                shutil.copy2(original_path, backup_path)
+            # Copy enhanced over original
+            shutil.copy2(enhanced_path, original_path)
+            is_enhanced_flag = True
+        else:
+            # Restore original if backup exists
+            if os.path.exists(backup_path):
+                shutil.copy2(backup_path, original_path)
+                
+        # Save choice to photos_metadata.json
+        try:
+            session_dir = os.path.join(session_storage.local_base, "sessions", req.session_id)
+            os.makedirs(session_dir, exist_ok=True)
+            metadata_file = os.path.join(session_dir, "photos_metadata.json")
+            photos_meta = {}
+            if os.path.exists(metadata_file):
+                with open(metadata_file, "r") as f:
+                    photos_meta = json.load(f)
+            if safe_filename not in photos_meta:
+                photos_meta[safe_filename] = {}
+            photos_meta[safe_filename]["is_enhanced"] = is_enhanced_flag
+            with open(metadata_file, "w") as f:
+                json.dump(photos_meta, f, indent=4)
+        except Exception as err:
+            print(f"Error caching select_photo_version metadata: {err}")
+            
+        return {"status": "success", "message": f"Successfully switched to {req.version} version."}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 

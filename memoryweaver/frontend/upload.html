@@ -853,7 +853,10 @@
             top: 6px;
             right: 6px;
             background: rgba(255, 255, 255, 0.95);
-            border: 1.5px solid var(--border);
+            border: none !important;
+            outline: none !important;
+            -webkit-appearance: none;
+            appearance: none;
             border-radius: 50%;
             width: 22px;
             height: 22px;
@@ -871,7 +874,6 @@
         }
         .pool-photo-card .overlay-btn.exclude-btn:hover {
             background: var(--danger) !important;
-            border-color: var(--danger) !important;
             color: #fff !important;
         }
         .pool-photo-card .overlay-btn.include-btn:hover {
@@ -946,6 +948,20 @@
         .pool-photo-card.selected-card {
             border: 3px solid var(--accent) !important;
         }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .shimmer-loader {
+            display: inline-block;
+            height: 14px;
+            width: 80px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #f3f3f3 25%, #eaeaea 50%, #f3f3f3 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s infinite;
+            vertical-align: middle;
+        }
 
         /* Beautiful Minimalist Photo Details Panel styling */
         .photo-detail-container {
@@ -976,21 +992,232 @@
             gap: 8px;
         }
         .btn-close-detail {
-            padding: 8px 16px;
-            font-size: 11.5px;
-            background: #FFFFFF;
-            border: 2px solid var(--border);
-            border-radius: 20px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: transparent;
+            border: none !important;
+            outline: none !important;
             cursor: pointer;
             font-weight: 700;
-            color: var(--text);
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
             transition: all 0.2s;
+            padding: 0;
+            flex-shrink: 0;
+            box-sizing: border-box;
+            align-self: center;
         }
         .btn-close-detail:hover {
+            background: transparent;
+            color: var(--accent);
+        }
+        .btn-re-evaluate {
+            background: #FFFFFF !important;
+            color: var(--text) !important;
+            border: 2px solid var(--border) !important;
+            border-radius: 12px !important;
+            font-family: 'Space Grotesk', sans-serif !important;
+            font-weight: 700 !important;
+            padding: 4px 10px !important;
+            font-size: 11.5px !important;
+            height: 28px !important;
+            min-height: auto !important;
+            box-shadow: none !important;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-re-evaluate:hover {
+            background: var(--accent) !important;
+            color: #FFFFFF !important;
+            border-color: var(--border) !important;
+        }
+        
+        .btn-magic-enhance {
+            width: 100%;
+            background: linear-gradient(135deg, var(--accent), #FF6B8B) !important;
+            color: #FFFFFF !important;
+            border: 2.5px solid var(--border) !important;
+            border-radius: 14px !important;
+            font-family: 'Space Grotesk', sans-serif !important;
+            font-weight: 800 !important;
+            padding: 12px 18px !important;
+            font-size: 13.5px !important;
+            cursor: pointer;
+            box-shadow: 2px 2px 0 var(--border) !important;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-sizing: border-box;
+            min-height: auto !important;
+        }
+        .btn-magic-enhance:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 4px 4px 0 var(--border) !important;
+        }
+        .btn-magic-enhance:active {
+            transform: translate(0, 0);
+            box-shadow: 2px 2px 0 var(--border) !important;
+        }
+        .btn-magic-enhance:disabled {
+            background: #EAEAEA !important;
+            color: #AAAAAA !important;
+            border-color: #CCCCCC !important;
+            box-shadow: none !important;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        .btn-compare-toggle {
+            padding: 5px 12px;
+            font-size: 11px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            background: #FFFFFF;
+            color: var(--text);
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-compare-toggle.active {
             background: var(--accent);
             color: #FFFFFF;
-            border-color: var(--border);
+            box-shadow: none;
         }
+        .stacked-compare-card {
+            background: #FFFDF9;
+            border: 2.5px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 4px 0 var(--border);
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .stacked-compare-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.03);
+            border-bottom: 2.5px solid var(--border);
+            padding: 10px 14px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 800;
+            font-size: 11.5px;
+            letter-spacing: 0.8px;
+            color: var(--text);
+            box-sizing: border-box;
+            text-transform: uppercase;
+        }
+        .stacked-compare-card img {
+            width: 100%;
+            height: auto;
+            max-height: 320px;
+            object-fit: contain;
+            background: #FFFFFF;
+            border-bottom: 2.5px solid var(--border);
+            display: block;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .btn-use-version {
+            margin: 14px !important;
+            min-height: auto !important;
+            padding: 10px 20px !important;
+            font-size: 13px !important;
+            font-weight: 800 !important;
+            font-family: 'Space Grotesk', sans-serif !important;
+            cursor: pointer;
+            border: 2.5px solid var(--border) !important;
+            border-radius: 12px !important;
+            box-shadow: 2px 2px 0 var(--border) !important;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            box-sizing: border-box;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        #btn-use-original {
+            background: #FFFFFF !important;
+            color: var(--text) !important;
+        }
+        #btn-use-original:hover:not(:disabled) {
+            background: #F2F2F2 !important;
+            transform: translate(-1px, -1px);
+            box-shadow: 3px 3px 0 var(--border) !important;
+        }
+        #btn-use-original:active:not(:disabled) {
+            transform: translate(0, 0);
+            box-shadow: 2px 2px 0 var(--border) !important;
+        }
+        #btn-use-enhanced {
+            background: var(--accent) !important;
+            color: #FFFFFF !important;
+        }
+        #btn-use-enhanced:hover:not(:disabled) {
+            background: #FF4A6F !important;
+            transform: translate(-1px, -1px);
+            box-shadow: 3px 3px 0 var(--border) !important;
+        }
+        #btn-use-enhanced:active:not(:disabled) {
+            transform: translate(0, 0);
+            box-shadow: 2px 2px 0 var(--border) !important;
+        }
+        
+        /* Metadata Tabs layout */
+        .metadata-tabs {
+            display: flex;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 12px;
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+        }
+        .meta-tab-btn {
+            flex: 1;
+            padding: 10px 12px;
+            font-size: 11.5px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            background: none;
+            border: none;
+            border-right: 2px solid var(--border);
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .meta-tab-btn:last-child {
+            border-right: none;
+        }
+        .meta-tab-btn.active {
+            background: #FFFFFF;
+            color: var(--accent);
+            font-weight: 800;
+        }
+        .meta-tab-content {
+            display: none;
+            padding: 4px 14px 14px 14px;
+        }
+        .meta-tab-content.active {
+            display: block;
+        }
+
         .detail-body-grid {
             display: grid;
             grid-template-columns: 1.1fr 1fr;
@@ -1007,18 +1234,18 @@
             overflow: hidden;
             background: #FFFFFF;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 320px;
-            max-height: 480px;
             position: relative;
+            align-self: start;
         }
         .detail-photo-column img {
-            max-width: 100%;
-            max-height: 460px;
+            width: 100%;
+            height: auto;
+            max-height: 520px;
             object-fit: contain;
             display: block;
-            border-radius: 12px;
         }
         .detail-meta-column {
             display: flex;
@@ -1077,6 +1304,23 @@
             color: var(--text);
             margin: 0;
         }
+        .gemini-analysis-scrollable {
+            max-height: 180px;
+            overflow-y: auto;
+            margin-top: 10px;
+            padding-right: 6px;
+        }
+        .gemini-analysis-scrollable::-webkit-scrollbar {
+            width: 6px;
+        }
+        .gemini-analysis-scrollable::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 3px;
+        }
+        .gemini-analysis-scrollable::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
 
         /* Voice Memo Card */
         .voice-memo-card {
@@ -1087,6 +1331,8 @@
             display: flex;
             flex-direction: column;
             gap: 14px;
+            overflow: hidden;
+            box-sizing: border-box;
         }
         .voice-memo-title {
             font-family: 'Space Grotesk', sans-serif;
@@ -1161,6 +1407,7 @@
             resize: vertical;
             background: var(--surface);
             line-height: 1.4;
+            box-sizing: border-box;
         }
         .transcription-textarea:focus {
             outline: none;
@@ -1171,7 +1418,7 @@
             font-size: 12px;
             background: var(--accent);
             color: #FFFFFF;
-            border: 2px solid var(--border);
+            border: none;
             border-radius: 8px;
             font-weight: 700;
             cursor: pointer;
@@ -1180,6 +1427,7 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
+            max-width: 100%;
         }
         .btn-save-voice:hover {
             opacity: 0.95;
@@ -1590,11 +1838,19 @@
                 <div style="color: var(--text-main); font-weight: 500; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; user-select: none;">
                     <i data-lucide="images" style="width: 14px; height: 14px; color: var(--text-muted);"></i> 📦 Album Photos
                 </div>
-                <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+                 <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
                     <div style="display: flex; gap: 8px;">
                         <button class="event-action-btn active-indicator" id="btn-pool-included" onclick="switchPoolTab('included'); event.preventDefault(); event.stopPropagation();">Included in Album</button>
                         <button class="event-action-btn" id="btn-pool-excluded" onclick="switchPoolTab('excluded'); event.preventDefault(); event.stopPropagation();">Hidden / Removed</button>
                     </div>
+                    
+                    <!-- Year Filter Controls -->
+                    <div style="display: flex; align-items: center; gap: 10px; border: 1.5px solid var(--border); border-radius: 20px; background: #FFFFFF; padding: 4px 12.5px; font-weight: 700; font-size: 12px; user-select: none;">
+                        <button onclick="navigateYearFilter(-1); event.preventDefault(); event.stopPropagation();" style="background: none; border: none; cursor: pointer; color: var(--accent); display: flex; align-items: center; justify-content: center; padding: 0 4px; font-weight: 800; font-size: 11px;" title="Previous Year">◀</button>
+                        <span id="current-year-filter-label" style="min-width: 65px; text-align: center;">All Years</span>
+                        <button onclick="navigateYearFilter(1); event.preventDefault(); event.stopPropagation();" style="background: none; border: none; cursor: pointer; color: var(--accent); display: flex; align-items: center; justify-content: center; padding: 0 4px; font-weight: 800; font-size: 11px;" title="Next Year">▶</button>
+                    </div>
+                    
                     <button class="event-action-btn btn-delete" onclick="clearSessionPhotos(); event.preventDefault(); event.stopPropagation();"><i data-lucide="trash-2" style="width: 12px; height: 12px; margin-right: 4px;"></i> Delete All</button>
                 </div>
                 <div id="uploaded-pool-tray" style="margin-top: 14px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; max-height: 320px; overflow-y: auto; padding-right: 5px;">
@@ -1610,15 +1866,45 @@
                 <!-- Photo Details Panel -->
                 <div id="photo-detail-section" class="photo-detail-container" style="display: none;">
                     <div class="detail-header">
-                        <h3>📷 Photo Details & Metadata</h3>
-                        <button class="btn btn-close-detail" onclick="closePhotoDetails(); event.preventDefault(); event.stopPropagation();">Close Panel</button>
+                        <h3>📷 Photo Analysis</h3>
+                        <button class="btn btn-close-detail" onclick="closePhotoDetails(); event.preventDefault(); event.stopPropagation();" title="Close Panel">✕</button>
                     </div>
                     <div class="detail-body-grid">
-                        <!-- Left: Large Image with Carousel Navigation -->
-                        <div class="detail-photo-column">
-                            <button class="carousel-arrow prev" onclick="navigateCarousel(-1); event.preventDefault(); event.stopPropagation();" title="Previous Photo"><i data-lucide="chevron-left" style="width: 20px; height: 20px;"></i></button>
-                            <img id="detail-photo-img" src="" alt="Selected Photo Preview" />
-                            <button class="carousel-arrow next" onclick="navigateCarousel(1); event.preventDefault(); event.stopPropagation();" title="Next Photo"><i data-lucide="chevron-right" style="width: 20px; height: 20px;"></i></button>
+                        <!-- Left: Large Image with Carousel Navigation / Stacked Comparison -->
+                        <div class="detail-photo-column" style="display: flex; flex-direction: column; gap: 14px; align-self: start;">
+                            <!-- Carousel View (Single Image) -->
+                            <div id="carousel-view-container" style="position: relative; width: 100%;">
+                                <button class="carousel-arrow prev" onclick="navigateCarousel(-1); event.preventDefault(); event.stopPropagation();" title="Previous Photo"><i data-lucide="chevron-left" style="width: 20px; height: 20px;"></i></button>
+                                <img id="detail-photo-img" src="" alt="Selected Photo Preview" />
+                                <button class="carousel-arrow next" onclick="navigateCarousel(1); event.preventDefault(); event.stopPropagation();" title="Next Photo"><i data-lucide="chevron-right" style="width: 20px; height: 20px;"></i></button>
+                            </div>
+                            
+                            <!-- Stacked Comparison View (Shown when enhanced) -->
+                            <div id="stacked-comparison-container" style="display: none; flex-direction: column; gap: 20px; width: 100%;">
+                                <!-- Original Card -->
+                                <div class="stacked-compare-card">
+                                    <div class="stacked-compare-label">
+                                        <span>ORIGINAL VERSION</span>
+                                        <span id="compare-orig-rating" style="background: rgba(0, 0, 0, 0.05); padding: 2px 6px; border-radius: 6px; font-weight: 700; font-size: 11px;">-/10</span>
+                                    </div>
+                                    <img id="detail-photo-img-original" src="" alt="Original Photo" />
+                                    <button class="btn btn-use-version" id="btn-use-original" onclick="usePhotoVersion('original'); event.preventDefault();">
+                                        <i data-lucide="check" style="width: 14px; height: 14px;"></i> Keep Original
+                                    </button>
+                                </div>
+                                
+                                <!-- Enhanced Card -->
+                                <div class="stacked-compare-card">
+                                    <div class="stacked-compare-label">
+                                        <span><i data-lucide="sparkles" style="width: 12px; height: 12px;"></i> MAGIC ENHANCED</span>
+                                        <span id="compare-enhanced-rating" style="background: var(--accent); color: #FFFFFF; padding: 2px 6px; border-radius: 6px; font-weight: 700; font-size: 11px;">-/10</span>
+                                    </div>
+                                    <img id="detail-photo-img-enhanced" src="" alt="Enhanced Photo" />
+                                    <button class="btn btn-use-version" id="btn-use-enhanced" onclick="usePhotoVersion('enhanced'); event.preventDefault();">
+                                        <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i> Apply Enhanced Version
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                         <!-- Right: Metadata, Map, & Voice Story -->
                         <div class="detail-meta-column">
@@ -1629,29 +1915,42 @@
                                         <i data-lucide="sparkles" style="width: 16px; height: 16px; color: var(--accent);"></i> Photo Analysis
                                     </h4>
                                     <div style="display: flex; align-items: center; gap: 8px;">
-                                        <button class="btn" style="padding: 4px 10px; font-size: 11.5px; display: inline-flex; align-items: center; gap: 4px; border: 1.5px solid var(--border); height: 28px; border-radius: 14px;" onclick="refreshGeminiAnalysis(); event.preventDefault(); event.stopPropagation();" title="Regenerate Photographer Critique">
+                                        <button class="btn-re-evaluate" onclick="refreshGeminiAnalysis(); event.preventDefault(); event.stopPropagation();" title="Regenerate Photographer Critique">
                                             <i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i> Re-evaluate
                                         </button>
                                         <span id="gemini-rating" class="gemini-rating-badge">-/10</span>
                                     </div>
                                 </div>
+                                <div id="enhanced-status-banner" style="display: none; align-items: center; gap: 6px; background: rgba(235, 35, 113, 0.07); border-radius: 10px; padding: 7px 12px; margin: 8px 0; font-size: 11.5px; color: var(--text-muted); font-family: 'Outfit', sans-serif;">
+                                    <i data-lucide="sparkles" style="width: 13px; height: 13px; color: var(--accent); flex-shrink: 0;"></i>
+                                    <span>You're viewing the <strong style="color: var(--accent);">enhanced version</strong>. <button id="btn-revert-original" onclick="usePhotoVersion('original'); event.preventDefault();" style="background: none; border: none; outline: none; color: var(--accent); font-weight: 700; font-size: 11.5px; cursor: pointer; padding: 0; text-decoration: underline; font-family: inherit;">Revert to original</button></span>
+                                </div>
                                 <div id="gemini-summary" class="gemini-analysis-summary">Loading visual summary...</div>
-                                <p id="gemini-details" class="gemini-analysis-text">Requesting curation analysis...</p>
+                                <div class="gemini-analysis-scrollable">
+                                    <p id="gemini-details" class="gemini-analysis-text">Requesting curation analysis...</p>
+                                    <div id="gemini-tips-container" style="display: none; margin-top: 12px; border-top: 1.5px dashed rgba(235, 35, 113, 0.1); padding-top: 10px;">
+                                        <h5 style="font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 12px; color: var(--accent); margin: 0 0 8px 0; display: flex; align-items: center; gap: 4px;">
+                                            <i data-lucide="lightbulb" style="width: 14px; height: 14px; stroke-width: 2.5px;"></i> Pro Tips
+                                        </h5>
+                                        <ul id="gemini-tips-list" style="margin: 0; padding-left: 16px; font-size: 12px; line-height: 1.55; color: var(--text); display: flex; flex-direction: column; gap: 6px;">
+                                        </ul>
+                                    </div>
+                                </div>
                                 
-                                <!-- Photographic Actions Toolbar -->
-                                <div style="display: flex; gap: 8px; margin-top: 10px; border-top: 1.5px solid rgba(235, 35, 113, 0.1); padding-top: 12px; flex-wrap: wrap;">
-                                    <button class="btn btn-action" onclick="runPhotoAction('crop_guide'); event.preventDefault();" style="flex: 1; min-width: 80px; padding: 6px; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1.5px solid var(--border); border-radius: 12px; background: #FFFFFF; font-weight: 700; cursor: pointer;" title="Composition & Crop Guide">
-                                        <i data-lucide="crop" style="width: 13px; height: 13px; color: var(--accent);"></i> Crop
+                                <!-- Magic Auto-Enhance Button -->
+                                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px; border-top: 1.5px solid rgba(235, 35, 113, 0.1); padding-top: 12px;">
+                                    <button id="btn-magic-enhance" class="btn-magic-enhance" onclick="runMagicEnhance(); event.preventDefault();" title="Let Gemini analyze and automatically enhance exposure, contrast, colors, and detail">
+                                        <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i> Magic Auto-Enhance
                                     </button>
-                                    <button class="btn btn-action" onclick="runPhotoAction('exposure_slider'); event.preventDefault();" style="flex: 1; min-width: 80px; padding: 6px; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1.5px solid var(--border); border-radius: 12px; background: #FFFFFF; font-weight: 700; cursor: pointer;" title="Lightroom Slider Adjustments">
-                                        <i data-lucide="sliders" style="width: 13px; height: 13px; color: var(--accent);"></i> Colors
-                                    </button>
-                                    <button class="btn btn-action" onclick="runPhotoAction('quality_check'); event.preventDefault();" style="flex: 1; min-width: 80px; padding: 6px; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1.5px solid var(--border); border-radius: 12px; background: #FFFFFF; font-weight: 700; cursor: pointer;" title="Blur & Blurriness Check">
-                                        <i data-lucide="shield-alert" style="width: 13px; height: 13px; color: var(--accent);"></i> Quality
-                                    </button>
-                                    <button class="btn btn-action" onclick="runPhotoAction('enhance_text'); event.preventDefault();" style="flex: 1; min-width: 80px; padding: 6px; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1.5px solid var(--border); border-radius: 12px; background: #FFFFFF; font-weight: 700; cursor: pointer;" title="Polish Transcription Narrative">
-                                        <i data-lucide="feather" style="width: 13px; height: 13px; color: var(--accent);"></i> Polish
-                                    </button>
+                                    
+                                    <!-- Before/After Toggle & Info -->
+                                    <div id="magic-comparison-panel" style="display: none; align-items: center; justify-content: space-between; gap: 8px; background: rgba(0, 0, 0, 0.02); padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 12px;">
+                                        <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Compare Version:</span>
+                                        <div style="display: flex; gap: 6px;">
+                                            <button id="btn-compare-orig" class="btn-compare-toggle" onclick="toggleCompareVersion('original'); event.preventDefault();">Original</button>
+                                            <button id="btn-compare-enhanced" class="btn-compare-toggle active" onclick="toggleCompareVersion('enhanced'); event.preventDefault();">Enhanced</button>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div id="analysis-action-result" style="display: none; background: #FFFFFF; border: 1.5px solid var(--border); border-radius: 12px; padding: 12px; font-size: 12px; margin-top: 10px; line-height: 1.5; color: var(--text);"></div>
                             </div>
@@ -1670,6 +1969,12 @@
                                     </button>
                                     <span id="voice-timer" class="timer-badge">00:00 / 01:00</span>
                                     <audio id="voice-audio-playback" controls style="display: none; height: 32px; flex: 1; min-width: 140px;"></audio>
+                                    <button id="btn-voice-rerecord" class="event-action-btn" onclick="startVoiceRecording(); event.preventDefault(); event.stopPropagation();" style="display: none; font-size: 11px; padding: 6px 10px; gap: 4px; border: 1.5px solid var(--border) !important; background: #FFFFFF !important; color: var(--text) !important; border-radius: 8px !important; box-shadow: 1px 1px 0 var(--border) !important; font-family: 'Space Grotesk', sans-serif !important; font-weight: 800 !important; cursor: pointer; align-items: center; min-height: auto !important;">
+                                        <i data-lucide="rotate-ccw" style="width: 12px; height: 12px;"></i> Re-record
+                                    </button>
+                                    <button id="btn-voice-delete" class="event-action-btn btn-delete" onclick="deleteVoiceRecording(); event.preventDefault(); event.stopPropagation();" style="display: none; font-size: 11px; padding: 6px 10px; gap: 4px; border: 1.5px solid var(--border) !important; background: #FFFFFF !important; color: var(--danger) !important; border-radius: 8px !important; box-shadow: 1px 1px 0 var(--border) !important; font-family: 'Space Grotesk', sans-serif !important; font-weight: 800 !important; cursor: pointer; align-items: center; min-height: auto !important;">
+                                        <i data-lucide="trash-2" style="width: 12px; height: 12px; color: var(--danger);"></i> Delete
+                                    </button>
                                 </div>
                                 <div>
                                     <textarea id="transcription-editor" class="transcription-textarea" placeholder="Speak to transcribe, or type your memories here..."></textarea>
@@ -1679,31 +1984,88 @@
                                 </button>
                             </div>
 
-                            <!-- 3. Metadata Details Card -->
-                            <div class="metadata-card">
-                                <div class="meta-row">
-                                    <span class="meta-label">Filename:</span>
-                                    <span id="meta-filename" class="meta-value">-</span>
+                            <!-- 3. Metadata Details Card (Tabbed View) -->
+                            <div class="metadata-card" style="padding: 0; overflow: hidden;">
+                                <div class="metadata-tabs">
+                                    <button class="meta-tab-btn active" onclick="switchMetaTab(event, 'meta-tab-file')">File Info</button>
+                                    <button class="meta-tab-btn" onclick="switchMetaTab(event, 'meta-tab-camera')">Camera Settings</button>
+                                    <button class="meta-tab-btn" onclick="switchMetaTab(event, 'meta-tab-location')">Location & Time</button>
                                 </div>
-                                <div class="meta-row">
-                                    <span class="meta-label">Date Taken:</span>
-                                    <span id="meta-date" class="meta-value">-</span>
+                                
+                                <!-- Tab 1: File Info -->
+                                <div id="meta-tab-file" class="meta-tab-content active">
+                                    <div class="meta-row">
+                                        <span class="meta-label">Filename:</span>
+                                        <span id="meta-filename" class="meta-value">-</span>
+                                    </div>
+                                    <div class="meta-row">
+                                        <span class="meta-label">Dimensions:</span>
+                                        <span id="meta-dimensions" class="meta-value">-</span>
+                                    </div>
+                                    <div class="meta-row">
+                                        <span class="meta-label">File Size:</span>
+                                        <span id="meta-size" class="meta-value">-</span>
+                                    </div>
+                                    <div class="meta-row">
+                                        <span class="meta-label">Software:</span>
+                                        <span id="meta-software" class="meta-value">-</span>
+                                    </div>
+                                    <div class="meta-row">
+                                        <span class="meta-label">Color Space:</span>
+                                        <span id="meta-colorspace" class="meta-value">-</span>
+                                    </div>
                                 </div>
-                                <div class="meta-row">
-                                    <span class="meta-label">Camera:</span>
-                                    <span id="meta-device" class="meta-value">-</span>
+                                
+                                <!-- Tab 2: Camera Settings -->
+                                <div id="meta-tab-camera" class="meta-tab-content">
+                                    <div class="meta-row">
+                                        <span class="meta-label">Camera:</span>
+                                        <span id="meta-device" class="meta-value">-</span>
+                                    </div>
+                                    <div class="meta-row">
+                                        <span class="meta-label">Aperture:</span>
+                                        <span id="meta-aperture" class="meta-value">-</span>
+                                    </div>
+                                    <div class="meta-row">
+                                        <span class="meta-label">Exposure:</span>
+                                        <span id="meta-shutter-speed" class="meta-value">-</span>
+                                    </div>
+                                    <div class="meta-row">
+                                        <span class="meta-label">ISO:</span>
+                                        <span id="meta-iso" class="meta-value">-</span>
+                                    </div>
+                                    <div class="meta-row">
+                                        <span class="meta-label">Focal Length:</span>
+                                        <span id="meta-focal-length" class="meta-value">-</span>
+                                    </div>
+                                    <div class="meta-row">
+                                        <span class="meta-label">Lens:</span>
+                                        <span id="meta-lens" class="meta-value">-</span>
+                                    </div>
                                 </div>
-                                <div class="meta-row">
-                                    <span class="meta-label">Dimensions:</span>
-                                    <span id="meta-dimensions" class="meta-value">-</span>
-                                </div>
-                                <div class="meta-row">
-                                    <span class="meta-label">File Size:</span>
-                                    <span id="meta-size" class="meta-value">-</span>
-                                </div>
-                                <div class="meta-row">
-                                    <span class="meta-label">GPS:</span>
-                                    <span id="meta-gps" class="meta-value">-</span>
+                                
+                                <!-- Tab 3: Location & Time -->
+                                <div id="meta-tab-location" class="meta-tab-content">
+                                    <div class="meta-row">
+                                        <span class="meta-label">Date Taken:</span>
+                                        <span id="meta-date" class="meta-value">-</span>
+                                    </div>
+                                    <div class="meta-row">
+                                        <span class="meta-label">Time Taken:</span>
+                                        <span id="meta-time" class="meta-value">-</span>
+                                    </div>
+                                    <div class="meta-row">
+                                        <span class="meta-label">GPS:</span>
+                                        <span id="meta-gps" class="meta-value">-</span>
+                                    </div>
+                                    <div class="meta-row">
+                                        <span class="meta-label">Altitude:</span>
+                                        <span id="meta-altitude" class="meta-value">-</span>
+                                    </div>
+                                    <div class="meta-row">
+                                        <span class="meta-label">Direction:</span>
+                                        <span id="meta-direction" class="meta-value">-</span>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -1895,6 +2257,21 @@
                     method: 'POST',
                     headers: authHeaders()
                 });
+                
+                if (!res.ok) {
+                    let errMsg = `HTTP ${res.status}`;
+                    try {
+                        const errData = await res.json();
+                        errMsg += `: ${errData.detail || errData.message || JSON.stringify(errData)}`;
+                    } catch (_) {
+                        try {
+                            const errTxt = await res.text();
+                            errMsg += `: ${errTxt.substring(0, 100)}`;
+                        } catch (__) {}
+                    }
+                    throw new Error(errMsg);
+                }
+                
                 const data = await res.json();
                 if (data.status === 'success') {
                     await uiAlert("Event photo pool and contributor cache cleared!");
@@ -1905,7 +2282,7 @@
                     const details = document.getElementById('photo-pool-details');
                     loadUploadedPoolTray();
                 } else {
-                    alert("Failed to clear session: " + (data.message || "Unknown error"));
+                    alert("Failed to clear session: " + (data.message || data.detail || JSON.stringify(data) || "Unknown error"));
                 }
             } catch (e) {
                 alert("Error clearing session: " + e.message);
@@ -1977,6 +2354,9 @@
         let activeMap = null;
         let selectedFilename = null;
         let allPhotosInTray = [];
+        let availableYears = ['All Years'];
+        let currentYearFilterIndex = 0;
+        let firstLoadYearDefault = true;
 
         // Carousel arrow controls
         function navigateCarousel(direction) {
@@ -1993,6 +2373,34 @@
             selectPhoto(nextFilename, nextCard);
         }
 
+        function navigateYearFilter(direction) {
+            if (availableYears.length <= 1) return;
+            currentYearFilterIndex += direction;
+            if (currentYearFilterIndex < 0) {
+                currentYearFilterIndex = availableYears.length - 1;
+            } else if (currentYearFilterIndex >= availableYears.length) {
+                currentYearFilterIndex = 0;
+            }
+            document.getElementById('current-year-filter-label').textContent = availableYears[currentYearFilterIndex];
+            // Reload the tray to apply filter
+            loadUploadedPoolTray();
+        }
+
+        function switchMetaTab(event, tabId) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const parent = event.target.closest('.metadata-tabs');
+            const buttons = parent.querySelectorAll('.meta-tab-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const card = parent.closest('.metadata-card');
+            const contents = card.querySelectorAll('.meta-tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+            card.querySelector(`#${tabId}`).classList.add('active');
+        }
+
         // Voice recorder state variables
         let mediaRecorder = null;
         let audioChunks = [];
@@ -2001,6 +2409,19 @@
         let timerInterval = null;
         let audioBlob = null;
         let speechRecognition = null;
+        let recordingStopResolver = null;
+        let isTranscriptionDirty = false;
+
+        function markTranscriptionDirty() {
+            isTranscriptionDirty = true;
+            const btnSave = document.getElementById('btn-save-voice');
+            if (btnSave) {
+                btnSave.style.removeProperty('background');
+                btnSave.disabled = false;
+                btnSave.innerHTML = '<i data-lucide="save" style="width: 14px; height: 14px;"></i> Save Voice Story';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+        }
 
         function toggleVoiceRecording() {
             if (isRecording) {
@@ -2016,6 +2437,10 @@
             recordingDuration = 0;
             document.getElementById('voice-timer').textContent = "00:00 / 01:00";
             document.getElementById('voice-audio-playback').style.display = 'none';
+            const rerecordBtn = document.getElementById('btn-voice-rerecord');
+            const deleteBtn = document.getElementById('btn-voice-delete');
+            if (rerecordBtn) rerecordBtn.style.display = 'none';
+            if (deleteBtn) deleteBtn.style.display = 'none';
             
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -2030,12 +2455,33 @@
                 mediaRecorder.onstop = () => {
                     audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                     const audioUrl = URL.createObjectURL(audioBlob);
+                    markTranscriptionDirty();
                     const playback = document.getElementById('voice-audio-playback');
                     playback.src = audioUrl;
                     playback.style.display = 'block';
                     
+                    playback.onloadedmetadata = () => {
+                        if (playback.duration && !isNaN(playback.duration) && isFinite(playback.duration)) {
+                            recordingDuration = playback.duration;
+                            const mins = String(Math.floor(recordingDuration / 60)).padStart(2, '0');
+                            const secs = String(Math.round(recordingDuration % 60)).padStart(2, '0');
+                            document.getElementById('voice-timer').textContent = `${mins}:${secs} / 01:00`;
+                        }
+                    };
+                    
+                    const rerecordBtn = document.getElementById('btn-voice-rerecord');
+                    const deleteBtn = document.getElementById('btn-voice-delete');
+                    if (rerecordBtn) rerecordBtn.style.display = 'inline-flex';
+                    if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                    
                     // Stop all audio track streams to release microphone
                     stream.getTracks().forEach(track => track.stop());
+                    
+                    if (recordingStopResolver) {
+                        recordingStopResolver();
+                        recordingStopResolver = null;
+                    }
                 };
                 
                 // Start Speech Recognition (live client-side transcription)
@@ -2059,6 +2505,7 @@
                             }
                         }
                         editor.value = (finalTranscript + interimTranscript).trim();
+                        markTranscriptionDirty();
                     };
                     
                     speechRecognition.onerror = (e) => {
@@ -2121,6 +2568,15 @@
         async function saveVoiceNote() {
             if (!selectedFilename) return;
             
+            // If recording is active, stop recording and wait for the blob to be created before saving
+            if (isRecording) {
+                const stopPromise = new Promise(resolve => {
+                    recordingStopResolver = resolve;
+                });
+                stopVoiceRecording();
+                await stopPromise;
+            }
+            
             const transcriptionText = document.getElementById('transcription-editor').value.trim();
             const btnSave = document.getElementById('btn-save-voice');
             btnSave.disabled = true;
@@ -2131,6 +2587,8 @@
             formData.append('session_id', getSessionId());
             formData.append('filename', selectedFilename);
             formData.append('transcription', transcriptionText);
+            formData.append('duration', recordingDuration);
+            formData.append('transcribe_updated', isTranscriptionDirty ? 'true' : 'false');
             if (audioBlob) {
                 formData.append('audio', audioBlob, 'recording.webm');
             }
@@ -2143,15 +2601,35 @@
                 });
                 const data = await res.json();
                 if (data.status === 'success') {
-                    btnSave.style.backgroundColor = 'var(--success)';
+                    btnSave.style.setProperty('background', 'var(--success)', 'important');
                     btnSave.innerHTML = '<i data-lucide="check" style="width: 14px; height: 14px;"></i> Saved!';
                     lucide.createIcons();
-                    setTimeout(() => {
-                        btnSave.style.backgroundColor = '';
-                        btnSave.disabled = false;
-                        btnSave.innerHTML = '<i data-lucide="save" style="width: 14px; height: 14px;"></i> Save Voice Story';
-                        lucide.createIcons();
-                    }, 2000);
+                    
+                    // Reset local audioBlob since it is now saved to the backend
+                    audioBlob = null;
+                    isTranscriptionDirty = false;
+                    
+                    // Refresh the tray cards to show the microphone badge
+                    loadUploadedPoolTray();
+                    
+                    // Direct reload of playback audio player using official served media URL
+                    const playback = document.getElementById('voice-audio-playback');
+                    const rerecordBtn = document.getElementById('btn-voice-rerecord');
+                    const deleteBtn = document.getElementById('btn-voice-delete');
+                    if (playback) {
+                        if (data.voice_note) {
+                            playback.src = `/media?filename=${encodeURIComponent(data.voice_note)}&session_id=${encodeURIComponent(getSessionId())}&t=${Date.now()}`;
+                            playback.style.display = 'block';
+                            if (rerecordBtn) rerecordBtn.style.display = 'inline-flex';
+                            if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+                        } else {
+                            playback.src = '';
+                            playback.style.display = 'none';
+                            if (rerecordBtn) rerecordBtn.style.display = 'none';
+                            if (deleteBtn) deleteBtn.style.display = 'none';
+                        }
+                    }
+                    btnSave.disabled = true;
                 } else {
                     throw new Error(data.message);
                 }
@@ -2160,6 +2638,67 @@
                 btnSave.disabled = false;
                 btnSave.innerHTML = '<i data-lucide="save" style="width: 14px; height: 14px;"></i> Save Voice Story';
                 lucide.createIcons();
+            }
+        }
+        
+        async function deleteVoiceRecording() {
+            if (!selectedFilename) return;
+            
+            const playback = document.getElementById('voice-audio-playback');
+            const rerecordBtn = document.getElementById('btn-voice-rerecord');
+            const btnDelete = document.getElementById('btn-voice-delete');
+            
+            // Check if this is a local unsaved draft (blob URL)
+            if (playback && playback.src.startsWith('blob:')) {
+                audioBlob = null;
+                playback.src = '';
+                playback.style.display = 'none';
+                if (rerecordBtn) rerecordBtn.style.display = 'none';
+                if (btnDelete) btnDelete.style.display = 'none';
+                return;
+            }
+            
+            if (!await uiConfirm("Are you sure you want to delete this voice recording?")) return;
+            
+            btnDelete.disabled = true;
+            btnDelete.innerHTML = '<i data-lucide="loader" class="animate-spin" style="width: 12px; height: 12px;"></i> Deleting...';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            
+            const formData = new FormData();
+            formData.append('session_id', getSessionId());
+            formData.append('filename', selectedFilename);
+            formData.append('transcription', document.getElementById('transcription-editor').value.trim());
+            formData.append('delete_audio', 'true');
+            
+            try {
+                const res = await fetch('/api/save-photo-voice', {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    audioBlob = null;
+                    if (playback) {
+                        playback.src = '';
+                        playback.style.display = 'none';
+                    }
+                    if (rerecordBtn) rerecordBtn.style.display = 'none';
+                    if (btnDelete) btnDelete.style.display = 'none';
+                    
+                    // Refresh the tray cards to remove the microphone badge
+                    loadUploadedPoolTray();
+                    
+                    await uiAlert("Voice recording deleted!");
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (err) {
+                alert("Error deleting voice recording: " + err.message);
+            } finally {
+                btnDelete.disabled = false;
+                btnDelete.innerHTML = '<i data-lucide="trash-2" style="width: 12px; height: 12px; color: var(--danger);"></i> Delete';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
             }
         }
 
@@ -2192,31 +2731,82 @@
             
             selectedFilename = filename;
             cardElement.classList.add('selected-card');
-            document.getElementById('analysis-action-result').style.display = 'none';
+            
+            const setSafeText = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = val;
+            };
+            const setSafeHTML = (id, html) => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = html;
+            };
+            const cleanMeta = (val) => {
+                if (!val || val === 'Unknown' || val === 'Unknown Device' || val === 'Unknown Time' || val === 'Unknown Location') {
+                    return 'Not Found';
+                }
+                return val;
+            };
+
+            setSafeText('analysis-action-result', '');
+            const actionResult = document.getElementById('analysis-action-result');
+            if (actionResult) actionResult.style.display = 'none';
+            
+            const magicPanel = document.getElementById('magic-comparison-panel');
+            if (magicPanel) magicPanel.style.display = 'none';
+            const magicBtn = document.getElementById('btn-magic-enhance');
+            if (magicBtn) {
+                magicBtn.disabled = false;
+                magicBtn.innerHTML = '<i data-lucide="sparkles" style="width: 16px; height: 16px;"></i> Magic Auto-Enhance';
+            }
+            
+            const stackedContainer = document.getElementById('stacked-comparison-container');
+            if (stackedContainer) stackedContainer.style.display = 'none';
+            const carouselContainer = document.getElementById('carousel-view-container');
+            if (carouselContainer) carouselContainer.style.display = 'block';
+            
+            const enhBannerReset = document.getElementById('enhanced-status-banner');
+            if (enhBannerReset) enhBannerReset.style.display = 'none';
+            
+            if (typeof lucide !== 'undefined') lucide.createIcons();
             
             // 1. Immediately show details panel & enlarged image preview
             const imgUrl = `/media?filename=${encodeURIComponent(filename)}&session_id=${encodeURIComponent(getSessionId())}`;
-            document.getElementById('detail-photo-img').src = imgUrl;
-            document.getElementById('photo-detail-section').style.display = 'block';
+            const detailImg = document.getElementById('detail-photo-img');
+            if (detailImg) detailImg.src = imgUrl;
             
-            // Set temporary loading placeholders
-            document.getElementById('meta-filename').textContent = filename;
-            document.getElementById('meta-date').textContent = "Loading...";
-            document.getElementById('meta-device').textContent = "Loading...";
-            document.getElementById('meta-dimensions').textContent = "Loading...";
-            document.getElementById('meta-size').textContent = "Loading...";
-            document.getElementById('meta-gps').textContent = "Loading...";
+            const detailSection = document.getElementById('photo-detail-section');
+            if (detailSection) detailSection.style.display = 'block';
+            
+            // Set temporary loading placeholders with shimmer loaders
+            setSafeText('meta-filename', filename);
+            setSafeHTML('meta-date', '<div class="shimmer-loader"></div>');
+            setSafeHTML('meta-time', '<div class="shimmer-loader"></div>');
+            setSafeHTML('meta-device', '<div class="shimmer-loader"></div>');
+            setSafeHTML('meta-dimensions', '<div class="shimmer-loader"></div>');
+            setSafeHTML('meta-size', '<div class="shimmer-loader"></div>');
+            setSafeHTML('meta-gps', '<div class="shimmer-loader"></div>');
+            setSafeHTML('meta-altitude', '<div class="shimmer-loader"></div>');
+            setSafeHTML('meta-direction', '<div class="shimmer-loader"></div>');
+            setSafeHTML('meta-aperture', '<div class="shimmer-loader"></div>');
+            setSafeHTML('meta-shutter-speed', '<div class="shimmer-loader"></div>');
+            setSafeHTML('meta-iso', '<div class="shimmer-loader"></div>');
+            setSafeHTML('meta-focal-length', '<div class="shimmer-loader"></div>');
+            setSafeHTML('meta-lens', '<div class="shimmer-loader"></div>');
+            setSafeHTML('meta-software', '<div class="shimmer-loader"></div>');
+            setSafeHTML('meta-colorspace', '<div class="shimmer-loader"></div>');
             
             // Reset analysis fields
-            document.getElementById('gemini-summary').textContent = "Reviewing photo details...";
-            document.getElementById('gemini-details').textContent = "Composing professional critique and feedback...";
-            document.getElementById('gemini-rating').textContent = "-/10";
+            setSafeText('gemini-summary', "Reviewing photo details...");
+            setSafeText('gemini-details', "Composing professional critique and feedback...");
+            setSafeText('gemini-rating', "-/10");
             
             const mapWrapper = document.getElementById('detail-map-wrapper');
             const mapPlaceholder = document.getElementById('detail-map-placeholder');
-            mapWrapper.style.display = 'none';
-            mapPlaceholder.style.display = 'flex';
-            mapPlaceholder.textContent = "📍 Loading location details...";
+            if (mapWrapper) mapWrapper.style.display = 'none';
+            if (mapPlaceholder) {
+                mapPlaceholder.style.display = 'flex';
+                mapPlaceholder.textContent = "📍 Loading location details...";
+            }
             
             if (activeMap) {
                 activeMap.remove();
@@ -2236,34 +2826,120 @@
                 }
                 
                 // Populate metadata values
-                document.getElementById('meta-filename').textContent = data.filename || filename;
-                document.getElementById('meta-date').textContent = data.timestamp && data.timestamp !== 'Unknown Time' ? data.timestamp.replace('T', ' ') : 'Not Available';
-                document.getElementById('meta-device').textContent = data.device || 'Unknown';
-                document.getElementById('meta-dimensions').textContent = data.dimensions || 'Unknown';
-                document.getElementById('meta-size').textContent = data.size_kb ? `${data.size_kb} KB` : 'Unknown';
+                setSafeText('meta-filename', cleanMeta(data.filename || filename));
+                
+                let dateStr = 'Not Found';
+                let timeStr = 'Not Found';
+                if (data.timestamp && data.timestamp !== 'Unknown Time' && data.timestamp !== 'Unknown') {
+                    const parts = data.timestamp.split(/[T ]/);
+                    if (parts.length >= 1) dateStr = cleanMeta(parts[0]);
+                    if (parts.length >= 2) timeStr = cleanMeta(parts[1]);
+                }
+                setSafeText('meta-date', dateStr);
+                setSafeText('meta-time', timeStr);
+                
+                setSafeText('meta-device', cleanMeta(data.device));
+                setSafeText('meta-dimensions', cleanMeta(data.dimensions));
+                setSafeText('meta-size', data.size_kb ? `${data.size_kb} KB` : 'Not Found');
+                
+                // Advanced EXIF fields
+                setSafeText('meta-altitude', cleanMeta(data.altitude));
+                setSafeText('meta-direction', cleanMeta(data.heading));
+                setSafeText('meta-aperture', cleanMeta(data.aperture));
+                setSafeText('meta-shutter-speed', cleanMeta(data.shutter_speed));
+                setSafeText('meta-iso', data.iso && data.iso !== 'Unknown' ? `ISO ${data.iso}` : 'Not Found');
+                setSafeText('meta-focal-length', cleanMeta(data.focal_length));
+                setSafeText('meta-lens', cleanMeta(data.lens));
+                setSafeText('meta-software', cleanMeta(data.software));
+                setSafeText('meta-colorspace', cleanMeta(data.color_space));
                 
                 // Populate voice note and transcription editor
-                document.getElementById('transcription-editor').value = data.transcription || '';
+                const transcriptionEl = document.getElementById('transcription-editor');
+                if (transcriptionEl) transcriptionEl.value = data.transcription || '';
                 audioBlob = null;
-                const playback = document.getElementById('voice-audio-playback');
-                if (data.voice_note) {
-                    playback.src = `/media?filename=${encodeURIComponent(data.voice_note)}&session_id=${encodeURIComponent(getSessionId())}`;
-                    playback.style.display = 'block';
-                } else {
-                    playback.src = '';
-                    playback.style.display = 'none';
+                isTranscriptionDirty = false;
+                
+                const btnSave = document.getElementById('btn-save-voice');
+                if (btnSave) {
+                    if (data.voice_note || data.transcription) {
+                        btnSave.style.setProperty('background', 'var(--success)', 'important');
+                        btnSave.disabled = true;
+                        btnSave.innerHTML = '<i data-lucide="check" style="width: 14px; height: 14px;"></i> Saved!';
+                    } else {
+                        btnSave.style.removeProperty('background');
+                        btnSave.disabled = false;
+                        btnSave.innerHTML = '<i data-lucide="save" style="width: 14px; height: 14px;"></i> Save Voice Story';
+                    }
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
                 }
-                document.getElementById('voice-timer').textContent = "00:00 / 01:00";
+
+                const playback = document.getElementById('voice-audio-playback');
+                const rerecordBtn = document.getElementById('btn-voice-rerecord');
+                const deleteBtn = document.getElementById('btn-voice-delete');
+                if (playback) {
+                    if (data.voice_note) {
+                        playback.src = `/media?filename=${encodeURIComponent(data.voice_note)}&session_id=${encodeURIComponent(getSessionId())}`;
+                        playback.style.display = 'block';
+                        if (rerecordBtn) rerecordBtn.style.display = 'inline-flex';
+                        if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+                    } else {
+                        playback.src = '';
+                        playback.style.display = 'none';
+                        if (rerecordBtn) rerecordBtn.style.display = 'none';
+                        if (deleteBtn) deleteBtn.style.display = 'none';
+                    }
+                }
+                setSafeText('voice-timer', "00:00 / 01:00");
                 
                 // Populate Gemini Vision analysis card
-                if (data.gemini_analysis) {
-                    document.getElementById('gemini-summary').textContent = data.gemini_analysis.summary || 'Visual Summary Unavailable';
-                    document.getElementById('gemini-rating').textContent = data.gemini_analysis.rating || 'N/A';
-                    document.getElementById('gemini-details').textContent = data.gemini_analysis.analysis || '';
+                const ga = data.gemini_analysis;
+                const tipsContainer = document.getElementById('gemini-tips-container');
+                const tipsList = document.getElementById('gemini-tips-list');
+                
+                const enhBanner = document.getElementById('enhanced-status-banner');
+                if (enhBanner) {
+                    enhBanner.style.display = data.is_enhanced ? 'flex' : 'none';
+                }
+                
+                const magicBtn = document.getElementById('btn-magic-enhance');
+                if (magicBtn) {
+                    if (data.is_enhanced) {
+                        magicBtn.disabled = true;
+                        magicBtn.innerHTML = '<i data-lucide="check" style="width: 16px; height: 16px;"></i> Photo Enhanced';
+                    } else {
+                        magicBtn.disabled = false;
+                        magicBtn.innerHTML = '<i data-lucide="sparkles" style="width: 16px; height: 16px;"></i> Magic Auto-Enhance';
+                    }
+                }
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+                
+                if (ga) {
+                    originalPhotoRating = ga.rating || 'N/A';
+                    enhancedPhotoRating = null;
+                    setSafeText('gemini-summary', ga.summary || 'Visual Summary Unavailable');
+                    setSafeText('gemini-rating', originalPhotoRating);
+                    setSafeText('gemini-details', ga.critique || ga.analysis || '');
+                    
+                    const tips = ga.tips || [];
+                    if (tipsContainer && tipsList) {
+                        if (Array.isArray(tips) && tips.length > 0) {
+                            tipsList.innerHTML = '';
+                            tips.forEach(tip => {
+                                const li = document.createElement('li');
+                                li.textContent = tip;
+                                tipsList.appendChild(li);
+                            });
+                            tipsContainer.style.display = 'block';
+                        } else {
+                            tipsList.innerHTML = '';
+                            tipsContainer.style.display = 'none';
+                        }
+                    }
                 } else {
-                    document.getElementById('gemini-summary').textContent = 'Visual Summary Unavailable';
-                    document.getElementById('gemini-rating').textContent = 'N/A';
-                    document.getElementById('gemini-details').textContent = 'Gemini Curation details are not loaded.';
+                    setSafeText('gemini-summary', 'Visual Summary Unavailable');
+                    setSafeText('gemini-rating', 'N/A');
+                    setSafeText('gemini-details', 'Photo Analysis details are not loaded.');
+                    if (tipsContainer) tipsContainer.style.display = 'none';
                 }
                 
                 // Refresh Lucide icons in the newly revealed voice card if needed
@@ -2275,11 +2951,11 @@
                 if (data.gps && data.gps.latitude !== null && data.gps.longitude !== null) {
                     const lat = data.gps.latitude;
                     const lon = data.gps.longitude;
-                    document.getElementById('meta-gps').textContent = `${lat.toFixed(5)}°, ${lon.toFixed(5)}°`;
+                    setSafeText('meta-gps', `${lat.toFixed(5)}°, ${lon.toFixed(5)}°`);
                     
                     if (typeof L !== 'undefined') {
-                        mapWrapper.style.display = 'block';
-                        mapPlaceholder.style.display = 'none';
+                        if (mapWrapper) mapWrapper.style.display = 'block';
+                        if (mapPlaceholder) mapPlaceholder.style.display = 'none';
                         
                         activeMap = L.map('photo-map').setView([lat, lon], 13);
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -2290,38 +2966,58 @@
                             .bindPopup(`<b>Photo location</b><br>${lat.toFixed(4)}, ${lon.toFixed(4)}`)
                             .openPopup();
                     } else {
-                        mapWrapper.style.display = 'none';
-                        mapPlaceholder.style.display = 'flex';
-                        mapPlaceholder.textContent = `📍 Coordinates: ${lat.toFixed(4)}°, ${lon.toFixed(4)}° (Map Offline)`;
+                        if (mapWrapper) mapWrapper.style.display = 'none';
+                        if (mapPlaceholder) {
+                            mapPlaceholder.style.display = 'flex';
+                            mapPlaceholder.textContent = `📍 Coordinates: ${lat.toFixed(4)}°, ${lon.toFixed(4)}° (Map Offline)`;
+                        }
                     }
                 } else {
-                    document.getElementById('meta-gps').textContent = 'Not Available';
-                    mapWrapper.style.display = 'none';
-                    mapPlaceholder.style.display = 'flex';
-                    mapPlaceholder.textContent = '📍 No GPS Coordinates Found';
+                    setSafeText('meta-gps', 'Not Found');
+                    if (mapWrapper) mapWrapper.style.display = 'none';
+                    if (mapPlaceholder) {
+                        mapPlaceholder.style.display = 'flex';
+                        mapPlaceholder.textContent = '📍 No GPS Coordinates Found';
+                    }
                 }
             } catch (err) {
                 console.error("Error fetching photo details:", err);
-                document.getElementById('meta-date').textContent = "Not Available";
-                document.getElementById('meta-device').textContent = "Unknown";
-                document.getElementById('meta-dimensions').textContent = "Unknown";
-                document.getElementById('meta-size').textContent = "Unknown";
-                document.getElementById('meta-gps').textContent = "Not Available";
+                setSafeText('meta-date', "Not Found");
+                setSafeText('meta-time', "Not Found");
+                setSafeText('meta-device', "Not Found");
+                setSafeText('meta-dimensions', "Not Found");
+                setSafeText('meta-size', "Not Found");
+                setSafeText('meta-gps', "Not Found");
+                setSafeText('meta-altitude', "Not Found");
+                setSafeText('meta-direction', "Not Found");
+                setSafeText('meta-aperture', "Not Found");
+                setSafeText('meta-shutter-speed', "Not Found");
+                setSafeText('meta-iso', "Not Found");
+                setSafeText('meta-focal-length', "Not Found");
+                setSafeText('meta-lens', "Not Found");
+                setSafeText('meta-software', "Not Found");
+                setSafeText('meta-colorspace', "Not Found");
                 
                 // Clear voice elements on failure
-                document.getElementById('transcription-editor').value = '';
-                document.getElementById('voice-audio-playback').src = '';
-                document.getElementById('voice-audio-playback').style.display = 'none';
-                document.getElementById('voice-timer').textContent = "00:00 / 01:00";
+                const transcriptionEl = document.getElementById('transcription-editor');
+                if (transcriptionEl) transcriptionEl.value = '';
+                const playback = document.getElementById('voice-audio-playback');
+                if (playback) {
+                    playback.src = '';
+                    playback.style.display = 'none';
+                }
+                setSafeText('voice-timer', "00:00 / 01:00");
                 
                 // Clear Gemini analysis fields on failure
-                document.getElementById('gemini-summary').textContent = 'Visual Summary Unavailable';
-                document.getElementById('gemini-details').textContent = 'Could not load photo analysis.';
-                document.getElementById('gemini-rating').textContent = 'N/A';
+                setSafeText('gemini-summary', 'Visual Summary Unavailable');
+                setSafeText('gemini-details', 'Could not load photo analysis.');
+                setSafeText('gemini-rating', 'N/A');
                 
-                mapWrapper.style.display = 'none';
-                mapPlaceholder.style.display = 'flex';
-                mapPlaceholder.textContent = "📍 Location metadata unavailable";
+                if (mapWrapper) mapWrapper.style.display = 'none';
+                if (mapPlaceholder) {
+                    mapPlaceholder.style.display = 'flex';
+                    mapPlaceholder.textContent = "📍 Location metadata unavailable";
+                }
             }
         }
 
@@ -2329,6 +3025,11 @@
             if (!selectedFilename) return;
             
             // Set temporary loading placeholders
+            const tipsContainer = document.getElementById('gemini-tips-container');
+            const tipsList = document.getElementById('gemini-tips-list');
+            if (tipsContainer) tipsContainer.style.display = 'none';
+            if (tipsList) tipsList.innerHTML = '';
+            
             document.getElementById('gemini-summary').textContent = "Re-analyzing photo details...";
             document.getElementById('gemini-details').textContent = "Composing new professional critique and feedback...";
             document.getElementById('gemini-rating').textContent = "-/10";
@@ -2344,51 +3045,167 @@
                     throw new Error(data.message || "Failed to load metadata");
                 }
                 
-                if (data.gemini_analysis) {
-                    document.getElementById('gemini-summary').textContent = data.gemini_analysis.summary || 'Visual Summary Unavailable';
-                    document.getElementById('gemini-rating').textContent = data.gemini_analysis.rating || 'N/A';
-                    document.getElementById('gemini-details').textContent = data.gemini_analysis.analysis || '';
+                const ga = data.gemini_analysis;
+                if (ga) {
+                    originalPhotoRating = ga.rating || 'N/A';
+                    enhancedPhotoRating = null;
+                    document.getElementById('gemini-summary').textContent = ga.summary || 'Visual Summary Unavailable';
+                    document.getElementById('gemini-rating').textContent = originalPhotoRating;
+                    document.getElementById('gemini-details').textContent = ga.critique || ga.analysis || '';
+                    
+                    const tips = ga.tips || [];
+                    if (tipsContainer && tipsList) {
+                        if (Array.isArray(tips) && tips.length > 0) {
+                            tipsList.innerHTML = '';
+                            tips.forEach(tip => {
+                                const li = document.createElement('li');
+                                li.textContent = tip;
+                                tipsList.appendChild(li);
+                            });
+                            tipsContainer.style.display = 'block';
+                        } else {
+                            tipsList.innerHTML = '';
+                            tipsContainer.style.display = 'none';
+                        }
+                    }
                 } else {
                     document.getElementById('gemini-summary').textContent = 'Visual Summary Unavailable';
                     document.getElementById('gemini-rating').textContent = 'N/A';
-                    document.getElementById('gemini-details').textContent = 'Gemini Curation details are not loaded.';
+                    document.getElementById('gemini-details').textContent = 'Photo Analysis details are not loaded.';
+                    if (tipsContainer) tipsContainer.style.display = 'none';
                 }
             } catch (err) {
                 console.error("Error refreshing Gemini photo details:", err);
                 document.getElementById('gemini-summary').textContent = 'Visual Summary Unavailable';
                 document.getElementById('gemini-details').textContent = 'Could not refresh photo analysis.';
                 document.getElementById('gemini-rating').textContent = 'N/A';
+                if (tipsContainer) tipsContainer.style.display = 'none';
             }
         }
 
-        async function runPhotoAction(actionName) {
+        let originalPhotoFilename = null;
+        let enhancedPhotoFilename = null;
+        let originalPhotoRating = "-/10";
+        let enhancedPhotoRating = null;
+
+        async function runMagicEnhance() {
             if (!selectedFilename) return;
             
+            const btn = document.getElementById('btn-magic-enhance');
+            const comparisonPanel = document.getElementById('magic-comparison-panel');
             const resultBox = document.getElementById('analysis-action-result');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i data-lucide="loader" class="animate-spin" style="width: 16px; height: 16px;"></i> Enhancing Photo...';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            
             resultBox.style.display = 'block';
-            resultBox.innerHTML = `<strong>Processing ${actionName.replace('_', ' ')}...</strong><br>Sending request to photographer tools...`;
+            resultBox.innerHTML = `<strong>✨ Crafting Your Photographic Masterpiece...</strong><br>
+            Our curation engine is analyzing lighting, color balance, and composition details to reveal a gorgeous, professional version of your capture you can trust.
+            <br><br>
+            <span style="font-size: 11px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px;">
+                <i data-lucide="clock" style="width: 12px; height: 12px;"></i> Estimated time: 2-4 seconds
+            </span>`;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
             
-            let textContext = null;
-            if (actionName === 'enhance_text') {
-                textContext = document.getElementById('transcription-editor').value;
-                if (!textContext.trim()) {
-                    resultBox.innerHTML = `<strong>Warning:</strong> Voice Story text is empty. Type some notes first!`;
-                    return;
-                }
-            }
-            
+            const startTime = performance.now();
             try {
-                const res = await fetch('/api/photo-action', {
+                const res = await fetch('/api/magic-enhance', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         ...authHeaders()
                     },
                     body: JSON.stringify({
-                        session_id: getSessionId(),
                         filename: selectedFilename,
-                        action: actionName,
-                        text_context: textContext
+                        session_id: getSessionId()
+                    })
+                });
+                
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                
+                const endTime = performance.now();
+                const durationSec = ((endTime - startTime) / 1000).toFixed(2);
+                
+                if (data.status !== 'success') {
+                    throw new Error(data.message || "Failed to enhance photo");
+                }
+                
+                originalPhotoFilename = data.original_filename;
+                enhancedPhotoFilename = data.enhanced_filename;
+                enhancedPhotoRating = data.enhanced_rating || "9.0/10";
+                
+                // Hide Carousel and Show Stacked Comparison View
+                const carouselContainer = document.getElementById('carousel-view-container');
+                const stackedContainer = document.getElementById('stacked-comparison-container');
+                if (carouselContainer) carouselContainer.style.display = 'none';
+                if (stackedContainer) stackedContainer.style.display = 'flex';
+                
+                // Populate comparison images
+                const origImg = document.getElementById('detail-photo-img-original');
+                const enhImg = document.getElementById('detail-photo-img-enhanced');
+                if (origImg) {
+                    origImg.src = `/media?filename=${encodeURIComponent(originalPhotoFilename)}&session_id=${encodeURIComponent(getSessionId())}`;
+                }
+                if (enhImg) {
+                    enhImg.src = `/media?filename=${encodeURIComponent(enhancedPhotoFilename)}&session_id=${encodeURIComponent(getSessionId())}&t=${Date.now()}`;
+                }
+                
+                // Populate comparison ratings
+                const origRating = document.getElementById('compare-orig-rating');
+                const enhRating = document.getElementById('compare-enhanced-rating');
+                if (origRating) origRating.textContent = originalPhotoRating;
+                if (enhRating) enhRating.textContent = enhancedPhotoRating;
+                
+                // Update score badge in header to enhanced rating
+                const ratingBadge = document.getElementById('gemini-rating');
+                if (ratingBadge) {
+                    ratingBadge.textContent = enhancedPhotoRating;
+                }
+                
+                // Show explanation & stats
+                resultBox.innerHTML = `✨ <strong>Magic Touch:</strong><br>${data.explanation}<br><br><em style="font-size:11px; color:var(--text-muted);">Adjustments applied: Brightness (${data.factors.brightness}x), Contrast (${data.factors.contrast}x), Saturation (${data.factors.saturation}x), Sharpness (${data.factors.sharpness}x), Warmth (${data.factors.warmth}x). Processed in ${durationSec}s.</em>`;
+                
+                btn.innerHTML = '<i data-lucide="check" style="width: 16px; height: 16px;"></i> Photo Enhanced!';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+                
+                // Reload pool tray
+                loadUploadedPoolTray();
+            } catch (err) {
+                console.error("Magic Enhance error:", err);
+                resultBox.innerHTML = `<span style="color: var(--danger);"><strong>Error:</strong> ${err.message}</span>`;
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="sparkles" style="width: 16px; height: 16px;"></i> Magic Auto-Enhance';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+        }
+
+        async function usePhotoVersion(version) {
+            if (!selectedFilename) return;
+            
+            const btn = version === 'original' ? document.getElementById('btn-use-original') : document.getElementById('btn-use-enhanced');
+            const otherBtn = version === 'original' ? document.getElementById('btn-use-enhanced') : document.getElementById('btn-use-original');
+            if (!btn) return;
+            
+            btn.disabled = true;
+            if (otherBtn) otherBtn.disabled = true;
+            
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader" class="animate-spin" style="width: 14px; height: 14px;"></i> Applying...';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            
+            try {
+                const res = await fetch('/api/select-photo-version', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...authHeaders()
+                    },
+                    body: JSON.stringify({
+                        filename: selectedFilename,
+                        version: version,
+                        session_id: getSessionId()
                     })
                 });
                 
@@ -2396,24 +3213,69 @@
                 const data = await res.json();
                 
                 if (data.status !== 'success') {
-                    throw new Error(data.message || "Failed to process photo action");
+                    throw new Error(data.message || "Failed to switch version");
                 }
                 
-                // Print output in user-friendly format
-                let prefix = "";
-                if (actionName === 'crop_guide') prefix = "✂️ <strong>Composition & Crop Guide:</strong><br>";
-                if (actionName === 'exposure_slider') prefix = "🎨 <strong>Sliders Suggestion:</strong><br>";
-                if (actionName === 'quality_check') prefix = "🔍 <strong>Quality Inspector Report:</strong><br>";
-                if (actionName === 'enhance_text') {
-                    prefix = "✍️ <strong>Polished Narrative saved!</strong><br>";
-                    // Also update the text area with the enhanced narrative!
-                    document.getElementById('transcription-editor').value = data.result || '';
-                }
+                btn.innerHTML = '<i data-lucide="check" style="width: 14px; height: 14px;"></i> Applied!';
+                btn.style.backgroundColor = 'var(--success)';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
                 
-                resultBox.innerHTML = `${prefix}${data.result.replace(/\n/g, '<br>')}`;
+                setTimeout(() => {
+                    btn.disabled = false;
+                    if (otherBtn) otherBtn.disabled = false;
+                    btn.style.backgroundColor = '';
+                    btn.innerHTML = originalText;
+                    
+                    // Switch back to carousel view
+                    const stackedContainer = document.getElementById('stacked-comparison-container');
+                    const carouselContainer = document.getElementById('carousel-view-container');
+                    if (stackedContainer) stackedContainer.style.display = 'none';
+                    if (carouselContainer) carouselContainer.style.display = 'block';
+                    
+                    // Update main preview image
+                    const previewImg = document.getElementById('detail-photo-img');
+                    if (previewImg) {
+                        previewImg.src = `/media?filename=${encodeURIComponent(selectedFilename)}&session_id=${encodeURIComponent(getSessionId())}&t=${Date.now()}`;
+                    }
+                    
+                    // Update header rating
+                    const mainRating = version === 'original' ? originalPhotoRating : (enhancedPhotoRating || originalPhotoRating);
+                    originalPhotoRating = mainRating;
+                    document.getElementById('gemini-rating').textContent = mainRating;
+                    
+                    // Hide the action result block
+                    document.getElementById('analysis-action-result').style.display = 'none';
+                    
+                    // Toggle enhanced status banner
+                    const enhBanner = document.getElementById('enhanced-status-banner');
+                    if (enhBanner) {
+                        enhBanner.style.display = version === 'enhanced' ? 'flex' : 'none';
+                    }
+                    
+                    // Sync Magic Auto-Enhance button
+                    const magicBtn = document.getElementById('btn-magic-enhance');
+                    if (magicBtn) {
+                        if (version === 'enhanced') {
+                            magicBtn.disabled = true;
+                            magicBtn.innerHTML = '<i data-lucide="check" style="width: 16px; height: 16px;"></i> Photo Enhanced';
+                        } else {
+                            magicBtn.disabled = false;
+                            magicBtn.innerHTML = '<i data-lucide="sparkles" style="width: 16px; height: 16px;"></i> Magic Auto-Enhance';
+                        }
+                    }
+                    
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                    
+                    // Refresh gallery tray
+                    loadUploadedPoolTray();
+                }, 1500);
             } catch (err) {
-                console.error("Error executing photo action:", err);
-                resultBox.innerHTML = `<span style="color: var(--danger);"><strong>Error:</strong> ${err.message}</span>`;
+                console.error("Error applying version:", err);
+                alert("Error applying version: " + err.message);
+                btn.disabled = false;
+                if (otherBtn) otherBtn.disabled = false;
+                btn.innerHTML = originalText;
+                if (typeof lucide !== 'undefined') lucide.createIcons();
             }
         }
 
@@ -2443,9 +3305,40 @@
                 
                 const rawPhotos = data.photos || [];
                 const allPhotos = rawPhotos.map(x => {
-                    if (typeof x === 'string') return { filename: x, date: "" };
-                    return { filename: x.filename || "", date: x.date || "" };
+                    if (typeof x === 'string') return { filename: x, date: "", is_enhanced: false, has_voice_note: false, voice_note: null, voice_duration: 0 };
+                    return { 
+                        filename: x.filename || "", 
+                        date: x.date || "", 
+                        is_enhanced: !!x.is_enhanced,
+                        has_voice_note: !!x.has_voice_note,
+                        voice_note: x.voice_note || null,
+                        voice_duration: parseFloat(x.voice_duration) || 0
+                    };
                 });
+                // Compile unique capture years dynamically from uploaded pool
+                const yearsSet = new Set();
+                allPhotos.forEach(p => {
+                    if (p.date && p.date !== '-' && p.date !== 'Unknown') {
+                        const yr = p.date.split('-')[0];
+                        if (yr && yr.length === 4 && !isNaN(yr)) {
+                            yearsSet.add(yr);
+                        }
+                    }
+                });
+                const sortedYears = Array.from(yearsSet).sort();
+                availableYears = ['All Years', ...sortedYears];
+                
+                // Default to 2026 on first load if it exists in the uploads pool
+                if (firstLoadYearDefault && availableYears.includes('2026')) {
+                    currentYearFilterIndex = availableYears.indexOf('2026');
+                    firstLoadYearDefault = false;
+                }
+                
+                if (currentYearFilterIndex >= availableYears.length) {
+                    currentYearFilterIndex = 0;
+                }
+                document.getElementById('current-year-filter-label').textContent = availableYears[currentYearFilterIndex];
+
                 const includedCount = allPhotos.filter(x => !excluded.includes(x.filename)).length;
                 const excludedCount = allPhotos.filter(x => excluded.includes(x.filename)).length;
 
@@ -2457,6 +3350,12 @@
                     photos = allPhotos.filter(x => !excluded.includes(x.filename));
                 } else {
                     photos = allPhotos.filter(x => excluded.includes(x.filename));
+                }
+                
+                // Apply active year filter
+                const activeYear = availableYears[currentYearFilterIndex];
+                if (activeYear && activeYear !== 'All Years') {
+                    photos = photos.filter(p => p.date && p.date.startsWith(activeYear));
                 }
                 
                 // Populate allPhotosInTray for carousel navigation
@@ -2512,6 +3411,82 @@
                     
                     card.appendChild(img);
                     card.appendChild(btn);
+                    
+                    const badgeContainer = document.createElement('div');
+                    badgeContainer.style.position = 'absolute';
+                    badgeContainer.style.bottom = '8px';
+                    badgeContainer.style.right = '8px';
+                    badgeContainer.style.display = 'flex';
+                    badgeContainer.style.gap = '4px';
+                    badgeContainer.style.zIndex = '5';
+                    card.appendChild(badgeContainer);
+                    
+                    if (photoObj.is_enhanced) {
+                        const enhBadge = document.createElement('span');
+                        enhBadge.className = 'enhanced-badge';
+                        enhBadge.innerHTML = '<i data-lucide="sparkles" style="width: 12px; height: 12px;"></i>';
+                        enhBadge.style.backgroundColor = 'var(--accent)';
+                        enhBadge.style.color = '#FFFFFF';
+                        enhBadge.style.border = 'none';
+                        enhBadge.style.borderRadius = '50%';
+                        enhBadge.style.width = '22px';
+                        enhBadge.style.height = '22px';
+                        enhBadge.style.display = 'inline-flex';
+                        enhBadge.style.alignItems = 'center';
+                        enhBadge.style.justifyContent = 'center';
+                        enhBadge.title = 'Enhanced version';
+                        badgeContainer.appendChild(enhBadge);
+                    }
+                    
+                    if (photoObj.has_voice_note) {
+                        const voiceBadge = document.createElement('span');
+                        voiceBadge.className = 'voice-badge';
+                        voiceBadge.style.backgroundColor = '#10B981'; // Green accent
+                        voiceBadge.style.color = '#FFFFFF';
+                        voiceBadge.style.border = 'none';
+                        voiceBadge.style.height = '22px';
+                        voiceBadge.style.display = 'inline-flex';
+                        voiceBadge.style.alignItems = 'center';
+                        voiceBadge.style.justifyContent = 'center';
+                        voiceBadge.style.fontSize = '9px';
+                        voiceBadge.style.fontWeight = '800';
+                        voiceBadge.style.fontFamily = "'Space Grotesk', sans-serif";
+                        
+                        const updateBadgeText = (seconds) => {
+                            const durVal = Math.round(seconds);
+                            if (durVal > 0) {
+                                voiceBadge.innerHTML = `<i data-lucide="mic" style="width: 11px; height: 11px; margin-right: 2px;"></i>${durVal}s`;
+                                voiceBadge.style.borderRadius = '10px';
+                                voiceBadge.style.width = 'auto';
+                                voiceBadge.style.padding = '2px 6px';
+                                voiceBadge.title = `Voice note added (${durVal}s)`;
+                            } else {
+                                voiceBadge.innerHTML = '<i data-lucide="mic" style="width: 12px; height: 12px;"></i>';
+                                voiceBadge.style.borderRadius = '50%';
+                                voiceBadge.style.width = '22px';
+                                voiceBadge.style.padding = '0';
+                                voiceBadge.title = 'Voice note added';
+                            }
+                            if (typeof lucide !== 'undefined') lucide.createIcons();
+                        };
+
+                        const savedDur = parseFloat(photoObj.voice_duration) || 0;
+                        if (savedDur > 0) {
+                            updateBadgeText(savedDur);
+                        } else if (photoObj.voice_note) {
+                            // Asynchronously load the audio metadata to determine precise duration for old/legacy entries
+                            const tempAudio = new Audio(`/media?filename=${encodeURIComponent(photoObj.voice_note)}&session_id=${encodeURIComponent(getSessionId())}&t=${Date.now()}`);
+                            tempAudio.addEventListener('loadedmetadata', () => {
+                                if (tempAudio.duration && !isNaN(tempAudio.duration)) {
+                                    updateBadgeText(tempAudio.duration);
+                                }
+                            });
+                            updateBadgeText(0);
+                        } else {
+                            updateBadgeText(0);
+                        }
+                        badgeContainer.appendChild(voiceBadge);
+                    }
                     
                     // Add contributor name tag to top left corner
                     const hash = filename.split('_')[0];
@@ -3154,6 +4129,48 @@
 
         // Auto-detect and sync with active backend tasks on page load/refresh
         window.addEventListener('DOMContentLoaded', async () => {
+            // Bind listener to transcription textarea to reset button to Save state on edit
+            const editor = document.getElementById('transcription-editor');
+            if (editor) {
+                editor.addEventListener('input', () => {
+                    markTranscriptionDirty();
+                });
+            }
+
+            // Bind listener to playback element to sync precise duration on metadata load
+            const playback = document.getElementById('voice-audio-playback');
+            if (playback) {
+                playback.addEventListener('loadedmetadata', () => {
+                    if (!selectedFilename) return;
+                    if (playback.duration && !isNaN(playback.duration) && isFinite(playback.duration)) {
+                        const oldDuration = recordingDuration;
+                        recordingDuration = playback.duration;
+                        const mins = String(Math.floor(recordingDuration / 60)).padStart(2, '0');
+                        const secs = String(Math.round(recordingDuration % 60)).padStart(2, '0');
+                        document.getElementById('voice-timer').textContent = `${mins}:${secs} / 01:00`;
+                        
+                        // If the loaded duration changed and it's not a local blob URL, sync it back to the server
+                        if (Math.abs(oldDuration - recordingDuration) > 0.5 && !playback.src.startsWith('blob:')) {
+                            const syncData = new FormData();
+                            syncData.append('session_id', getSessionId());
+                            syncData.append('filename', selectedFilename);
+                            syncData.append('transcription', document.getElementById('transcription-editor').value.trim());
+                            syncData.append('duration', recordingDuration);
+                            syncData.append('is_sync', 'true');
+                            fetch('/api/save-photo-voice', {
+                                method: 'POST',
+                                headers: authHeaders(),
+                                body: syncData
+                            }).then(res => res.json()).then(d => {
+                                if (d.status === 'success') {
+                                    loadUploadedPoolTray();
+                                }
+                            }).catch(e => console.error("Duration sync failed:", e));
+                        }
+                    }
+                });
+            }
+
             loadSessions();
             loadActiveShareCode();
             refreshPipelineOnlyCount();
