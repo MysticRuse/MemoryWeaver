@@ -334,8 +334,8 @@ def get_share_info(session_id: str = "default"):
         img = qrcode.make(share_url if base else f"http://localhost:8000{share_path}")
         buf = _io.BytesIO()
         try:
-            kwargs = {"format": "PNG"}
-            img.save(buf, **kwargs)
+            save_fn = getattr(img, "save")
+            save_fn(buf, format="PNG")
         except TypeError:
             img.save(buf)
         qr_data_uri = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
