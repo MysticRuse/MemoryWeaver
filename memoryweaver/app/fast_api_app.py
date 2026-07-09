@@ -367,7 +367,7 @@ def delete_photo(filename: str = Form(...), session_id: str = Form("default")):
 
 @app.post("/api/clear-session", dependencies=[Depends(require_admin_token)])
 def clear_session(session_id: str = "default"):
-    """Admin-only: clears all uploaded photos, thumbnails, and generated artefacts for a session."""
+    """Admin-only: clears all uploaded photos, thumbnails, and generated artefacts/memory bank for a session."""
     try:
         session_storage = StorageHelper(session_id=session_id)
         
@@ -381,6 +381,12 @@ def clear_session(session_id: str = "default"):
                         blob.delete()
                 except Exception as e:
                     print(f"Error deleting GCS prefix {prefix}: {e}")
+            try:
+                mb_blob = session_storage.bucket.blob(session_storage.gcs_path("memory_bank.json"))
+                if mb_blob.exists():
+                    mb_blob.delete()
+            except Exception as e:
+                print(f"Error deleting GCS memory_bank.json: {e}")
         
         import shutil
         shutil.rmtree(os.path.join(session_storage.local_base, "uploads"), ignore_errors=True)
@@ -389,6 +395,14 @@ def clear_session(session_id: str = "default"):
         # Recreate empty uploads/thumbs directories
         os.makedirs(os.path.join(session_storage.local_base, "uploads"), exist_ok=True)
         os.makedirs(os.path.join(session_storage.local_base, "thumbs"), exist_ok=True)
+        
+        # Delete local memory_bank.json if exists
+        mb_path = os.path.join(session_storage.local_base, "memory_bank.json")
+        if os.path.exists(mb_path):
+            try:
+                os.remove(mb_path)
+            except Exception as e:
+                print(f"Error deleting local memory_bank.json: {e}")
         
         # Reset progress states
         state = _get_progress_state(session_id)

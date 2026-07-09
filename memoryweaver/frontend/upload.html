@@ -1431,14 +1431,13 @@
                 });
                 const data = await res.json();
                 if (data.status === 'success') {
-                    await uiAlert("Event photo pool cleared!");
+                    await uiAlert("Event photo pool and contributor cache cleared!");
+                    contributorNamesCache = {};
                     refreshPipelineOnlyCount();
                     
                     // Force refresh of the uploaded photo pool tray grid
                     const details = document.getElementById('photo-pool-details');
-                    if (details && details.open) {
-                        loadUploadedPoolTray();
-                    }
+                    loadUploadedPoolTray();
                 } else {
                     alert("Failed to clear session: " + (data.message || "Unknown error"));
                 }
