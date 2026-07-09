@@ -2445,7 +2445,7 @@
                     if (captureDate) {
                         const dTag = document.createElement('span');
                         dTag.className = 'photo-date-label';
-                        dTag.textContent = captureDate;
+                        dTag.innerHTML = `<i data-lucide="calendar" style="width: 11px; height: 11px; margin-right: 4.5px; vertical-align: -1px; display: inline-block;"></i>${captureDate}`;
                         dTag.title = `Taken on ${captureDate}`;
                         card.appendChild(dTag);
                     }
