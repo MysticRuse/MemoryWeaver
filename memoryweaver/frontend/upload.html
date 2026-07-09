@@ -1587,12 +1587,16 @@
                     card.appendChild(btn);
                     
                     // Add contributor name tag to top left corner
+                    // Add contributor name tag to top left corner
                     const hash = filename.split('_')[0];
                     let uploaderName = contributorNamesCache[hash];
-                    if (hash === '0bf7ab78559a') {
+                    if (hash === '0bf7ab78559a' || !uploaderName) {
                         uploaderName = 'My Photos';
                     }
-                    if (uploaderName && hash !== 'unsplash') {
+                    if (hash === 'unsplash') {
+                        uploaderName = '';
+                    }
+                    if (uploaderName) {
                         const cTag = document.createElement('span');
                         cTag.className = 'contributor-tag';
                         cTag.textContent = uploaderName;
@@ -3488,10 +3492,13 @@
                     // Add contributor name tag to top left corner
                     const hash = filename.split('_')[0];
                     let uploaderName = contributorNamesCache[hash];
-                    if (hash === '0bf7ab78559a') {
+                    if (hash === '0bf7ab78559a' || !uploaderName) {
                         uploaderName = 'My Photos';
                     }
-                    if (uploaderName && hash !== 'unsplash') {
+                    if (hash === 'unsplash') {
+                        uploaderName = '';
+                    }
+                    if (uploaderName) {
                         const cTag = document.createElement('span');
                         cTag.className = 'contributor-tag';
                         cTag.textContent = uploaderName;
