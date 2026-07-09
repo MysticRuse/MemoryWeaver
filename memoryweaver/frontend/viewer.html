@@ -1533,12 +1533,29 @@
                         const hash = ph.split('_')[0];
                         const uploaderName = contributorNames[hash] || 'Family Member';
                         
+                        let kindText = 'Document';
+                        let ocrSnippet = '';
+                        if (entry.documents) {
+                            const matched = entry.documents.find(x => x.filename === ph);
+                            if (matched) {
+                                kindText = matched.doc_kind.charAt(0).toUpperCase() + matched.doc_kind.slice(1);
+                                ocrSnippet = matched.ocr_text.substring(0, 150) + '...';
+                            }
+                        }
+                        
                         docCard.innerHTML = `
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <i data-lucide="file-text" style="width: 20px; height: 20px; color: var(--accent-color);"></i>
-                                <span style="font-size: 0.85rem; font-weight: 600;">Trip Document (${uploaderName})</span>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 8px;">
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <i data-lucide="file-text" style="width: 18px; height: 18px; color: var(--accent-color);"></i>
+                                    <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-color);">${kindText} (${uploaderName})</span>
+                                </div>
+                                <a href="${mediaUrl(ph)}" target="_blank" style="font-size: 0.75rem; color: var(--accent-color); font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 2px;"><i data-lucide="download" style="width: 12px; height: 12px;"></i> Open PDF</a>
                             </div>
-                            <a href="${mediaUrl(ph)}" target="_blank"><i data-lucide="download" style="width: 12px; height: 12px;"></i> View Document</a>
+                            ${ocrSnippet ? `
+                            <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; background: rgba(0,0,0,0.02); padding: 8px; border-radius: 6px; font-family: monospace;">
+                                ${ocrSnippet}
+                            </div>
+                            ` : ''}
                         `;
                         body.appendChild(docCard);
                     }

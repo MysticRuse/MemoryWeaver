@@ -1,0 +1,11 @@
+{
+  "suite": "P5_aaas",
+  "spec": "specs/P5_aaas.feature.md",
+  "note": "EDD stub. Covers A2A card discovery + AP2 mandate/handshake guardrails.",
+  "assets_needed": ["golden/agent_card.json", "golden/ap2_mandate.json"],
+  "cases": [
+    { "id": "card_discovery", "input": { "path": "/.well-known/agent-card.json" }, "expected_tools": ["a2a.publish_card"], "expected_output": { "card_valid": true, "skills": ["moderate", "dedup", "score", "anchor_audio", "narrate"] } },
+    { "id": "mandate_required", "input": { "mandate": null, "action": "hire_external_video_agent" }, "expected_tools": ["ap2.check_mandate"], "expected_output": { "spend_without_mandate_blocked": true } },
+    { "id": "handshake_recorded", "input": { "mandate": "golden/ap2_mandate.json" }, "expected_tools": ["ap2.handshake"], "expected_output": { "signed_proof": true, "within_limits": true } }
+  ]
+}

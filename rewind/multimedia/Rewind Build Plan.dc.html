@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;background:#e9e7e0;font-family:'Inter',system-ui,sans-serif;color:#26241f}
+  .doc{width:900px;margin:34px auto;background:#fbfaf7;border:1.5px solid #d6d2c8;border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.08);padding:52px 56px;box-sizing:border-box}
+  .kick{font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#6d5ae6}
+  .mono{font-family:'JetBrains Mono',monospace}
+  h1{font:800 32px/1.1 'Inter';margin:8px 0 6px;letter-spacing:-.5px}
+  h2{font:800 18px/1.2 'Inter';margin:0 0 4px}
+  .sub{font:400 13.5px/1.6 'Inter';color:#6b665a;max-width:640px}
+  .rule{height:1.5px;background:#e7e4db;margin:34px 0}
+  .sec-h{display:flex;align-items:baseline;gap:10px;margin:0 0 18px}
+  .sec-n{font:800 12px 'JetBrains Mono',monospace;color:#fff;background:#6d5ae6;border-radius:6px;padding:4px 8px}
+  .step{display:flex;gap:14px;margin-bottom:14px}
+  .step-n{width:28px;height:28px;flex:none;border-radius:50%;background:#efeaff;color:#5b46d6;font:800 12px 'Inter';display:flex;align-items:center;justify-content:center}
+  .step-b{font:600 13.5px/1.4 'Inter';color:#2a2822}
+  .step-b span{display:block;font:400 12px/1.5 'Inter';color:#6b665a;margin-top:2px}
+  .card{background:#fff;border:1.5px solid #e4e0d6;border-radius:12px;padding:16px 18px;margin-bottom:12px}
+  .phase{display:flex;gap:0;border:1.5px solid #e4e0d6;border-radius:12px;overflow:hidden;margin-bottom:14px;background:#fff}
+  .phase-band{width:80px;flex:none;background:#f4f1ff;border-right:1.5px solid #e7e2ff;padding:16px 12px;display:flex;flex-direction:column;gap:4px}
+  .phase-band .pn{font:800 22px 'Inter';color:#5b46d6}
+  .phase-band .pw{font:600 10px 'JetBrains Mono',monospace;color:#8b7ae0}
+  .phase-body{flex:1;padding:16px 18px}
+  .lbl{font:700 9px/1.3 'JetBrains Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:#a8a294}
+  .kv{display:grid;grid-template-columns:96px 1fr;gap:6px 12px;margin-top:10px;font:400 12px/1.5 'Inter';color:#4a463d}
+  .kv b{font-weight:600;color:#6d5ae6}
+  .tag{display:inline-block;padding:2px 7px;border-radius:5px;background:#f0edff;color:#5b46d6;font:600 10px 'JetBrains Mono',monospace;margin:0 3px 3px 0}
+  .file{display:inline-block;padding:2px 7px;border-radius:5px;background:#f4f2ec;border:1px solid #e4e0d6;color:#6b665a;font:500 10.5px 'JetBrains Mono',monospace;margin:0 3px 3px 0}
+  .lane{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+  .lane-col{border:1.5px solid #e4e0d6;border-radius:10px;background:#f8f7f2;padding:10px;min-height:90px}
+  .lane-col .lh{font:700 10px 'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+  .ticket{background:#fff;border:1.5px solid #e4e0d6;border-radius:7px;padding:6px 8px;font:600 10px 'Inter';color:#3a372f;margin-bottom:6px}
+  .gate{border:1.5px dashed #d3c7ff;background:#f7f5ff;border-radius:10px;padding:14px 16px}
+  .dim{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1.5px solid #e4e0d6;border-radius:20px;font:600 11px 'Inter';color:#4a463d;background:#fff;margin:0 6px 6px 0}
+</style>
+</helmet>
+<div class="doc">
+  <div class="kick">Rewind · Build Plan & Agent Hand-off</div>
+  <h1>From wireframes to shipped, in phases</h1>
+  <p class="sub">A spec-driven roadmap for building the reimagined Rewind (formerly MemoryWeaver) with Claude Code / Antigravity as the implementer. You act as <b>orchestrator</b>: you own the specs, gates and reviews; the agent owns the keystrokes. Every phase is a vertical slice that ships on its own and maps to a wireframe (<span class="mono">1a–1g, 2a–2c</span>).</p>
+
+  <div class="rule"></div>
+
+  <!-- SECTION A: THE LOOP -->
+  <div class="sec-h"><span class="sec-n">A</span><h2>How each feature moves — the spec-driven loop</h2></div>
+  <p class="sub" style="margin-bottom:18px">Run this loop per feature. It is the "factory," not the product — structure is what lets vibe-speed coding stay shippable.</p>
+  <div class="step"><div class="step-n">1</div><div class="step-b">Write the spec, not the code<span>Author <span class="mono">specs/&lt;phase&gt;_&lt;feature&gt;.feature.md</span> from the template: Markdown intent + YAML schema (nesting &gt;3 → YAML per Day 5) + Gherkin scenarios + eval cases. This is the contract.</span></div></div>
+  <div class="step"><div class="step-n">2</div><div class="step-b">Hand it to the agent against the harness<span>Prompt: <span class="mono">"Implement specs/P1_multimedia_ingress per specs/HARNESS.md."</span> The agent reads the harness rules (sandbox, no secrets on frontend, tests-first) and builds.</span></div></div>
+  <div class="step"><div class="step-n">3</div><div class="step-b">Run the eval gate<span>LLM-as-judge + pytest + trajectory inspection score the run against the spec's eval cases. Below threshold → the agent self-repairs and re-runs. No green gate, no merge.</span></div></div>
+  <div class="step"><div class="step-n">4</div><div class="step-b">Human-in-the-loop review (the "Vibe Diff")<span>Agent produces a plain-English summary of what changed + trajectory. You approve or send corrections ("no, not like that") — corrections are captured as new eval cases.</span></div></div>
+  <div class="step"><div class="step-n">5</div><div class="step-b">Update the tracker & version the spec<span>Move the ticket in <span class="mono">specs/BUILD_TRACKER.md</span>, tag the spec version. Shipped code is disposable; the spec is the source of truth.</span></div></div>
+  <div class="step"><div class="step-n">6</div><div class="step-b">Promote authority tier<span>Feature graduates Read-only → Draft → Action-allowed only after eval coverage (trigger · execution · regression · token budget) is met.</span></div></div>
+
+  <div class="rule"></div>
+
+  <!-- SECTION B: ARTIFACTS -->
+  <div class="sec-h"><span class="sec-n">B</span><h2>The artifacts that live in <span class="mono" style="font-size:15px">specs/</span></h2></div>
+  <div class="card">
+    <div class="kv">
+      <span class="lbl">Plan</span><span><span class="file">00_phase_plan.yaml</span> milestones, phase order, exit criteria — the machine-readable version of Section C.</span>
+      <span class="lbl">Harness</span><span><span class="file">HARNESS.md</span> the rules of the factory: sandbox, security pillars, tests-first, PR shape, "how to build here."</span>
+      <span class="lbl">Design system</span><span><span class="file">DESIGN_SYSTEM.md</span> <b>locked brand directives</b> — Rewind · Soft Clay <span class="mono">#E0916B</span> · Space Grotesk + Outfit · Lucide icons only · crisp radii. Reference build: <span class="mono">Rewind Flow.dc.html</span> turn 5a.</span>
+      <span class="lbl">Template</span><span><span class="file">_TEMPLATE.feature.md</span> copy-per-feature contract: intent + YAML schema + Gherkin + eval cases.</span>
+      <span class="lbl">Feature specs</span><span><span class="file">P1_multimedia_ingress.feature.md</span> <span class="file">P2_workspace_pool.feature.md</span> … one per slice.</span>
+      <span class="lbl">Evals</span><span><span class="file">eval/eval_config.yaml</span> <span class="file">eval/datasets/*.json</span> golden data + LLM-judge config (extends the repo's existing eval harness).</span>
+      <span class="lbl">Tracker</span><span><span class="file">BUILD_TRACKER.md</span> the living board — status per ticket, mirrors Section D.</span>
+    </div>
+  </div>
+  <p class="sub" style="font-size:12.5px;color:#8a8578">Starter versions of the bold files are already written into this project's <span class="mono">specs/</span> folder — including the full P0–P5 feature specs.</p>
+
+  <div class="rule"></div>
+
+  <!-- SECTION C: ROADMAP -->
+  <div class="sec-h"><span class="sec-n">C</span><h2>The phased roadmap</h2></div>
+
+  <div class="phase"><div class="phase-band"><span class="pn">0</span><span class="pw">~2 wk</span></div><div class="phase-body">
+    <h2 style="font-size:15px">Foundations &amp; harness</h2>
+    <p class="sub" style="font-size:12.5px">Build the factory before the product: spec + eval + observability + security baseline, and the workspace/event/media data model everything else needs.</p>
+    <div class="kv">
+      <span class="lbl">Ships</span><span>Data model: <span class="mono">Workspace → Event → MediaItem(type)</span> · eval gate (LLM-judge + pytest) · OpenTelemetry trajectory · sandbox + CI (SAST/SCA)</span>
+      <span class="lbl">Wireframe</span><span>substrate for <span class="tag">1g</span></span>
+      <span class="lbl">Specs</span><span><span class="file">00_phase_plan.yaml</span><span class="file">HARNESS.md</span><span class="file">data_model.feature.md</span></span>
+      <span class="lbl">Eval gate</span><span>golden dataset runs green · trajectory recorded end-to-end</span>
+      <span class="lbl">Exit</span><span>any feature spec can be handed to the agent and complete the loop unattended</span>
+    </div>
+  </div></div>
+
+  <div class="phase"><div class="phase-band"><span class="pn">1</span><span class="pw">~2 wk</span></div><div class="phase-body">
+    <h2 style="font-size:15px">Multi-media ingress <span style="font:600 11px 'JetBrains Mono',monospace;color:#8b7ae0">· first user-visible win</span></h2>
+    <p class="sub" style="font-size:12.5px">Contributors drop any media — photo, video, voice, note, doc — with no login. Collector extended; audio transcription + doc labeling tools added.</p>
+    <div class="kv">
+      <span class="lbl">Ships</span><span>Contributor multi-media capture · mime-aware storage + EXIF strip for all types · transcription tool · doc OCR/label</span>
+      <span class="lbl">Wireframe</span><span><span class="tag">1a</span><span class="tag">1c collect</span></span>
+      <span class="lbl">Specs</span><span><span class="file">P1_multimedia_ingress.feature.md</span></span>
+      <span class="lbl">Eval gate</span><span>each media type uploads · transcription WER ≤ target on golden set · injection guard + 20MB/type allowlist pass</span>
+      <span class="lbl">Security</span><span>STRIDE: mime validation, size caps, path-traversal, PII hashing, EXIF strip</span>
+      <span class="lbl">Exit</span><span>mixed-media pool visible to organizer</span>
+    </div>
+  </div></div>
+
+  <div class="phase"><div class="phase-band"><span class="pn">2</span><span class="pw">~3 wk</span></div><div class="phase-body">
+    <h2 style="font-size:15px">Scalable curation</h2>
+    <p class="sub" style="font-size:12.5px">1,000+ mixed items stay browsable and curatable. Curator learns video + audio; curation review gets the friendly ⇄ developer-transparency toggle.</p>
+    <div class="kv">
+      <span class="lbl">Ships</span><span>Type filters + auto-grouping + virtualized grid · video keyframe/CLIP · audio anchoring · Memory missed-moments · A2A hire of external video agent</span>
+      <span class="lbl">Wireframe</span><span><span class="tag">1c</span><span class="tag">1d</span></span>
+      <span class="lbl">Specs</span><span><span class="file">P2_workspace_pool.feature.md</span><span class="file">P2_curation_pipeline.feature.md</span><span class="file">skills/*.skill.md</span></span>
+      <span class="lbl">Eval gate</span><span>dedup precision/recall on golden bursts · curation LLM-judge ≥ 0.85 · p95 latency budget · dev-view shows trajectory + score</span>
+      <span class="lbl">Security</span><span>7-pillar review of external A2A hire · egress governance</span>
+      <span class="lbl">Exit</span><span>1,000-item event curated within budget, HITL approves</span>
+    </div>
+  </div></div>
+
+  <div class="phase"><div class="phase-band"><span class="pn">3</span><span class="pw">~2 wk</span></div><div class="phase-body">
+    <h2 style="font-size:15px">Multimedia keepsake</h2>
+    <p class="sub" style="font-size:12.5px">The journal weaves every media type: inline video, tap-to-play voice with transcript + speaker, doc attachments, print/PDF.</p>
+    <div class="kv">
+      <span class="lbl">Ships</span><span>Viewer video + audio (tap-to-play, named speaker) · doc attach · sub-event tabs · PDF/print · book-ready layout</span>
+      <span class="lbl">Wireframe</span><span><span class="tag">1e</span><span class="tag">2a</span><span class="tag">2b</span><span class="tag">2c</span></span>
+      <span class="lbl">Specs</span><span><span class="file">P3_viewer.feature.md</span><span class="file">P3_narration_skills.feature.md</span></span>
+      <span class="lbl">Eval gate</span><span>narration quality LLM-judge · audio anchored correctly ≥ target · print-snapshot visual eval (multimodal judge)</span>
+      <span class="lbl">Exit</span><span>shareable book renders + prints with all media types</span>
+    </div>
+  </div></div>
+
+  <div class="phase"><div class="phase-band"><span class="pn">4</span><span class="pw">~3 wk</span></div><div class="phase-body">
+    <h2 style="font-size:15px">Organizer scale — workspaces &amp; teams</h2>
+    <p class="sub" style="font-size:12.5px">Many events, shared workspaces, roles, recurring series, templates. Moves from single-family to teams/orgs.</p>
+    <div class="kv">
+      <span class="lbl">Ships</span><span>Events dashboard · workspaces · roles/IAM · recurring events · templates · search</span>
+      <span class="lbl">Wireframe</span><span><span class="tag">1b</span></span>
+      <span class="lbl">Specs</span><span><span class="file">P4_workspaces.feature.md</span><span class="file">P4_iam_roles.feature.md</span></span>
+      <span class="lbl">Eval gate</span><span>RBAC tests · tenant-isolation tests · audit-log completeness</span>
+      <span class="lbl">Security</span><span>IAM least-privilege (JIT), tenant partitioning (Pillar 2/5), immutable audit trail (Pillar 7)</span>
+      <span class="lbl">Exit</span><span>multi-tenant workspace passes isolation tests</span>
+    </div>
+  </div></div>
+
+  <div class="phase"><div class="phase-band"><span class="pn">5</span><span class="pw">~2 wk</span></div><div class="phase-body">
+    <h2 style="font-size:15px">Monetization &amp; Agents-as-a-Service</h2>
+    <p class="sub" style="font-size:12.5px">Turn the keepsake into revenue: plans + billing, printed-book fulfillment, and the curation agent listed on an A2A marketplace with AP2 spend guardrails.</p>
+    <div class="kv">
+      <span class="lbl">Ships</span><span>Plans/entitlements · Stripe billing · printed-book order flow · A2A listing (AaaS) · AP2 mandates for agent spend</span>
+      <span class="lbl">Wireframe</span><span><span class="tag">1f</span></span>
+      <span class="lbl">Specs</span><span><span class="file">P5_billing.feature.md</span><span class="file">P5_aaas.feature.md</span></span>
+      <span class="lbl">Eval gate</span><span>Stripe test-mode flows · AP2 mandate/handshake tests · entitlement-gating tests</span>
+      <span class="lbl">Security</span><span>no card data on frontend · webhook signature verify · AP2 human-approved mandates</span>
+      <span class="lbl">Exit</span><span>test-mode purchase + entitlement gate + agent discoverable on A2A</span>
+    </div>
+  </div></div>
+
+  <div class="rule"></div>
+
+  <!-- SECTION D: TRACKING -->
+  <div class="sec-h"><span class="sec-n">D</span><h2>Tracking board — how a ticket flows</h2></div>
+  <p class="sub" style="margin-bottom:16px">Mirror this in <span class="mono">specs/BUILD_TRACKER.md</span>. A ticket = one feature spec. It only moves right when the gate for that lane passes.</p>
+  <div class="lane">
+    <div class="lane-col"><div class="lh" style="color:#a8a294">Backlog</div><div class="ticket">P2 · video curation</div><div class="ticket">P3 · print layout</div><div class="ticket">P4 · recurring</div></div>
+    <div class="lane-col"><div class="lh" style="color:#6d5ae6">Spec ✍</div><div class="ticket">P2 · pool filters</div></div>
+    <div class="lane-col"><div class="lh" style="color:#c9954a">Building 🤖</div><div class="ticket">P1 · voice ingress</div></div>
+    <div class="lane-col"><div class="lh" style="color:#3a86c9">Eval + HITL 🔍</div><div class="ticket">P1 · doc ingress</div></div>
+    <div class="lane-col"><div class="lh" style="color:#2f9e5f">Shipped ✓</div><div class="ticket">P0 · data model</div><div class="ticket">P1 · photo parity</div></div>
+  </div>
+
+  <div class="rule"></div>
+
+  <!-- SECTION E: DoD -->
+  <div class="sec-h"><span class="sec-n">E</span><h2>Definition of done — the eval gate every ticket clears</h2></div>
+  <div class="gate">
+    <div class="lbl" style="color:#8b7ae0;margin-bottom:10px">Seven dimensions (Day 4 eval framework)</div>
+    <span class="dim">✓ Intent satisfaction</span><span class="dim">✓ Functional correctness</span><span class="dim">✓ Visual / behavioral</span><span class="dim">✓ Cost / latency budget</span><span class="dim">✓ Code quality</span><span class="dim">✓ Trajectory quality</span><span class="dim">✓ Self-repair</span>
+    <p class="sub" style="font-size:12.5px;margin-top:12px">Plus per-spec: security STRIDE items closed · Gherkin scenarios green · no PII in logs · authority tier justified. Track <b>session convergence</b> (did the user get what they wanted), not just per-turn pass rate.</p>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

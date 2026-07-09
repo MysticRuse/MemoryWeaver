@@ -1,0 +1,66 @@
+# eval/eval_config.yaml — LLM-as-judge + functional eval gate
+# Extends the repo's existing eval harness (agents-cli eval).
+# Every feature spec references a golden dataset here; the gate blocks merge on fail.
+
+version: 1
+project: rewind                      # product name (repo dir stays memoryweaver/)
+judge_model: gemini-2.5-pro          # LLM-as-judge; use a strong model for scoring
+runner: agents-cli                   # or pytest for pure functional cases
+
+# Day 4 eval dimensions — each case is scored on the ones it declares.
+dimensions:
+  - intent_satisfaction
+  - functional_correctness
+  - visual_behavioral
+  - cost_latency
+  - code_quality
+  - trajectory_quality
+  - self_repair
+
+defaults:
+  pass_threshold: 0.85               # per-feature specs may override
+  max_retries: 2                     # self-repair attempts before hard fail
+  record_trajectory: true            # OpenTelemetry — inspect for drift/loops
+
+# One suite per phase; points at the spec + its golden dataset.
+suites:
+  - id: P1_multimedia_ingress
+    spec: specs/P1_multimedia_ingress.feature.md
+    dataset: eval/datasets/p1-ingress.json
+    threshold: 0.85
+    methods: [pytest, llm_as_judge, trajectory]
+    extra_metrics:
+      transcription_wer_max: 0.15
+    budget: { p95_latency_s: 8, max_gemini_calls_per_item: 1 }
+
+  - id: P2_curation_pipeline
+    spec: specs/P2_curation_pipeline.feature.md
+    dataset: eval/datasets/p2-curation.json
+    threshold: 0.85
+    methods: [pytest, llm_as_judge, trajectory]
+    extra_metrics:
+      dedup_precision_min: 0.9
+      dedup_recall_min: 0.85
+    budget: { p95_latency_s: 180 }
+
+  - id: P3_viewer
+    spec: specs/P3_viewer.feature.md
+    dataset: eval/datasets/p3-viewer.json
+    threshold: 0.85
+    methods: [llm_as_judge, browser, trajectory]   # browser = rendered-artifact check
+    extra_metrics:
+      audio_anchor_accuracy_min: 0.9
+
+# Security cases run on EVERY suite (regression) — a fail here blocks regardless of score.
+security_regression:
+  - no_pii_in_logs
+  - exif_stripped_on_public_media
+  - prompt_injection_sanitized
+  - upload_validation_enforced          # mime allowlist + 20MB cap + path traversal
+  - admin_endpoints_token_gated
+
+# Track session convergence (did the user ultimately get what they wanted),
+# not just per-turn pass rate. Mine human corrections as new negative cases.
+reporting:
+  track: [session_convergence, turn_pass_rate, cost_per_feature]
+  mine_corrections_as_cases: true

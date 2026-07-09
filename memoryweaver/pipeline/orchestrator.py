@@ -63,7 +63,59 @@ def transcribe_audio_file(file_path: str, log=print) -> str:
         return transcript
     except Exception as e:
         log(f"  [Transcription] Error: {e}")
-        return f"[Audio Transcription Failed: {e}]"
+        return f"[Transcription Failed: {e}]"
+
+def ocr_and_classify_document(file_path: str, log=print) -> dict:
+    from google import genai
+    from google.genai import types
+    import os
+    
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return {"ocr_text": "[OCR Failed: API Key not set]", "doc_kind": "other"}
+        
+    client = genai.Client(api_key=api_key)
+    log(f"  [OCR] processing document: {os.path.basename(file_path)}...")
+    
+    try:
+        with open(file_path, "rb") as f:
+            file_bytes = f.read()
+            
+        mime = "application/pdf" if file_path.lower().endswith(".pdf") else "image/jpeg"
+        
+        prompt = (
+            "Extract all readable text from this document. Then, classify it as one of the following kinds:\n"
+            "doc_kind: ticket, menu, map, boarding_pass, or other.\n"
+            "Format the response exactly as: \n"
+            "DOC_KIND: <kind>\n"
+            "TEXT: <extracted text>"
+        )
+        
+        res = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=[
+                types.Part.from_bytes(data=file_bytes, mime_type=mime),
+                prompt
+            ]
+        )
+        
+        text = res.text.strip()
+        doc_kind = "other"
+        ocr_text = text
+        
+        for line in text.splitlines():
+            if line.upper().startswith("DOC_KIND:"):
+                candidate = line.split(":", 1)[1].strip().lower()
+                if candidate in ["ticket", "menu", "map", "boarding_pass", "other"]:
+                    doc_kind = candidate
+            elif line.upper().startswith("TEXT:"):
+                ocr_text = text.split(line, 1)[1].strip()
+                
+        log(f"  [OCR] Success: Classified as {doc_kind}.")
+        return {"ocr_text": ocr_text, "doc_kind": doc_kind}
+    except Exception as e:
+        log(f"  [OCR] Error document OCR on {file_path}: {e}")
+        return {"ocr_text": f"[OCR Failed: {e}]", "doc_kind": "other"}
 
 def execute_trip_pipeline(project_root: str, session_id: str = "default", limit: int = 50, log=print, progress_callback=None, stage: str = "all") -> dict:
     """
@@ -528,6 +580,7 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
     all_files = os.listdir(uploads_dir) if os.path.exists(uploads_dir) else []
     text_files = [f for f in all_files if f.lower().endswith(".txt") and "story_note" in f.lower()]
     audio_files = [f for f in all_files if f.lower().endswith((".wav", ".mp3", ".m4a"))]
+    doc_files = [f for f in all_files if f.lower().endswith(".pdf")]
     
     # Load calendar events
     calendar_events = []
@@ -554,11 +607,18 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
                 text_notes[f] = tf.read().strip()
         except Exception as e:
             log(f"Warning: Failed to read text file {f}: {e}")
+
+    # Process document OCR and classification using Gemini
+    doc_infos = {}
+    for f in doc_files:
+        f_path = os.path.join(uploads_dir, f)
+        doc_infos[f] = ocr_and_classify_document(f_path, log)
             
     # Match extra files to the closest photo moment timestamp
     scene_notes = {}
     scene_audios = {}
     scene_calendars = {}
+    scene_docs = {}
     
     # Helper to find nearest scene label
     def find_nearest_scene(timestamp):
@@ -590,6 +650,19 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
             if scene not in scene_calendars: scene_calendars[scene] = []
             scene_calendars[scene].append(ev.get("title", "Event"))
 
+    for f in doc_files:
+        f_path = os.path.join(uploads_dir, f)
+        mtime = os.path.getmtime(f_path)
+        scene = find_nearest_scene(mtime)
+        if scene:
+            if scene not in scene_docs: scene_docs[scene] = []
+            info = doc_infos[f]
+            scene_docs[scene].append({
+                "filename": f,
+                "doc_kind": info["doc_kind"],
+                "ocr_text": info["ocr_text"]
+            })
+
     # Run Narrator Journaling in a Single Batched API Call
     log("Starting Phase 5: Batched Narrator Agent synthesis (single API call)...")
     p5_start = time.time()
@@ -612,7 +685,8 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
             "top_photos": top3_info,
             "user_notes": scene_notes.get(scene, []),
             "voice_transcripts": [x["transcription"] for x in scene_audios.get(scene, [])],
-            "calendar_events": scene_calendars.get(scene, [])
+            "calendar_events": scene_calendars.get(scene, []),
+            "documents": scene_docs.get(scene, [])
         })
         
     if progress_callback:
@@ -638,7 +712,8 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
             "date": moment_date,
             "notes": scene_notes.get(scene, []),
             "audio_notes": scene_audios.get(scene, []),
-            "calendar_events": scene_calendars.get(scene, [])
+            "calendar_events": scene_calendars.get(scene, []),
+            "documents": scene_docs.get(scene, [])
         })
         
     if progress_callback:

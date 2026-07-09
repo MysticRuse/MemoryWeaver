@@ -1,0 +1,13 @@
+{
+  "suite": "P3_narration_skills",
+  "spec": "specs/P3_narration_skills.feature.md",
+  "threshold": 0.85,
+  "note": "EDD stub. Cover positive + negative skill triggers and tone judged per event type.",
+  "budget": { "max_gemini_calls": 1 },
+  "assets_needed": ["golden/moments_trip.json", "golden/moments_sports.json"],
+  "cases": [
+    { "id": "trigger_coverage", "input": { "event_type": "sports_match" }, "expected_tools": ["skill.narrate_sports_match"], "expected_output": { "positive_trigger": true, "negative_trigger": false } },
+    { "id": "tone_matches_type", "input": { "fixture": "golden/moments_sports.json" }, "expected_tools": ["skill.narrate_sports_match"], "expected_output": { "llm_judge_tone_min": 0.85 } },
+    { "id": "uses_transcripts", "input": { "fixture": "golden/moments_trip.json" }, "expected_tools": ["skill.narrate_trip"], "expected_output": { "grounded_in_source": true } }
+  ]
+}

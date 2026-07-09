@@ -1,0 +1,12 @@
+{
+  "suite": "P3_viewer",
+  "spec": "specs/P3_viewer.feature.md",
+  "threshold": 0.85,
+  "note": "EDD stub. `print_snapshot` uses a multimodal visual judge on the rendered PDF page.",
+  "assets_needed": ["golden/trip_book_bali.json", "golden/print_reference.png"],
+  "cases": [
+    { "id": "audio_anchor_render", "input": { "book": "golden/trip_book_bali.json" }, "expected_tools": ["viewer.render_moment"], "expected_output": { "speaker_shown": true, "autoplay": false, "shows": ["waveform", "transcript_pullquote"] } },
+    { "id": "sub_event_filter", "input": { "sub_event": "day-2-uluwatu" }, "expected_tools": ["viewer.filter"], "expected_output": { "only_segment_moments": true } },
+    { "id": "print_snapshot", "method": "browser", "input": { "export": "pdf" }, "expected_output": { "visual_judge_min": 0.85, "video_shows_poster_qr": true, "audio_shows_quote_qr": true } }
+  ]
+}

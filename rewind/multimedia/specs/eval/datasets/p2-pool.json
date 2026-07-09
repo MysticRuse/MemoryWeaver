@@ -1,0 +1,12 @@
+{
+  "suite": "P2_workspace_pool",
+  "spec": "specs/P2_workspace_pool.feature.md",
+  "note": "EDD stub. `perf_1000_items` needs a synthetic 1,000-item event fixture.",
+  "budget": { "first_page_load_ms": 800 },
+  "assets_needed": ["golden/event_1000_items.json"],
+  "cases": [
+    { "id": "filter_correctness", "input": { "type": "video" }, "expected_tools": ["media.list"], "expected_output": { "only_type": "video", "counts_unchanged": true } },
+    { "id": "perf_1000_items", "input": { "fixture": "golden/event_1000_items.json" }, "expected_tools": ["media.list"], "expected_output": { "p95_scroll_frame_ms_max": 32, "page_size": 60 } },
+    { "id": "nondestructive_exclude", "input": { "ids": ["m1", "m2"], "excluded": true }, "expected_tools": ["media.exclude"], "expected_output": { "removed_from_curation": true, "deleted_from_storage": false } }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "suite": "P5_billing",
+  "spec": "specs/P5_billing.feature.md",
+  "note": "EDD stub. Use Stripe TEST-mode keys only. Never include live keys or real card data.",
+  "assets_needed": ["golden/stripe_test_events.json"],
+  "cases": [
+    { "id": "entitlement_gating", "input": { "plan": "free", "action": "upload_video" }, "expected_tools": ["entitlement.check"], "expected_output": { "free_blocks_video": true, "pro_allows_video": true } },
+    { "id": "stripe_test_flow", "input": { "plan": "family_pro", "mode": "test" }, "expected_tools": ["billing.checkout", "billing.webhook_verify"], "expected_output": { "checkout_ok": true, "webhook_verified": true } },
+    { "id": "no_card_data_local", "input": { "flow": "checkout" }, "expected_tools": ["billing.checkout"], "expected_output": { "card_data_touches_server": false } }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "suite": "P4_workspaces",
+  "spec": "specs/P4_workspaces.feature.md",
+  "note": "EDD stub for dashboard, recurring series, templates, search.",
+  "assets_needed": ["golden/workspace_fixture.json"],
+  "cases": [
+    { "id": "dashboard_status_counts", "input": { "fixture": "golden/workspace_fixture.json" }, "expected_tools": ["workspace.list_events"], "expected_output": { "has_counts": ["collecting", "curating", "ready"] } },
+    { "id": "recurring_spawn", "input": { "series": "Weekly soccer", "cadence": "weekly" }, "expected_tools": ["event.spawn_recurring"], "expected_output": { "child_has_own_share_code": true, "parent_linked": true } },
+    { "id": "template_prefill", "input": { "template_id": "wedding" }, "expected_tools": ["event.create_from_template"], "expected_output": { "prefilled": ["type", "narration_skill", "cover_style"] } },
+    { "id": "search", "input": { "q": "bali" }, "expected_tools": ["workspace.search"], "expected_output": { "returns_only_matching": true, "scoped_to_workspace": true } }
+  ]
+}

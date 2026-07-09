@@ -1,0 +1,14 @@
+{
+  "suite": "P2_curation_pipeline",
+  "spec": "specs/P2_curation_pipeline.feature.md",
+  "threshold": 0.85,
+  "note": "EDD stub. Provide labelled burst groups and an anchoring fixture (voice notes with known nearest clusters).",
+  "budget": { "p95_latency_s": 180 },
+  "assets_needed": ["golden/bursts/", "golden/clips/", "golden/anchoring_fixture.json"],
+  "cases": [
+    { "id": "dedup_bursts", "input": { "bursts": "golden/bursts/" }, "expected_tools": ["curator.clip_dedup"], "expected_output": { "precision_min": 0.9, "recall_min": 0.85 } },
+    { "id": "video_scored", "input": { "clips": "golden/clips/" }, "expected_tools": ["curator.keyframe", "curator.score"], "expected_output": { "each_clip_has": ["keyframe", "score", "caption"] } },
+    { "id": "curation_quality", "input": { "fixture": "golden/clips/" }, "expected_tools": ["curator.score"], "expected_output": { "llm_judge_min": 0.85 } },
+    { "id": "audio_anchor", "input": { "fixture": "golden/anchoring_fixture.json" }, "expected_tools": ["curator.anchor_audio"], "expected_output": { "anchor_accuracy_min": 0.9, "unanchored_becomes_standalone": true } }
+  ]
+}

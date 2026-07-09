@@ -1,0 +1,11 @@
+{
+  "suite": "P0_data_model",
+  "spec": "specs/P0_data_model.feature.md",
+  "note": "EDD stub — fill `expected_output` for your data and add the listed asset files before running.",
+  "assets_needed": ["golden/gps_photo.jpg"],
+  "cases": [
+    { "id": "tenant_isolation", "input": { "events": ["A", "B"], "query_event": "A" }, "expected_tools": [], "expected_output": { "cross_event_leak": false } },
+    { "id": "exif_stripped", "input": { "photo": "golden/gps_photo.jpg" }, "expected_tools": ["media.serve"], "expected_output": { "has_exif": false } },
+    { "id": "legacy_migration", "input": { "from": "default_single_event_pool" }, "expected_tools": ["migrate.default"], "expected_output": { "photos_preserved": true, "workspace": "default", "event": "default" } }
+  ]
+}

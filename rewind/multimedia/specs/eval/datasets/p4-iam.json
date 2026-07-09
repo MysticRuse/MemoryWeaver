@@ -1,0 +1,11 @@
+{
+  "suite": "P4_iam_roles",
+  "spec": "specs/P4_iam_roles.feature.md",
+  "note": "EDD stub — security-critical. `rbac_matrix` should enumerate every role x action pair.",
+  "assets_needed": ["golden/rbac_matrix.json"],
+  "cases": [
+    { "id": "rbac_matrix", "input": { "matrix": "golden/rbac_matrix.json" }, "expected_tools": ["iam.authorize"], "expected_output": { "all_role_action_pairs_enforced": true, "viewer_denied_run_pipeline": true } },
+    { "id": "cross_tenant_denied", "input": { "member_of": ["A"], "request_workspace": "B" }, "expected_tools": ["iam.authorize"], "expected_output": { "leak": false, "status": 403 } },
+    { "id": "audit_complete", "input": { "action": "delete_event" }, "expected_tools": ["audit.record"], "expected_output": { "every_destructive_action_logged": true, "immutable": true } }
+  ]
+}
