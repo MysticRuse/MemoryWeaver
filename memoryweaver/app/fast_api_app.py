@@ -876,6 +876,7 @@ def run_photo_action(req: PhotoActionRequest):
             
             # Save it back to metadata file as the new transcription
             try:
+                import json
                 session_dir = os.path.join(session_storage.local_base, "sessions", req.session_id)
                 metadata_file = os.path.join(session_dir, "photos_metadata.json")
                 photos_meta = {}
@@ -899,15 +900,25 @@ def run_photo_action(req: PhotoActionRequest):
                     
                 if req.action == "crop_guide":
                     prompt = (
-                        "You are a professional photographer. Analyze the composition of this photo and "
-                        "recommend optimal cropping options. Provide clear rule-of-thirds advice, focal subject position, "
-                        "and potential aspect ratio adjustments (e.g. 4:3, 16:9) to enhance its visual impact."
+                        "You are a professional photographer. Analyze the composition of this photo.\n\n"
+                        "1. Assign a current composition score (out of 10).\n"
+                        "2. Provide clear, actionable cropping recommendations (subject placement, aspect ratio, rule-of-thirds advice).\n"
+                        "3. Estimate a projected composition score (out of 10) if the recommendations are implemented.\n\n"
+                        "Format your feedback with clear headers:\n"
+                        "Current Composition Rating: X / 10\n"
+                        "Projected Composition Rating (post-crop): Y / 10\n\n"
+                        "Composition & Cropping Advice:"
                     )
                 elif req.action == "exposure_slider":
                     prompt = (
-                        "You are a professional Lightroom colorist. Critique the lighting and color balance of this photo. "
-                        "Suggest exact slider values between -100 and +100 for: Exposure, Contrast, Highlights, Shadows, "
-                        "Whites, Blacks, Temp, and Tint to make the colors pop beautifully."
+                        "You are a professional Lightroom colorist. Critique the lighting and color balance of this photo.\n\n"
+                        "1. Assign a current color grading score (out of 10).\n"
+                        "2. Suggest exact Lightroom slider adjustments between -100 and +100 (Exposure, Contrast, Highlights, Shadows, Whites, Blacks, Temp, Tint) to make it look spectacular.\n"
+                        "3. Estimate a projected color grading score (out of 10) after these adjustments are applied.\n\n"
+                        "Format your feedback with clear headers:\n"
+                        "Current Color Rating: X / 10\n"
+                        "Projected Color Rating (post-adjustments): Y / 10\n\n"
+                        "Lightroom Slider Recommendations:"
                     )
                 elif req.action == "quality_check":
                     prompt = (
