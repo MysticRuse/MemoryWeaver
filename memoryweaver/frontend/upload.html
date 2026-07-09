@@ -1031,6 +1031,205 @@
             box-shadow: 3px 3px 0px var(--border);
         }
 
+        /* Carousel Navigation Arrows */
+        .detail-photo-column {
+            position: relative;
+        }
+        .carousel-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            border: 2.5px solid var(--border);
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 2px 2px 0px var(--border);
+            z-index: 10;
+            transition: all 0.2s;
+            color: var(--text);
+        }
+        .carousel-arrow:hover {
+            background: var(--accent);
+            color: #FFFFFF;
+            transform: translateY(-50%) scale(1.1);
+        }
+        .carousel-arrow:active {
+            transform: translateY(-50%) scale(0.95);
+        }
+        .carousel-arrow.prev {
+            left: 12px;
+        }
+        .carousel-arrow.next {
+            right: 12px;
+        }
+
+        /* Voice Memo UI Refinements */
+        .voice-memo-card {
+            background: #FFFFFF;
+            border: 2.5px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 3px 3px 0px var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .voice-memo-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 800;
+            font-size: 13.5px;
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .voice-memo-explanation {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            line-height: 1.45;
+            border-left: 2.5px solid var(--accent);
+            padding-left: 8px;
+        }
+        .voice-controls-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .btn-record {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            background: #FFFFFF;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text);
+            transition: all 0.2s;
+            box-shadow: 2px 2px 0px var(--border);
+        }
+        .btn-record:hover {
+            transform: scale(1.08);
+        }
+        .btn-record.recording {
+            background: var(--danger);
+            color: #FFFFFF;
+            animation: pulse-recording 1.5s infinite;
+        }
+        @keyframes pulse-recording {
+            0% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 77, 77, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0); }
+        }
+        .timer-badge {
+            font-family: monospace;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            background: var(--bg);
+            padding: 4px 10px;
+            border: 1.5px solid var(--border);
+            border-radius: 6px;
+            user-select: none;
+        }
+        .transcription-textarea {
+            width: 100%;
+            height: 85px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            color: var(--text);
+            resize: vertical;
+            background: var(--surface);
+            line-height: 1.4;
+        }
+        .transcription-textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .btn-save-voice {
+            padding: 8px 18px;
+            font-size: 12px;
+            background: var(--accent);
+            color: #FFFFFF;
+            border: 2.5px solid var(--border);
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 2px 2px 0px var(--border);
+            transition: all 0.2s;
+            align-self: flex-end;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-save-voice:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 3px 3px 0px var(--border);
+        }
+        /* Gemini Vision Analysis Card */
+        .gemini-analysis-card {
+            background: rgba(235, 35, 113, 0.03);
+            border: 2.5px dashed var(--accent);
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+        .gemini-analysis-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .gemini-analysis-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 800;
+            font-size: 13.5px;
+            color: var(--accent);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .gemini-rating-badge {
+            background: var(--accent);
+            color: #FFFFFF;
+            font-weight: 800;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-family: 'Space Grotesk', sans-serif;
+            border: 2px solid var(--border);
+            box-shadow: 1.5px 1.5px 0px var(--border);
+        }
+        .gemini-analysis-summary {
+            font-size: 12.5px;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0;
+            padding-bottom: 6px;
+            border-bottom: 1.5px solid rgba(235, 35, 113, 0.1);
+            line-height: 1.4;
+        }
+        .gemini-analysis-text {
+            font-size: 12px;
+            line-height: 1.5;
+            color: var(--text);
+            margin: 0;
+        }
+
         /* Simplified Event Manager Styles */
         .event-type-radios {
             display: flex;
@@ -1391,11 +1590,13 @@
                         <button class="btn btn-close-detail" onclick="closePhotoDetails(); event.preventDefault(); event.stopPropagation();">Close Panel</button>
                     </div>
                     <div class="detail-body-grid">
-                        <!-- Left: Large Image -->
+                        <!-- Left: Large Image with Carousel Navigation -->
                         <div class="detail-photo-column">
+                            <button class="carousel-arrow prev" onclick="navigateCarousel(-1); event.preventDefault(); event.stopPropagation();" title="Previous Photo"><i data-lucide="chevron-left" style="width: 20px; height: 20px;"></i></button>
                             <img id="detail-photo-img" src="" alt="Selected Photo Preview" />
+                            <button class="carousel-arrow next" onclick="navigateCarousel(1); event.preventDefault(); event.stopPropagation();" title="Next Photo"><i data-lucide="chevron-right" style="width: 20px; height: 20px;"></i></button>
                         </div>
-                        <!-- Right: Metadata & Map -->
+                        <!-- Right: Metadata, Map, & Voice Story -->
                         <div class="detail-meta-column">
                             <div class="metadata-card">
                                 <div class="meta-row">
@@ -1430,6 +1631,46 @@
                             </div>
                             <div id="detail-map-placeholder" style="background: rgba(235, 35, 113, 0.04); border: 1.5px dashed var(--accent); border-radius: 12px; height: 180px; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--accent); font-weight: 600;">
                                 📍 No GPS Coordinates Found
+                            </div>
+
+                            <!-- Gemini Vision Analysis Card -->
+                            <div class="gemini-analysis-card" id="gemini-analysis-card">
+                                <div class="gemini-analysis-header">
+                                    <h4 class="gemini-analysis-title">
+                                        <i data-lucide="sparkles" style="width: 16px; height: 16px; color: var(--accent);"></i> Gemini Curation Review
+                                    </h4>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <button class="btn" style="padding: 4px 8px; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; border: 1.5px solid var(--border); height: 26px;" onclick="refreshGeminiAnalysis(); event.preventDefault(); event.stopPropagation();" title="Regenerate Photographer Critique">
+                                            <i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i> Refeed
+                                        </button>
+                                        <span id="gemini-rating" class="gemini-rating-badge">-/10</span>
+                                    </div>
+                                </div>
+                                <div id="gemini-summary" class="gemini-analysis-summary">Loading visual summary...</div>
+                                <p id="gemini-details" class="gemini-analysis-text">Requesting curation analysis from Gemini...</p>
+                            </div>
+
+                            <!-- Voice Note Recorder Card -->
+                            <div class="voice-memo-card">
+                                <h4 class="voice-memo-title">
+                                    <i data-lucide="mic" style="width: 16px; height: 16px; color: var(--accent);"></i> Add Voice Story / Note
+                                </h4>
+                                <p class="voice-memo-explanation">
+                                    🎤 Your voice brings this photo to life! Share the laughter, background stories, or immediate thoughts behind this moment to weave a truly memorable journal.
+                                </p>
+                                <div class="voice-controls-row">
+                                    <button id="btn-voice-record" class="btn-record" onclick="toggleVoiceRecording(); event.preventDefault(); event.stopPropagation();" title="Record voice note (60s limit)">
+                                        <i data-lucide="mic" style="width: 18px; height: 18px;"></i>
+                                    </button>
+                                    <span id="voice-timer" class="timer-badge">00:00 / 01:00</span>
+                                    <audio id="voice-audio-playback" controls style="display: none; height: 32px; flex: 1; min-width: 140px;"></audio>
+                                </div>
+                                <div>
+                                    <textarea id="transcription-editor" class="transcription-textarea" placeholder="Speak to transcribe, or type your memories here..."></textarea>
+                                </div>
+                                <button id="btn-save-voice" class="btn-save-voice" onclick="saveVoiceNote(); event.preventDefault(); event.stopPropagation();">
+                                    <i data-lucide="save" style="width: 14px; height: 14px;"></i> Save Voice Story
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1695,8 +1936,195 @@
 
         let activeMap = null;
         let selectedFilename = null;
+        let allPhotosInTray = [];
+
+        // Carousel arrow controls
+        function navigateCarousel(direction) {
+            if (allPhotosInTray.length === 0 || !selectedFilename) return;
+            const currentIdx = allPhotosInTray.indexOf(selectedFilename);
+            if (currentIdx === -1) return;
+            
+            let nextIdx = currentIdx + direction;
+            if (nextIdx < 0) nextIdx = allPhotosInTray.length - 1; // loop to end
+            if (nextIdx >= allPhotosInTray.length) nextIdx = 0;    // loop to start
+            
+            const nextFilename = allPhotosInTray[nextIdx];
+            const nextCard = document.getElementById(`card-${nextFilename.replace(/[^a-zA-Z0-9]/g, '_')}`);
+            selectPhoto(nextFilename, nextCard);
+        }
+
+        // Voice recorder state variables
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+        let recordingDuration = 0;
+        let timerInterval = null;
+        let audioBlob = null;
+        let speechRecognition = null;
+
+        function toggleVoiceRecording() {
+            if (isRecording) {
+                stopVoiceRecording();
+            } else {
+                startVoiceRecording();
+            }
+        }
+
+        async function startVoiceRecording() {
+            audioChunks = [];
+            audioBlob = null;
+            recordingDuration = 0;
+            document.getElementById('voice-timer').textContent = "00:00 / 01:00";
+            document.getElementById('voice-audio-playback').style.display = 'none';
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = () => {
+                    audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const playback = document.getElementById('voice-audio-playback');
+                    playback.src = audioUrl;
+                    playback.style.display = 'block';
+                    
+                    // Stop all audio track streams to release microphone
+                    stream.getTracks().forEach(track => track.stop());
+                };
+                
+                // Start Speech Recognition (live client-side transcription)
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (SpeechRecognition) {
+                    speechRecognition = new SpeechRecognition();
+                    speechRecognition.continuous = true;
+                    speechRecognition.interimResults = true;
+                    speechRecognition.lang = 'en-US';
+                    
+                    const editor = document.getElementById('transcription-editor');
+                    let finalTranscript = '';
+                    
+                    speechRecognition.onresult = (event) => {
+                        let interimTranscript = '';
+                        for (let i = event.resultIndex; i < event.results.length; ++i) {
+                            if (event.results[i].isFinal) {
+                                finalTranscript += event.results[i][0].transcript + ' ';
+                            } else {
+                                interimTranscript += event.results[i][0].transcript;
+                            }
+                        }
+                        editor.value = (finalTranscript + interimTranscript).trim();
+                    };
+                    
+                    speechRecognition.onerror = (e) => {
+                        console.warn("Speech Recognition Error:", e);
+                    };
+                    
+                    speechRecognition.start();
+                } else {
+                    console.log("Web Speech API is not supported in this browser.");
+                }
+                
+                mediaRecorder.start();
+                isRecording = true;
+                
+                // Toggle Button visual states
+                const recordBtn = document.getElementById('btn-voice-record');
+                recordBtn.classList.add('recording');
+                recordBtn.innerHTML = '<i data-lucide="square" style="width: 18px; height: 18px;"></i>';
+                lucide.createIcons();
+                
+                // Start Countdown Timer (Capped at 60s)
+                timerInterval = setInterval(() => {
+                    recordingDuration++;
+                    const mins = String(Math.floor(recordingDuration / 60)).padStart(2, '0');
+                    const secs = String(recordingDuration % 60).padStart(2, '0');
+                    document.getElementById('voice-timer').textContent = `${mins}:${secs} / 01:00`;
+                    
+                    if (recordingDuration >= 60) {
+                        stopVoiceRecording();
+                    }
+                }, 1000);
+                
+            } catch (err) {
+                console.error("Microphone Access Error:", err);
+                alert("Could not access microphone. Please grant permission in settings.");
+            }
+        }
+
+        function stopVoiceRecording() {
+            if (!isRecording) return;
+            
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            if (speechRecognition) {
+                speechRecognition.stop();
+                speechRecognition = null;
+            }
+            
+            clearInterval(timerInterval);
+            timerInterval = null;
+            isRecording = false;
+            
+            const recordBtn = document.getElementById('btn-voice-record');
+            recordBtn.classList.remove('recording');
+            recordBtn.innerHTML = '<i data-lucide="mic" style="width: 18px; height: 18px;"></i>';
+            lucide.createIcons();
+        }
+
+        async function saveVoiceNote() {
+            if (!selectedFilename) return;
+            
+            const transcriptionText = document.getElementById('transcription-editor').value.trim();
+            const btnSave = document.getElementById('btn-save-voice');
+            btnSave.disabled = true;
+            btnSave.innerHTML = '<i data-lucide="loader" class="animate-spin" style="width: 14px; height: 14px;"></i> Saving...';
+            lucide.createIcons();
+            
+            const formData = new FormData();
+            formData.append('session_id', getSessionId());
+            formData.append('filename', selectedFilename);
+            formData.append('transcription', transcriptionText);
+            if (audioBlob) {
+                formData.append('audio', audioBlob, 'recording.webm');
+            }
+            
+            try {
+                const res = await fetch('/api/save-photo-voice', {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    btnSave.style.backgroundColor = 'var(--success)';
+                    btnSave.innerHTML = '<i data-lucide="check" style="width: 14px; height: 14px;"></i> Saved!';
+                    lucide.createIcons();
+                    setTimeout(() => {
+                        btnSave.style.backgroundColor = '';
+                        btnSave.disabled = false;
+                        btnSave.innerHTML = '<i data-lucide="save" style="width: 14px; height: 14px;"></i> Save Voice Story';
+                        lucide.createIcons();
+                    }, 2000);
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (err) {
+                alert("Error saving voice note: " + err.message);
+                btnSave.disabled = false;
+                btnSave.innerHTML = '<i data-lucide="save" style="width: 14px; height: 14px;"></i> Save Voice Story';
+                lucide.createIcons();
+            }
+        }
 
         function closePhotoDetails() {
+            stopVoiceRecording();
             document.getElementById('photo-detail-section').style.display = 'none';
             // Clear selected border
             document.querySelectorAll('.pool-photo-card').forEach(c => {
@@ -1724,63 +2152,170 @@
             selectedFilename = filename;
             cardElement.classList.add('selected-card');
             
-            // Set image preview source
+            // 1. Immediately show details panel & enlarged image preview
             const imgUrl = `/media?filename=${encodeURIComponent(filename)}&session_id=${encodeURIComponent(getSessionId())}`;
             document.getElementById('detail-photo-img').src = imgUrl;
+            document.getElementById('photo-detail-section').style.display = 'block';
             
-            // Fetch photo metadata
+            // Set temporary loading placeholders
+            document.getElementById('meta-filename').textContent = filename;
+            document.getElementById('meta-date').textContent = "Loading...";
+            document.getElementById('meta-device').textContent = "Loading...";
+            document.getElementById('meta-dimensions').textContent = "Loading...";
+            document.getElementById('meta-size').textContent = "Loading...";
+            document.getElementById('meta-gps').textContent = "Loading...";
+            
+            // Reset Gemini analysis fields
+            document.getElementById('gemini-summary').textContent = "⚡ Analyzing image content...";
+            document.getElementById('gemini-details').textContent = "Requesting visual evaluation from Gemini Vision models...";
+            document.getElementById('gemini-rating').textContent = "-/10";
+            
+            const mapWrapper = document.getElementById('detail-map-wrapper');
+            const mapPlaceholder = document.getElementById('detail-map-placeholder');
+            mapWrapper.style.display = 'none';
+            mapPlaceholder.style.display = 'flex';
+            mapPlaceholder.textContent = "📍 Loading location details...";
+            
+            if (activeMap) {
+                activeMap.remove();
+                activeMap = null;
+            }
+
+            // 2. Fetch photo metadata asynchronously
             try {
                 const res = await fetch(`/api/photo-metadata?filename=${encodeURIComponent(filename)}&session_id=${encodeURIComponent(getSessionId())}`, {
                     headers: authHeaders()
                 });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
+                
                 if (data.status !== 'success') {
-                    console.error("Failed to load photo metadata: " + data.message);
-                    return;
+                    throw new Error(data.message || "Failed to load metadata");
                 }
                 
                 // Populate metadata values
-                document.getElementById('meta-filename').textContent = data.filename;
+                document.getElementById('meta-filename').textContent = data.filename || filename;
                 document.getElementById('meta-date').textContent = data.timestamp && data.timestamp !== 'Unknown Time' ? data.timestamp.replace('T', ' ') : 'Not Available';
                 document.getElementById('meta-device').textContent = data.device || 'Unknown';
                 document.getElementById('meta-dimensions').textContent = data.dimensions || 'Unknown';
                 document.getElementById('meta-size').textContent = data.size_kb ? `${data.size_kb} KB` : 'Unknown';
-                document.getElementById('meta-gps').textContent = data.gps && data.gps.latitude ? `${data.gps.latitude.toFixed(5)}°, ${data.gps.longitude.toFixed(5)}°` : 'Not Available';
                 
-                // Toggle details section display
-                document.getElementById('photo-detail-section').style.display = 'block';
+                // Populate voice note and transcription editor
+                document.getElementById('transcription-editor').value = data.transcription || '';
+                audioBlob = null;
+                const playback = document.getElementById('voice-audio-playback');
+                if (data.voice_note) {
+                    playback.src = `/media?filename=${encodeURIComponent(data.voice_note)}&session_id=${encodeURIComponent(getSessionId())}`;
+                    playback.style.display = 'block';
+                } else {
+                    playback.src = '';
+                    playback.style.display = 'none';
+                }
+                document.getElementById('voice-timer').textContent = "00:00 / 01:00";
                 
-                // Render Leaflet Map if GPS exists
-                const mapWrapper = document.getElementById('detail-map-wrapper');
-                const mapPlaceholder = document.getElementById('detail-map-placeholder');
-                
-                if (activeMap) {
-                    activeMap.remove();
-                    activeMap = null;
+                // Populate Gemini Vision analysis card
+                if (data.gemini_analysis) {
+                    document.getElementById('gemini-summary').textContent = data.gemini_analysis.summary || 'Visual Summary Unavailable';
+                    document.getElementById('gemini-rating').textContent = data.gemini_analysis.rating || 'N/A';
+                    document.getElementById('gemini-details').textContent = data.gemini_analysis.analysis || '';
+                } else {
+                    document.getElementById('gemini-summary').textContent = 'Visual Summary Unavailable';
+                    document.getElementById('gemini-rating').textContent = 'N/A';
+                    document.getElementById('gemini-details').textContent = 'Gemini Curation details are not loaded.';
                 }
                 
+                // Refresh Lucide icons in the newly revealed voice card if needed
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+                
+                // Render Leaflet Map if GPS exists
                 if (data.gps && data.gps.latitude !== null && data.gps.longitude !== null) {
-                    mapWrapper.style.display = 'block';
-                    mapPlaceholder.style.display = 'none';
-                    
                     const lat = data.gps.latitude;
                     const lon = data.gps.longitude;
+                    document.getElementById('meta-gps').textContent = `${lat.toFixed(5)}°, ${lon.toFixed(5)}°`;
                     
-                    // Create Leaflet map instance
-                    activeMap = L.map('photo-map').setView([lat, lon], 13);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a>'
-                    }).addTo(activeMap);
-                    
-                    L.marker([lat, lon]).addTo(activeMap)
-                        .bindPopup(`<b>Photo location</b><br>${lat.toFixed(4)}, ${lon.toFixed(4)}`)
-                        .openPopup();
+                    if (typeof L !== 'undefined') {
+                        mapWrapper.style.display = 'block';
+                        mapPlaceholder.style.display = 'none';
+                        
+                        activeMap = L.map('photo-map').setView([lat, lon], 13);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a>'
+                        }).addTo(activeMap);
+                        
+                        L.marker([lat, lon]).addTo(activeMap)
+                            .bindPopup(`<b>Photo location</b><br>${lat.toFixed(4)}, ${lon.toFixed(4)}`)
+                            .openPopup();
+                    } else {
+                        mapWrapper.style.display = 'none';
+                        mapPlaceholder.style.display = 'flex';
+                        mapPlaceholder.textContent = `📍 Coordinates: ${lat.toFixed(4)}°, ${lon.toFixed(4)}° (Map Offline)`;
+                    }
                 } else {
+                    document.getElementById('meta-gps').textContent = 'Not Available';
                     mapWrapper.style.display = 'none';
                     mapPlaceholder.style.display = 'flex';
+                    mapPlaceholder.textContent = '📍 No GPS Coordinates Found';
                 }
             } catch (err) {
                 console.error("Error fetching photo details:", err);
+                document.getElementById('meta-date').textContent = "Not Available";
+                document.getElementById('meta-device').textContent = "Unknown";
+                document.getElementById('meta-dimensions').textContent = "Unknown";
+                document.getElementById('meta-size').textContent = "Unknown";
+                document.getElementById('meta-gps').textContent = "Not Available";
+                
+                // Clear voice elements on failure
+                document.getElementById('transcription-editor').value = '';
+                document.getElementById('voice-audio-playback').src = '';
+                document.getElementById('voice-audio-playback').style.display = 'none';
+                document.getElementById('voice-timer').textContent = "00:00 / 01:00";
+                
+                // Clear Gemini analysis fields on failure
+                document.getElementById('gemini-summary').textContent = 'Visual Summary Unavailable';
+                document.getElementById('gemini-details').textContent = 'Could not load photo analysis.';
+                document.getElementById('gemini-rating').textContent = 'N/A';
+                
+                mapWrapper.style.display = 'none';
+                mapPlaceholder.style.display = 'flex';
+                mapPlaceholder.textContent = "📍 Location metadata unavailable";
+            }
+        }
+
+        async function refreshGeminiAnalysis() {
+            if (!selectedFilename) return;
+            
+            // Set temporary loading placeholders
+            document.getElementById('gemini-summary').textContent = "⚡ Re-analyzing image content...";
+            document.getElementById('gemini-details').textContent = "Requesting new professional evaluation from Gemini Vision...";
+            document.getElementById('gemini-rating').textContent = "-/10";
+            
+            try {
+                const res = await fetch(`/api/photo-metadata?filename=${encodeURIComponent(selectedFilename)}&session_id=${encodeURIComponent(getSessionId())}&force_refresh=true`, {
+                    headers: authHeaders()
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                
+                if (data.status !== 'success') {
+                    throw new Error(data.message || "Failed to load metadata");
+                }
+                
+                if (data.gemini_analysis) {
+                    document.getElementById('gemini-summary').textContent = data.gemini_analysis.summary || 'Visual Summary Unavailable';
+                    document.getElementById('gemini-rating').textContent = data.gemini_analysis.rating || 'N/A';
+                    document.getElementById('gemini-details').textContent = data.gemini_analysis.analysis || '';
+                } else {
+                    document.getElementById('gemini-summary').textContent = 'Visual Summary Unavailable';
+                    document.getElementById('gemini-rating').textContent = 'N/A';
+                    document.getElementById('gemini-details').textContent = 'Gemini Curation details are not loaded.';
+                }
+            } catch (err) {
+                console.error("Error refreshing Gemini photo details:", err);
+                document.getElementById('gemini-summary').textContent = 'Visual Summary Unavailable';
+                document.getElementById('gemini-details').textContent = 'Could not refresh photo analysis.';
+                document.getElementById('gemini-rating').textContent = 'N/A';
             }
         }
 
@@ -1826,6 +2361,9 @@
                     photos = allPhotos.filter(x => excluded.includes(x.filename));
                 }
                 
+                // Populate allPhotosInTray for carousel navigation
+                allPhotosInTray = photos.map(p => p.filename);
+                
                 if (photos.length === 0) {
                     tray.innerHTML = `<div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1;">No photos in this section.</div>`;
                     return;
@@ -1837,6 +2375,7 @@
                     const captureDate = photoObj.date;
                     const card = document.createElement('div');
                     card.className = 'pool-photo-card';
+                    card.id = `card-${filename.replace(/[^a-zA-Z0-9]/g, '_')}`;
                     card.style.cursor = 'pointer';
                     if (selectedFilename === filename) {
                         card.classList.add('selected-card');
