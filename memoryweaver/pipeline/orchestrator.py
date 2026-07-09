@@ -648,9 +648,19 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
         
     # Compile the final Trip Story
     log("  Compiling overall Trip Story...")
+    curation_instructions = ""
+    inst_path = os.path.join(uploads_dir, "curation_instructions.txt")
+    if os.path.exists(inst_path):
+        try:
+            with open(inst_path, "r", encoding="utf-8") as inf:
+                curation_instructions = inf.read().strip()
+        except Exception as e:
+            log(f"Warning: Failed to load curation instructions: {e}")
+
     full_story = generate_trip_story(
         journal_entries_json=json.dumps(journal_entries),
-        destination=memory_store.get_trip_context().get("destination") or "our trip"
+        destination=memory_store.get_trip_context().get("destination") or "our trip",
+        curation_instructions=curation_instructions
     )
     
     trajectory["steps"].append({

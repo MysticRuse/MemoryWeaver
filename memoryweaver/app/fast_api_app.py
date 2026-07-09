@@ -595,7 +595,59 @@ def exclude_photos(session_id: str = Form(...), filenames: str = Form("")):
         return {"status": "success", "message": f"Updated excluded list with {len(exclude_list)} photos."}
     except Exception as e:
         return {"status": "error", "message": str(e)}
-
+@app.post("/api/curation-chat")
+async def curation_chat(request: Request):
+    """
+    Handles interactive curation chat queries.
+    Uses gemini-2.5-flash to guide the user on curating their photos.
+    """
+    body = await request.json()
+    message = body.get("message", "")
+    session_id = body.get("session_id", "default")
+    chat_history = body.get("history", [])
+    
+    from google import genai
+    from google.genai import types
+    
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return {"response": "GEMINI_API_KEY is not set. Curation Chat is currently disabled."}
+        
+    client = genai.Client(api_key=api_key)
+    
+    contents = []
+    system_instruction = (
+        "You are the MemoryWeaver Curation Chat Assistant. Your job is to guide the user "
+        "on how they want to curate their photos and what highlights are important for their keepsake book.\n"
+        "Ask friendly, concise, clarifying questions (2 sentences max) about the details of the journal, "
+        "which memories are most important to print, and photo captions."
+    )
+    
+    for h in chat_history:
+        contents.append(
+            types.Content(
+                role=h["role"],
+                parts=[types.Part.from_text(text=h["text"])]
+            )
+        )
+    contents.append(
+        types.Content(
+            role="user",
+            parts=[types.Part.from_text(text=message)]
+        )
+    )
+    
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=contents,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction
+            )
+        )
+        return {"response": response.text.strip()}
+    except Exception as e:
+        return {"response": f"Sorry, I ran into an issue: {e}"}
 
 @app.post("/upload")
 async def handle_photo_upload(photos: list[UploadFile] = File(...), contributor_name: str = Form("Anonymous"), session_id: str = Form("default"), share_code: str = Form("")):

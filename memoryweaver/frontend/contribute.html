@@ -497,10 +497,10 @@
         <main class="main-scroll-view" id="main-scroll">
             
             <!-- Daily Chat Banner Card -->
-            <div class="banner-card">
+            <div class="banner-card" onclick="openCurationChat()" style="cursor: pointer;">
                 <span class="banner-tag">✨ Daily Chat</span>
                 <h3 class="banner-title" id="chat-title">Ready to capture memories?</h3>
-                <p class="banner-desc" id="event-subtitle">Tap below to add photos or speak your story. We'll automatically build your keepsake storybook.</p>
+                <p class="banner-desc" id="event-subtitle">Tap here to chat with the Curation Assistant. Help us decide what details and highlights are important!</p>
             </div>
 
             <!-- Moments Actions Menu Card -->
@@ -659,6 +659,31 @@
             </div>
         </div>
 
+        <!-- SLIDE-UP CURATION CHAT ASSISTANT -->
+        <div class="editor-sheet" id="curation-chat-sheet">
+            <header class="editor-header">
+                <span class="editor-close-btn" onclick="closeCurationChat()">Back</span>
+                <span class="editor-title">Curation Assistant</span>
+                <span class="editor-close-btn" onclick="applyCurationChatInstructions()" id="btn-chat-apply">Apply</span>
+            </header>
+
+            <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #F4F6F9;">
+                <!-- Chat message history scroll box -->
+                <div id="chat-messages-box" style="flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+                    <!-- AI intro message -->
+                    <div style="align-self: flex-start; background: #ffffff; border: 1.5px solid var(--border); padding: 10px 14px; border-radius: 16px 16px 16px 4px; max-width: 85%; font-size: 0.9rem; line-height: 1.4; color: var(--text);">
+                        Hi! I am your MemoryWeaver Curation Assistant. Let's design your keepsake book! What highlights of this event are the most important to print?
+                    </div>
+                </div>
+
+                <!-- Input area footer inside drawer -->
+                <div style="background: #ffffff; border-top: 1px solid var(--border); padding: 12px; display: flex; gap: 8px; align-items: center; z-index: 10;">
+                    <input type="text" id="chat-input-text" placeholder="Tell us what is important..." style="flex: 1; border: 1.5px solid var(--border); border-radius: 20px; padding: 8px 16px; font-family: inherit; font-size: 0.9rem; outline: none;" onkeydown="if(event.key==='Enter') sendCurationChatMessage()">
+                    <button onclick="sendCurationChatMessage()" style="width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: #ffffff; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer;"><i data-lucide="send" style="width: 16px; height: 16px;"></i></button>
+                </div>
+            </div>
+        </div>
+
         <!-- ERROR EXPIRY OVERLAY -->
         <div class="error-overlay" id="error-card" style="display: none;">
             <i data-lucide="lock" style="width: 48px; height: 48px; color: var(--danger); margin-bottom: 14px;"></i>
@@ -742,6 +767,116 @@
                 badge.textContent = 'Failed';
                 badge.style.color = 'var(--danger)';
                 alert('Calendar sync failed: ' + e.message);
+            }
+        }
+
+        // Curation Chat Assistant Controls
+        let curationChatHistory = [];
+
+        function openCurationChat() {
+            document.getElementById('curation-chat-sheet').classList.add('active');
+        }
+
+        function closeCurationChat() {
+            document.getElementById('curation-chat-sheet').classList.remove('active');
+        }
+
+        function renderChatMessage(role, text) {
+            const box = document.getElementById('chat-messages-box');
+            const msgDiv = document.createElement('div');
+            
+            if (role === 'user') {
+                msgDiv.style.alignSelf = 'flex-end';
+                msgDiv.style.background = 'var(--accent)';
+                msgDiv.style.color = '#ffffff';
+                msgDiv.style.padding = '10px 14px';
+                msgDiv.style.borderRadius = '16px 16px 4px 16px';
+            } else {
+                msgDiv.style.alignSelf = 'flex-start';
+                msgDiv.style.background = '#ffffff';
+                msgDiv.style.color = 'var(--text)';
+                msgDiv.style.border = '1.5px solid var(--border)';
+                msgDiv.style.padding = '10px 14px';
+                msgDiv.style.borderRadius = '16px 16px 16px 4px';
+            }
+            
+            msgDiv.style.maxWidth = '85%';
+            msgDiv.style.fontSize = '0.9rem';
+            msgDiv.style.lineHeight = '1.4';
+            msgDiv.textContent = text;
+            
+            box.appendChild(msgDiv);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        async function sendCurationChatMessage() {
+            const input = document.getElementById('chat-input-text');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            input.value = '';
+            renderChatMessage('user', text);
+            
+            // Map role for API
+            const apiHistory = curationChatHistory.map(h => ({
+                role: h.role === 'user' ? 'user' : 'model',
+                text: h.text
+            }));
+            
+            curationChatHistory.push({ role: 'user', text: text });
+            
+            try {
+                const res = await fetch('/api/curation-chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: text,
+                        session_id: sessionId,
+                        history: apiHistory
+                    })
+                });
+                const data = await res.json();
+                const reply = data.response || "I couldn't process that. Please try again.";
+                
+                curationChatHistory.push({ role: 'model', text: reply });
+                renderChatMessage('model', reply);
+            } catch (e) {
+                renderChatMessage('model', "Connection error: " + e.message);
+            }
+        }
+
+        async function applyCurationChatInstructions() {
+            const userMessages = curationChatHistory.filter(h => h.role === 'user').map(h => h.text);
+            if (!userMessages.length) {
+                closeCurationChat();
+                return;
+            }
+            
+            const btn = document.getElementById('btn-chat-apply');
+            btn.textContent = 'Saving...';
+            
+            const instructionsText = "User Curation Priorities:\n" + userMessages.map(m => "- " + m).join("\n");
+            const blob = new Blob([instructionsText], { type: 'text/plain' });
+            const file = new File([blob], 'curation_instructions.txt', { type: 'text/plain' });
+            
+            const formData = new FormData();
+            formData.append('contributor_name', localStorage.getItem('mw_contributor_name') || 'Anonymous');
+            formData.append('session_id', sessionId);
+            formData.append('share_code', shareCode);
+            formData.append('photos', file);
+            
+            try {
+                const res = await fetch('/upload', { method: 'POST', body: formData });
+                if (res.ok) {
+                    alert('Your curation instructions were saved! The Narrator agent will apply them when curating your book.');
+                    closeCurationChat();
+                } else {
+                    throw new Error('Save error');
+                }
+            } catch (e) {
+                alert('Failed to save instructions: ' + e.message);
+            } finally {
+                btn.textContent = 'Apply';
             }
         }
 

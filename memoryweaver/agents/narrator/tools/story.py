@@ -8,7 +8,7 @@ def get_gemini_client():
         raise ValueError("GEMINI_API_KEY environment variable is not set.")
     return genai.Client(api_key=api_key)
 
-def generate_trip_story(journal_entries_json: str, destination: str = "our trip") -> str:
+def generate_trip_story(journal_entries_json: str, destination: str = "our trip", curation_instructions: str = "") -> str:
     """
     Weaves together individual journal entries and moments into a flowing, multi-paragraph
     trip story summarizing the entire trip experience.
@@ -24,9 +24,14 @@ def generate_trip_story(journal_entries_json: str, destination: str = "our trip"
     except Exception:
         formatted_entries = journal_entries_json
 
+    curation_prompt = ""
+    if curation_instructions:
+        curation_prompt = f"Please respect the following curation priorities and style requests from the family:\n{curation_instructions}\n\n"
+
     story_prompt = (
         f"You are a master travel writer wrapping up a family vacation to {destination}.\n"
         f"Here are the individual moments we recorded:\n{formatted_entries}\n\n"
+        f"{curation_prompt}"
         "Weave these memories into a beautiful, cohesive multi-paragraph trip story (2-3 paragraphs).\n"
         "Use first-person plural (we/our). The tone should be excited, warm, and highly engaging, "
         "highlighting the journey from start to finish. Focus on the emotional connection of traveling together.\n"
