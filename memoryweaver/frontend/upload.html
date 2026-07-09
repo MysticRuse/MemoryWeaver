@@ -850,19 +850,19 @@
             position: absolute;
             top: 6px;
             right: 6px;
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.95);
+            border: 1.5px solid var(--border);
             border-radius: 50%;
-            width: 28px;
-            height: 28px;
+            width: 22px;
+            height: 22px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 13px;
+            font-size: 10px;
             color: var(--text);
             transition: all 0.2s;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            box-shadow: 1px 1px 0px var(--border);
             z-index: 2;
         }
         .pool-photo-card .overlay-btn:hover {
@@ -880,24 +880,24 @@
         }
         .pool-photo-card .contributor-tag {
             position: absolute;
-            top: 8px;
-            left: 8px;
+            top: 6px;
+            left: 6px;
             background: #FFFFFF;
             color: #303030;
-            padding: 4px 10px;
-            border-radius: 20px;
+            padding: 2px 6px;
+            border-radius: 12px;
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 10px;
+            font-size: 8.5px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            border: 2px solid #303030;
+            border: 1.5px solid #303030;
             z-index: 2;
-            max-width: calc(100% - 46px);
+            max-width: calc(100% - 38px);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            box-shadow: 2px 2px 0px #303030;
+            box-shadow: 1px 1px 0px #303030;
             display: inline-flex;
             align-items: center;
             gap: 4px;
@@ -1634,12 +1634,12 @@
                             cTag.style.backgroundColor = '#303030';
                             cTag.style.color = '#FFFFFF';
                             cTag.style.borderColor = '#303030';
-                            cTag.style.boxShadow = '2px 2px 0px #EB2371';
+                            cTag.style.boxShadow = '1px 1px 0px #EB2371';
                         } else {
                             cTag.style.backgroundColor = '#FFFFFF';
                             cTag.style.color = '#303030';
                             cTag.style.borderColor = '#303030';
-                            cTag.style.boxShadow = '2px 2px 0px #EB2371';
+                            cTag.style.boxShadow = '1px 1px 0px #EB2371';
                         }
                         card.appendChild(cTag);
                     }
@@ -3562,12 +3562,12 @@
                             cTag.style.backgroundColor = '#303030';
                             cTag.style.color = '#FFFFFF';
                             cTag.style.borderColor = '#303030';
-                            cTag.style.boxShadow = '2px 2px 0px #EB2371';
+                            cTag.style.boxShadow = '1px 1px 0px #EB2371';
                         } else {
                             cTag.style.backgroundColor = '#FFFFFF';
                             cTag.style.color = '#303030';
                             cTag.style.borderColor = '#303030';
-                            cTag.style.boxShadow = '2px 2px 0px #EB2371';
+                            cTag.style.boxShadow = '1px 1px 0px #EB2371';
                         }
                         card.appendChild(cTag);
                     }
