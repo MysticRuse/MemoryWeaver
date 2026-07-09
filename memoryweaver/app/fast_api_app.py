@@ -598,6 +598,17 @@ def list_uploads(session_id: str = "default"):
         return {"status": "error", "message": str(e)}
 
 
+@app.get("/api/memory-bank", dependencies=[Depends(require_admin_token)])
+def get_memory_bank(session_id: str = "default"):
+    """Returns the raw memory bank for a session, containing contributor profiles."""
+    try:
+        from agents.memory.tools.memory_bank import MemoryBankStore
+        store = MemoryBankStore(session_id)
+        return {"status": "success", "contributors": store.data.get("contributors", {})}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
 @app.post("/api/exclude-photos", dependencies=[Depends(require_admin_token)])
 def exclude_photos(session_id: str = Form(...), filenames: str = Form("")):
     """Saves the list of excluded filenames for a session (comma-separated)."""
