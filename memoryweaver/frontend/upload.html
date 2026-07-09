@@ -849,7 +849,7 @@
         .pool-photo-card .overlay-btn {
             position: absolute;
             top: 6px;
-            right: 6px;
+            left: 6px;
             background: rgba(255, 255, 255, 0.9);
             border: 1px solid var(--border);
             border-radius: 50%;
@@ -877,6 +877,24 @@
             background: var(--success) !important;
             border-color: var(--success) !important;
             color: #fff !important;
+        }
+        .pool-photo-card .contributor-tag {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: var(--accent);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            border: 1.5px solid var(--border);
+            z-index: 2;
+            max-width: 90px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            box-shadow: 1px 1px 0px var(--border);
         }
 
         /* Simplified Event Manager Styles */
@@ -1473,10 +1491,31 @@
             }
         }
 
+        let contributorNamesCache = {};
+        async function loadContributorNamesCache() {
+            try {
+                const res = await fetch(`/api/memory-bank?session_id=${encodeURIComponent(getSessionId())}`, { headers: authHeaders() });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.contributors) {
+                        contributorNamesCache = {};
+                        for (const [id, prof] of Object.entries(data.contributors)) {
+                            contributorNamesCache[id] = prof.name;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to load contributor profiles:", e);
+            }
+        }
+
         async function loadUploadedPoolTray() {
             const tray = document.getElementById('uploaded-pool-tray');
             tray.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1;">Loading photo pool...</div>';
             try {
+                if (Object.keys(contributorNamesCache).length === 0) {
+                    await loadContributorNamesCache();
+                }
                 const res = await fetch(withSession('/api/list-uploads'), { headers: authHeaders() });
                 if (handleAuthFailure(res)) {
                     tray.innerHTML = '<div style="color: var(--danger); font-size: 13px; grid-column: 1/-1;">Unauthorized: Admin token required.</div>';
@@ -1547,6 +1586,18 @@
                     
                     card.appendChild(img);
                     card.appendChild(btn);
+                    
+                    // Add contributor name tag to top right corner
+                    const hash = filename.split('_')[0];
+                    const uploaderName = contributorNamesCache[hash];
+                    if (uploaderName && hash !== 'unsplash') {
+                        const cTag = document.createElement('span');
+                        cTag.className = 'contributor-tag';
+                        cTag.textContent = uploaderName;
+                        cTag.title = `Contributed by ${uploaderName}`;
+                        card.appendChild(cTag);
+                    }
+                    
                     tray.appendChild(card);
                 });
                 lucide.createIcons();
@@ -3326,6 +3377,9 @@
             tray.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1;">Loading review...</div>';
             
             try {
+                if (Object.keys(contributorNamesCache).length === 0) {
+                    await loadContributorNamesCache();
+                }
                 // 1. Fetch current pool photos
                 const res = await fetch(withSession('/api/list-uploads'), { headers: authHeaders() });
                 const listData = await res.json();
@@ -3421,6 +3475,17 @@
                         btn.innerHTML = '🔒';
                         btn.title = 'Excluded photos can only be managed in Step 2';
                         card.appendChild(btn);
+                    }
+
+                    // Add contributor name tag to top right corner
+                    const hash = filename.split('_')[0];
+                    const uploaderName = contributorNamesCache[hash];
+                    if (uploaderName && hash !== 'unsplash') {
+                        const cTag = document.createElement('span');
+                        cTag.className = 'contributor-tag';
+                        cTag.textContent = uploaderName;
+                        cTag.title = `Contributed by ${uploaderName}`;
+                        card.appendChild(cTag);
                     }
 
                     tray.appendChild(card);
