@@ -20,6 +20,26 @@
             --danger: #E11D48;
             --success: #10B981;
             --accent-glow: rgba(224, 145, 107, 0.08);
+            --card-padding: 32px 24px;
+            --btn-height: 48px;
+            --font-size-base: 0.9rem;
+        }
+
+        /* Grandma Mode / High Contrast Warm Light Theme */
+        body.grandma-mode {
+            --bg: #FBFBFA;
+            --surface: #FFFFFF;
+            --surface-hover: #F6F4EF;
+            --border: #D8D6D1;
+            --accent: #D9835A;
+            --accent-hover: #C9744B;
+            --on-accent: #FFFFFF;
+            --text: #1C1D1F;
+            --text-muted: #615E57;
+            --accent-glow: rgba(217, 131, 90, 0.08);
+            --card-padding: 40px 28px;
+            --btn-height: 56px;
+            --font-size-base: 1.1rem;
         }
 
         * {
@@ -38,33 +58,75 @@
             justify-content: center;
             align-items: center;
             padding: 24px 16px;
+            transition: all 0.3s ease;
         }
 
         .wrap {
             width: 100%;
-            max-width: 440px;
+            max-width: 480px;
+        }
+
+        /* Theme Toggle Header */
+        .toggle-header {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 12px;
+        }
+
+        .theme-toggle-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        body.grandma-mode .theme-toggle-btn {
+            font-size: 0.95rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .theme-toggle-btn:hover {
+            background: var(--surface-hover);
         }
 
         .card {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 32px 24px;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+            border-radius: 16px;
+            padding: var(--card-padding);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        body.grandma-mode .card {
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.05);
         }
 
         h1 {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             font-weight: 700;
             letter-spacing: -0.5px;
             text-align: center;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
+        }
+
+        body.grandma-mode h1 {
+            font-size: 2.1rem;
         }
 
         .sub {
@@ -76,16 +138,27 @@
             font-weight: 400;
         }
 
+        body.grandma-mode .sub {
+            font-size: 1.05rem;
+            margin-bottom: 28px;
+        }
+
         .count-pill {
             display: inline-block;
-            padding: 4px 12px;
+            padding: 6px 14px;
             border-radius: 20px;
             background: rgba(255, 255, 255, 0.03);
             color: var(--text-muted);
             font-size: 0.75rem;
-            font-weight: 500;
+            font-weight: 600;
             border: 1px solid var(--border);
             margin: 0 auto 24px auto;
+        }
+
+        body.grandma-mode .count-pill {
+            font-size: 0.9rem;
+            padding: 8px 18px;
+            background: rgba(0, 0, 0, 0.02);
         }
 
         .pill-wrapper {
@@ -95,93 +168,178 @@
 
         label {
             display: block;
-            font-size: 0.7rem;
-            font-weight: 600;
+            font-size: 0.75rem;
+            font-weight: 700;
             color: var(--text-muted);
             margin-bottom: 8px;
             letter-spacing: 0.05em;
             text-transform: uppercase;
         }
 
-        input[type="text"], textarea {
+        body.grandma-mode label {
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+        }
+
+        /* Inputs */
+        input[type="text"], textarea, select {
             width: 100%;
-            padding: 12px 14px;
-            border-radius: 8px;
+            padding: 14px 16px;
+            border-radius: 10px;
             border: 1px solid var(--border);
             background: var(--bg);
             color: var(--text);
             font-family: inherit;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             outline: none;
             transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        input[type="text"]:focus, textarea:focus {
+        body.grandma-mode input[type="text"], 
+        body.grandma-mode textarea,
+        body.grandma-mode select {
+            font-size: 1.15rem;
+            padding: 18px;
+            background: #F4F2ED;
+            border-color: #C2C0BB;
+        }
+
+        input[type="text"]:focus, textarea:focus, select:focus {
             border-color: var(--accent);
-            box-shadow: 0 0 0 2px var(--accent-glow);
+            box-shadow: 0 0 0 3px var(--accent-glow);
         }
 
         textarea {
             resize: none;
-            min-height: 110px;
+            min-height: 120px;
             line-height: 1.5;
         }
 
-        /* Ingress Tabs */
-        .ingress-tabs {
-            display: flex;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 4px;
-            margin: 20px 0;
+        body.grandma-mode textarea {
+            min-height: 150px;
         }
 
-        .ingress-tab-btn {
-            flex: 1;
-            background: none;
-            border: none;
-            color: var(--text-muted);
+        /* Context Selector Styling */
+        .context-selector-group {
+            margin-bottom: 24px;
+        }
+
+        /* Grandma-Friendly Menu Options */
+        .option-button-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .option-btn {
+            background: var(--bg);
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+            color: var(--text);
             font-family: inherit;
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 8px 0;
+            text-align: left;
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-            display: inline-flex;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        body.grandma-mode .option-btn {
+            padding: 24px;
+            border-width: 2px;
+        }
+
+        .option-btn:hover {
+            border-color: var(--accent);
+            background: var(--surface-hover);
+            transform: translateY(-2px);
+        }
+
+        .option-icon {
+            display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            border-radius: 6px;
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: var(--surface);
+            color: var(--accent);
+            border: 1px solid var(--border);
         }
 
-        .ingress-tab-btn:hover {
-            color: var(--text);
+        body.grandma-mode .option-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
         }
 
-        .ingress-tab-btn.active {
-            color: var(--on-accent);
-            background: var(--accent);
+        .option-details h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
         }
 
-        .tab-panel {
+        body.grandma-mode .option-details h3 {
+            font-size: 1.2rem;
+        }
+
+        .option-details p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        body.grandma-mode .option-details p {
+            font-size: 0.95rem;
+        }
+
+        /* Focus Section Controls */
+        .focus-section {
             display: none;
-            animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .tab-panel.active {
+        .focus-section.active {
             display: block;
+        }
+
+        .back-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-bottom: 20px;
+            background: none;
+            border: none;
+            font-family: inherit;
+        }
+
+        body.grandma-mode .back-bar {
+            font-size: 1rem;
+            margin-bottom: 24px;
         }
 
         /* Dropzone */
         .dropzone {
-            border: 1px dashed var(--border);
-            border-radius: 8px;
-            padding: 36px 20px;
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 48px 24px;
             text-align: center;
             cursor: pointer;
             transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
             background: rgba(255, 255, 255, 0.01);
+        }
+
+        body.grandma-mode .dropzone {
+            padding: 60px 30px;
+            border-width: 3px;
         }
 
         .dropzone:hover {
@@ -190,50 +348,24 @@
         }
 
         .dz-title {
-            font-size: 0.9rem;
-            font-weight: 600;
+            font-size: 1rem;
+            font-weight: 700;
             color: var(--text);
-            margin-top: 8px;
+            margin-top: 12px;
+        }
+
+        body.grandma-mode .dz-title {
+            font-size: 1.25rem;
         }
 
         .dz-desc {
             font-size: 0.75rem;
             color: var(--text-muted);
-            margin-top: 4px;
+            margin-top: 6px;
         }
 
-        /* Prompt Chips for guided speech-to-story prompts */
-        .prompt-chips {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding-bottom: 8px;
-            margin-bottom: 16px;
-            scrollbar-width: none;
-        }
-        .prompt-chips::-webkit-scrollbar {
-            display: none;
-        }
-        .prompt-chip {
-            white-space: nowrap;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .prompt-chip:hover {
-            color: var(--text);
-            border-color: var(--text-muted);
-        }
-        .prompt-chip.active {
-            background: var(--accent-tint-bg);
-            border-color: var(--accent);
-            color: var(--accent);
+        body.grandma-mode .dz-desc {
+            font-size: 0.95rem;
         }
 
         /* Buttons */
@@ -245,15 +377,15 @@
             margin-top: 16px;
             padding: 12px 20px;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             background: var(--accent);
             color: var(--on-accent);
             font-family: inherit;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-            min-height: 44px;
+            min-height: var(--btn-height);
         }
 
         .btn:hover:not(:disabled) {
@@ -271,8 +403,12 @@
 
         .btn.secondary {
             background: transparent;
-            border: 1px solid var(--border);
+            border: 1.5px solid var(--border);
             color: var(--text);
+        }
+
+        body.grandma-mode .btn.secondary {
+            border-width: 2px;
         }
 
         .btn.secondary:hover {
@@ -282,44 +418,105 @@
 
         #status {
             margin-top: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
+            font-size: 0.85rem;
+            font-weight: 600;
             text-align: center;
             line-height: 1.4;
             min-height: 1.4em;
         }
 
-        /* Minimalist Voice Recorder */
+        body.grandma-mode #status {
+            font-size: 1.05rem;
+        }
+
+        /* Guided Prompts Pills */
+        .prompt-chips {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 18px;
+            scrollbar-width: none;
+        }
+
+        .prompt-chips::-webkit-scrollbar {
+            display: none;
+        }
+
+        .prompt-chip {
+            white-space: nowrap;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1.5px solid var(--border);
+            color: var(--text-muted);
+            padding: 8px 16px;
+            border-radius: 24px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        body.grandma-mode .prompt-chip {
+            font-size: 0.95rem;
+            padding: 12px 20px;
+            border-width: 2px;
+        }
+
+        .prompt-chip:hover {
+            color: var(--text);
+            border-color: var(--text-muted);
+        }
+
+        .prompt-chip.active {
+            background: var(--accent-tint-bg);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Minimalist Voice Recorder dashboard */
         .recorder-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 24px 16px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
+            padding: 28px 20px;
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
             background: rgba(255, 255, 255, 0.01);
+        }
+
+        body.grandma-mode .recorder-container {
+            border-width: 2px;
+            padding: 36px 24px;
         }
 
         .recorder-status-text {
             font-size: 0.75rem;
             color: var(--text-muted);
-            font-weight: 500;
+            font-weight: 700;
             margin-bottom: 12px;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
 
+        body.grandma-mode .recorder-status-text {
+            font-size: 0.95rem;
+        }
+
         .record-timer {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 2.2rem;
+            font-size: 2.5rem;
             font-weight: 700;
             color: var(--text);
-            margin-bottom: 20px;
+            margin-bottom: 24px;
+        }
+
+        body.grandma-mode .record-timer {
+            font-size: 3.2rem;
         }
 
         .record-btn-round {
-            width: 56px;
-            height: 56px;
+            width: 64px;
+            height: 64px;
             border-radius: 50%;
             border: none;
             display: inline-flex;
@@ -327,7 +524,12 @@
             justify-content: center;
             cursor: pointer;
             transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        body.grandma-mode .record-btn-round {
+            width: 80px;
+            height: 80px;
         }
 
         .record-btn-start {
@@ -351,25 +553,29 @@
 
         .audio-preview {
             width: 100%;
-            margin-top: 16px;
-            border-radius: 8px;
+            margin-top: 20px;
+            border-radius: 10px;
             outline: none;
         }
 
         /* Note Ingress Draft indicator */
         .draft-indicator {
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             color: var(--success);
-            font-weight: 600;
-            margin-top: 6px;
+            font-weight: 700;
+            margin-top: 8px;
             display: flex;
             align-items: center;
             gap: 4px;
             display: none;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(4px); }
+        body.grandma-mode .draft-indicator {
+            font-size: 0.95rem;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(8px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
@@ -381,78 +587,116 @@
 </head>
 <body>
     <div class="wrap">
+        <!-- Theme Toggle Switcher -->
+        <div class="toggle-header">
+            <button class="theme-toggle-btn" id="theme-toggle" onclick="toggleTheme()">
+                <i data-lucide="sun" style="width: 13px; height: 13px;"></i>
+                <span id="theme-btn-text">Grandma Mode (Light / Big Text)</span>
+            </button>
+        </div>
+
         <div class="card" id="main-card" style="display: none;">
-            <h1 id="event-title">Loading event...</h1>
-            <p class="sub">Add a photo, record a memory, or write a note. Everything gets woven into the trip keepsake.</p>
+            <h1 id="event-title">Loading journal...</h1>
+            <p class="sub" id="event-subtitle">Let's compile a beautiful keepsake of our moments together.</p>
             
             <div class="pill-wrapper">
                 <span class="count-pill" id="photo-count"></span>
             </div>
 
-            <label for="contributor-name">Your Name</label>
-            <input type="text" id="contributor-name" placeholder="e.g. Grandma Lena" oninput="saveName(this.value)">
-
-            <div class="ingress-tabs">
-                <button class="ingress-tab-btn active" onclick="switchTab('tab-upload')"><i data-lucide="image" style="width:13px;height:13px;"></i> Media File</button>
-                <button class="ingress-tab-btn" onclick="switchTab('tab-voice')"><i data-lucide="mic" style="width:13px;height:13px;"></i> Record</button>
-                <button class="ingress-tab-btn" onclick="switchTab('tab-note')"><i data-lucide="pen-line" style="width:13px;height:13px;"></i> Write Story</button>
+            <!-- Dynamic Category/Scope Selection (Universal Journal) -->
+            <div class="context-selector-group" id="theme-selector-area">
+                <label for="journal-theme-select">Choose Journal Type:</label>
+                <select id="journal-theme-select" onchange="changeJournalTheme(this.value)">
+                    <option value="trip">🏞️ Family Trip Journal</option>
+                    <option value="reunion">💖 Family Precious Moments</option>
+                    <option value="other">📅 Daily Personal Diary</option>
+                    <option value="sports_match">🏫 Co-Journal with School Friends</option>
+                </select>
             </div>
 
-            <!-- Tab: Media Upload -->
-            <div class="tab-panel active" id="tab-upload">
+            <div style="margin-bottom: 24px;">
+                <label for="contributor-name">Who is adding this memory?</label>
+                <input type="text" id="contributor-name" placeholder="e.g. Grandma Lena" oninput="saveName(this.value)">
+            </div>
+
+            <!-- Menu Menu Option Buttons (Elderly-Friendly Menu) -->
+            <div class="option-button-grid" id="main-menu">
+                <button class="option-btn" onclick="openSection('sec-upload')">
+                    <div class="option-icon"><i data-lucide="image" style="width: 20px; height: 20px;"></i></div>
+                    <div class="option-details">
+                        <h3>Add Photos or Videos</h3>
+                        <p>Select pictures or clips directly from your phone camera</p>
+                    </div>
+                </button>
+                <button class="option-btn" onclick="openSection('sec-voice')">
+                    <div class="option-icon"><i data-lucide="mic" style="width: 20px; height: 20px;"></i></div>
+                    <div class="option-details">
+                        <h3>Tap & Speak Your Story</h3>
+                        <p>Record your voice to describe a memory without typing</p>
+                    </div>
+                </button>
+                <button class="option-btn" onclick="openSection('sec-note')">
+                    <div class="option-icon"><i data-lucide="pen-line" style="width: 20px; height: 20px;"></i></div>
+                    <div class="option-details">
+                        <h3>Write Your Story</h3>
+                        <p>Type down custom notes or descriptions of what happened</p>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Focus Screen: Photo/Video -->
+            <div class="focus-section" id="sec-upload">
+                <button class="back-bar" onclick="backToMenu()"><i data-lucide="chevron-left" style="width: 14px; height: 14px; vertical-align: middle;"></i> Back to options</button>
                 <div class="dropzone" onclick="document.getElementById('file-input').click()">
-                    <div style="color: var(--accent);"><i data-lucide="plus" style="width: 28px; height: 28px; margin: 0 auto;"></i></div>
+                    <div style="color: var(--accent);"><i data-lucide="plus" style="width: 36px; height: 36px; margin: 0 auto;"></i></div>
                     <div class="dz-title">Choose photos or videos</div>
                     <div class="dz-desc">JPEG, PNG, HEIC, MP4, MOV, or PDF</div>
                     <input type="file" id="file-input" multiple accept=".jpg,.jpeg,.png,.heic,.mp4,.mov,.pdf,image/*,video/*" style="display: none;" onchange="uploadFiles(this.files)">
                 </div>
 
-                <div class="dropzone" id="folder-zone" style="margin-top: 12px; padding: 20px;" onclick="document.getElementById('folder-input').click()">
-                    <div style="font-weight: 600; color: var(--text); font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <div class="dropzone" id="folder-zone" style="margin-top: 14px; padding: 20px;" onclick="document.getElementById('folder-input').click()">
+                    <div style="font-weight: 700; color: var(--text); font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 6px;">
                         <i data-lucide="folder" style="width: 14px; height: 14px; color: var(--accent);"></i> Upload entire folder
                     </div>
                     <input type="file" id="folder-input" webkitdirectory style="display: none;" onchange="uploadFiles(this.files)">
                 </div>
             </div>
 
-            <!-- Tab: Voice Recorder -->
-            <div class="tab-panel" id="tab-voice">
-                <label style="margin-bottom: 8px;">Pick a storytelling prompt (optional):</label>
-                <div class="prompt-chips" id="voice-prompts-container">
-                    <button class="prompt-chip active" onclick="selectPrompt(this, '')">🎙️ Custom Note</button>
-                    <button class="prompt-chip" onclick="selectPrompt(this, 'My favorite memory of today')">🌟 Favorite Memory</button>
-                    <button class="prompt-chip" onclick="selectPrompt(this, 'The funniest thing that happened')">😂 Funniest Moment</button>
-                    <button class="prompt-chip" onclick="selectPrompt(this, 'Tell a story about someone featured here')">👤 Family Story</button>
-                    <button class="prompt-chip" onclick="selectPrompt(this, 'What was the most surprising thing you saw')">😮 Most Surprising</button>
-                </div>
+            <!-- Focus Screen: Voice Note -->
+            <div class="focus-section" id="sec-voice">
+                <button class="back-bar" onclick="backToMenu()"><i data-lucide="chevron-left" style="width: 14px; height: 14px; vertical-align: middle;"></i> Back to options</button>
+                
+                <label style="margin-bottom: 10px;">Select a prompt question to talk about:</label>
+                <div class="prompt-chips" id="voice-prompts-container"></div>
 
                 <div class="recorder-container">
-                    <div id="active-prompt-banner" style="display: none; font-size: 0.8rem; font-weight: 600; color: var(--accent); background: var(--accent-glow); border: 1px solid var(--accent-tint-border); border-radius: 8px; padding: 6px 12px; margin-bottom: 12px; text-align: center; width: 100%;"></div>
+                    <div id="active-prompt-banner" style="display: none; font-size: 0.85rem; font-weight: 700; color: var(--accent); background: var(--accent-glow); border: 1.5px solid rgba(224,145,107,0.3); border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; text-align: center; width: 100%;"></div>
                     <span class="recorder-status-text" id="recorder-status">Ready to record</span>
                     <div class="record-timer" id="record-timer">00:00</div>
                     
                     <div style="display: flex; justify-content: center;">
-                        <button class="record-btn-round record-btn-start" id="btn-record-start" onclick="startRecording()"><i data-lucide="mic" style="width: 22px; height: 22px;"></i></button>
-                        <button class="record-btn-round record-btn-stop" id="btn-record-stop" style="display: none;" onclick="stopRecording()"><i data-lucide="square" style="width: 20px; height: 20px;"></i></button>
+                        <button class="record-btn-round record-btn-start" id="btn-record-start" onclick="startRecording()"><i data-lucide="mic" style="width: 24px; height: 24px;"></i></button>
+                        <button class="record-btn-round record-btn-stop" id="btn-record-stop" style="display: none;" onclick="stopRecording()"><i data-lucide="square" style="width: 22px; height: 22px;"></i></button>
                     </div>
 
                     <audio id="audio-player" class="audio-preview" controls style="display: none;"></audio>
 
-                    <div id="voice-upload-controls" style="display: none; width: 100%; gap: 10px; margin-top: 16px;">
-                        <button class="btn secondary" style="margin-top: 0; flex: 1;" onclick="discardVoice()"><i data-lucide="rotate-ccw" style="width:13px;height:13px;margin-right:4px;"></i> Redo</button>
-                        <button class="btn" style="margin-top: 0; flex: 1.5;" onclick="uploadVoice()"><i data-lucide="upload" style="width:13px;height:13px;margin-right:4px;"></i> Save</button>
+                    <div id="voice-upload-controls" style="display: none; width: 100%; gap: 12px; margin-top: 20px;">
+                        <button class="btn secondary" style="margin-top: 0; flex: 1;" onclick="discardVoice()"><i data-lucide="rotate-ccw" style="width:14px;height:14px;margin-right:4px;"></i> Redo</button>
+                        <button class="btn" style="margin-top: 0; flex: 1.5;" onclick="uploadVoice()"><i data-lucide="upload" style="width:14px;height:14px;margin-right:4px;"></i> Save Memory</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Tab: Write Note -->
-            <div class="tab-panel" id="tab-note">
+            <!-- Focus Screen: Write Note -->
+            <div class="focus-section" id="sec-note">
+                <button class="back-bar" onclick="backToMenu()"><i data-lucide="chevron-left" style="width: 14px; height: 14px; vertical-align: middle;"></i> Back to options</button>
                 <textarea id="note-body" placeholder="Share a special memory or story from this moment..." oninput="saveNoteDraft(this.value)"></textarea>
-                <div class="draft-indicator" id="draft-saved"><i data-lucide="check" style="width:11px;height:11px;color:var(--success);"></i> Draft saved locally</div>
+                <div class="draft-indicator" id="draft-saved"><i data-lucide="check" style="width:12px;height:12px;color:var(--success);"></i> Draft saved safely</div>
 
-                <div style="display: flex; gap: 10px; margin-top: 12px;">
-                    <button class="btn secondary" style="margin-top: 0; flex: 1;" onclick="clearNoteDraft()"><i data-lucide="trash-2" style="width:13px;height:13px;margin-right:4px;"></i> Clear</button>
-                    <button class="btn" style="margin-top: 0; flex: 2;" id="btn-submit-note" onclick="submitNote()"><i data-lucide="send" style="width:13px;height:13px;margin-right:4px;"></i> Submit</button>
+                <div style="display: flex; gap: 12px; margin-top: 16px;">
+                    <button class="btn secondary" style="margin-top: 0; flex: 1;" onclick="clearNoteDraft()"><i data-lucide="trash-2" style="width:14px;height:14px;margin-right:4px;"></i> Clear</button>
+                    <button class="btn" style="margin-top: 0; flex: 2;" id="btn-submit-note" onclick="submitNote()"><i data-lucide="send" style="width:14px;height:14px;margin-right:4px;"></i> Save Story</button>
                 </div>
             </div>
 
@@ -472,23 +716,49 @@
         const shareCode = new URLSearchParams(window.location.search).get('code') || '';
         const EVENT_ICONS = { trip: 'compass', birthday: 'gift', wedding: 'heart', sports_match: 'award', reunion: 'users', other: 'camera' };
 
+        // Toggle Grandma Mode (Light Canvas & Large Text)
+        function toggleTheme() {
+            const body = document.body;
+            const text = document.getElementById('theme-btn-text');
+            const icon = document.querySelector('#theme-toggle i');
+            
+            body.classList.toggle('grandma-mode');
+            
+            if (body.classList.contains('grandma-mode')) {
+                text.textContent = 'Standard Mode (Dark)';
+                icon.setAttribute('data-lucide', 'moon');
+                localStorage.setItem('mw_grandma_mode', 'true');
+            } else {
+                text.textContent = 'Grandma Mode (Light / Big Text)';
+                icon.setAttribute('data-lucide', 'sun');
+                localStorage.setItem('mw_grandma_mode', 'false');
+            }
+            lucide.createIcons();
+        }
+
+        // Initialize user preferences
+        if (localStorage.getItem('mw_grandma_mode') === 'true') {
+            document.body.classList.add('grandma-mode');
+            document.getElementById('theme-btn-text').textContent = 'Standard Mode (Dark)';
+        }
+
         function saveName(val) {
             localStorage.setItem('mw_contributor_name', val.trim());
         }
 
-        function switchTab(tabId) {
-            document.querySelectorAll('.ingress-tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.querySelectorAll('.tab-panel').forEach(panel => {
-                panel.classList.remove('active');
-            });
+        // Simplified linear navigation (Grandma-Proof)
+        function openSection(secId) {
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('theme-selector-area').style.display = 'none';
+            document.querySelectorAll('.focus-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(secId).classList.add('active');
+            document.getElementById('status').textContent = '';
+        }
 
-            const activeBtn = Array.from(document.querySelectorAll('.ingress-tab-btn')).find(b => 
-                b.getAttribute('onclick').includes(tabId)
-            );
-            if (activeBtn) activeBtn.classList.add('active');
-            document.getElementById(tabId).classList.add('active');
+        function backToMenu() {
+            document.querySelectorAll('.focus-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('main-menu').style.display = 'flex';
+            document.getElementById('theme-selector-area').style.display = 'block';
             document.getElementById('status').textContent = '';
         }
 
@@ -498,36 +768,56 @@
                 { text: '🌟 Favorite Memory', prompt: 'My favorite memory of today' },
                 { text: '😂 Funniest Moment', prompt: 'The funniest thing that happened today' },
                 { text: '🍽️ Local Food', prompt: 'Describe the best food we ate today' },
-                { text: '😮 Most Surprising', prompt: 'What was the most unexpected thing we saw today' }
-            ],
-            birthday: [
-                { text: '🎙️ Custom Note', prompt: '' },
-                { text: '🎂 Birthday Wish', prompt: 'My special birthday wish for you' },
-                { text: '🌟 Favorite Memory', prompt: 'My favorite memory of us together' },
-                { text: '🎁 Best Moment', prompt: 'The highlight of the party today' },
-                { text: '❤️ Message of Love', prompt: 'Something I appreciate most about you' }
-            ],
-            wedding: [
-                { text: '🎙️ Custom Note', prompt: '' },
-                { text: '💍 Special Message', prompt: 'A message of love and joy for the couple' },
-                { text: '🌟 Highlight Moment', prompt: 'My favorite part of the wedding day' },
-                { text: '💃 Fun story', prompt: 'A fun story from the dance floor or reception' },
-                { text: '🥂 Toast of Love', prompt: 'My toast to your beautiful future together' }
+                { text: '😮 Unexpected Sights', prompt: 'What was the most surprising thing we saw today' }
             ],
             reunion: [
                 { text: '🎙️ Custom Note', prompt: '' },
                 { text: '🌳 Family Story', prompt: 'A special family memory or story to share' },
-                { text: '🌟 Reunion Highlight', prompt: 'The best part of seeing everyone today' },
-                { text: '😂 Funniest Story', prompt: 'A hilarious story about our family from the past' },
-                { text: '❤️ Message of Hope', prompt: 'A message for the next generation' }
+                { text: '🌟 Gathering Highlight', prompt: 'The best part of seeing everyone today' },
+                { text: '😂 Hilarious Tale', prompt: 'A funny story from the family archives' },
+                { text: '❤️ Wisdom & Message', prompt: 'A message for the younger generation' }
             ],
             other: [
                 { text: '🎙️ Custom Note', prompt: '' },
-                { text: '🌟 Favorite Moment', prompt: 'My favorite moment today' },
-                { text: '📸 Story Behind Photo', prompt: 'The story behind what is happening in this photo' },
-                { text: '✍️ Thoughts & Reflections', prompt: 'My reflections and thoughts today' }
+                { text: '🌟 Joy of the Day', prompt: 'What made me smile or laugh today' },
+                { text: '✍️ Thoughts & Feelings', prompt: 'My personal reflections and thoughts today' },
+                { text: '📸 Behind the scenes', prompt: 'The story of what is happening in this photo' }
+            ],
+            sports_match: [
+                { text: '🎙️ Custom Note', prompt: '' },
+                { text: '🏫 School Memory', prompt: 'A fun class or playground memory' },
+                { text: '🌟 Favorite Joke', prompt: 'The funniest joke or meme in school today' },
+                { text: '👥 Friends Message', prompt: 'A message of appreciation to our class' }
             ]
         };
+
+        function changeJournalTheme(val) {
+            // Build dynamic prompts based on selector
+            const promptsContainer = document.getElementById('voice-prompts-container');
+            if (promptsContainer) {
+                promptsContainer.innerHTML = '';
+                const prompts = PROMPTS_BY_TYPE[val] || PROMPTS_BY_TYPE['other'];
+                prompts.forEach((p, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = `prompt-chip ${idx === 0 ? 'active' : ''}`;
+                    btn.textContent = p.text;
+                    btn.onclick = () => selectPrompt(btn, p.prompt);
+                    promptsContainer.appendChild(btn);
+                });
+            }
+
+            // Adjust event subtitles dynamically
+            const sub = document.getElementById('event-subtitle');
+            if (val === 'trip') {
+                sub.textContent = "🏞️ Let's compile a beautiful keepsake of our trip memories together.";
+            } else if (val === 'reunion') {
+                sub.textContent = "💖 Let's capture our family's precious legacy moments.";
+            } else if (val === 'other') {
+                sub.textContent = "📅 Write down your daily personal diary and reflections.";
+            } else if (val === 'sports_match') {
+                sub.textContent = "🏫 Co-journal with school friends and classmates.";
+            }
+        }
 
         async function loadEvent() {
             try {
@@ -542,20 +832,17 @@
                 document.getElementById('photo-count').textContent =
                     `${data.photo_count} memory items collected`;
 
-                // Render dynamic prompts based on type
-                const promptsContainer = document.getElementById('voice-prompts-container');
-                if (promptsContainer) {
-                    promptsContainer.innerHTML = '';
-                    const eventType = data.event_type || 'other';
-                    const prompts = PROMPTS_BY_TYPE[eventType] || PROMPTS_BY_TYPE['other'];
-                    prompts.forEach((p, idx) => {
-                        const btn = document.createElement('button');
-                        btn.className = `prompt-chip ${idx === 0 ? 'active' : ''}`;
-                        btn.textContent = p.text;
-                        btn.onclick = () => selectPrompt(btn, p.prompt);
-                        promptsContainer.appendChild(btn);
-                    });
+                // Set type switcher value
+                const selector = document.getElementById('journal-theme-select');
+                if (data.event_type && ['trip', 'reunion', 'other', 'sports_match'].includes(data.event_type)) {
+                    selector.value = data.event_type;
+                } else if (data.event_type === 'birthday' || data.event_type === 'wedding') {
+                    selector.value = 'reunion'; // Map celebration events to Precious Moments category
+                } else {
+                    selector.value = 'other';
                 }
+                
+                changeJournalTheme(selector.value);
 
                 const viewerLink = document.getElementById('viewer-link');
                 if (data.journal_ready && data.viewer_url) {
@@ -577,7 +864,6 @@
             const all = Array.from(fileList);
             if (!all.length) return;
             const files = all.filter(f => SUPPORTED_EXT.test(f.name));
-            const skipped = all.length - files.length;
 
             const status = document.getElementById('status');
             if (!files.length) {
@@ -618,6 +904,7 @@
                 if (failed) msg += ` (${failed} failed)`;
                 status.textContent = msg;
                 loadEvent();
+                setTimeout(backToMenu, 1500); // Auto close uploader screen on success
             } catch (e) {
                 status.style.color = 'var(--danger)';
                 status.textContent = 'Upload failed: ' + e.message;
@@ -671,9 +958,10 @@
 
                 if (res.ok && (data.status === 'success' || data.status === 'partial_success')) {
                     status.style.color = 'var(--success)';
-                    status.textContent = 'Saved note to the trip keepsake!';
+                    status.textContent = 'Saved note to the keepsake!';
                     clearNoteDraft();
                     loadEvent();
+                    setTimeout(backToMenu, 1500); // Auto close screen
                 } else {
                     throw new Error(data.detail || data.message || 'Saving note failed');
                 }
@@ -690,6 +978,24 @@
         let isRecording = false;
         let recordTimerInterval;
         let recordSeconds = 0;
+        let activePrompt = "";
+
+        function selectPrompt(elem, promptText) {
+            document.querySelectorAll('.prompt-chip').forEach(chip => {
+                chip.classList.remove('active');
+            });
+            elem.classList.add('active');
+
+            activePrompt = promptText;
+
+            const banner = document.getElementById('active-prompt-banner');
+            if (promptText) {
+                banner.textContent = `Topic: "${promptText}"`;
+                banner.style.display = 'block';
+            } else {
+                banner.style.display = 'none';
+            }
+        }
 
         function updateRecordTimer() {
             recordSeconds++;
@@ -756,25 +1062,6 @@
             document.getElementById('status').textContent = '';
         }
 
-        let activePrompt = "";
-
-        function selectPrompt(elem, promptText) {
-            document.querySelectorAll('.prompt-chip').forEach(chip => {
-                chip.classList.remove('active');
-            });
-            elem.classList.add('active');
-
-            activePrompt = promptText;
-
-            const banner = document.getElementById('active-prompt-banner');
-            if (promptText) {
-                banner.textContent = `Topic: "${promptText}"`;
-                banner.style.display = 'block';
-            } else {
-                banner.style.display = 'none';
-            }
-        }
-
         async function uploadVoice() {
             const status = document.getElementById('status');
             if (!audioBlob) {
@@ -786,7 +1073,6 @@
             const name = document.getElementById('contributor-name').value.trim() || 'Anonymous';
             saveName(name);
 
-            // Slugify prompt text for filename injection
             const promptSlug = activePrompt 
                 ? activePrompt.toLowerCase().replace(/[^a-z0-9]+/g, '_').substring(0, 30) + '_' 
                 : '';
@@ -808,9 +1094,10 @@
 
                 if (res.ok && (data.status === 'success' || data.status === 'partial_success')) {
                     status.style.color = 'var(--success)';
-                    status.textContent = 'Saved voice note to the trip keepsake!';
+                    status.textContent = 'Saved voice note to the keepsake!';
                     discardVoice();
                     loadEvent();
+                    setTimeout(backToMenu, 1500); // Auto close screen
                 } else {
                     throw new Error(data.detail || data.message || 'Voice upload failed');
                 }
