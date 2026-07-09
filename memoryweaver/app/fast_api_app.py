@@ -637,6 +637,55 @@ def list_uploads(session_id: str = "default"):
                     "date": date_str
                 })
         return {"status": "success", "photos": photos, "session_id": session_id}
+@app.get("/api/photo-metadata", dependencies=[Depends(require_admin_token)])
+def get_photo_metadata(filename: str, session_id: str = "default"):
+    """Returns detailed EXIF and file metadata for a specific uploaded photo."""
+    try:
+        session_storage = StorageHelper(session_id=session_id)
+        upload_dir = os.path.join(session_storage.local_base, "uploads")
+        full_path = os.path.join(upload_dir, filename)
+        
+        if not os.path.exists(full_path):
+            return {"status": "error", "message": "Photo not found"}
+            
+        # 1. Run EXIF extraction
+        from agents.collector.tools.upload import extract_exif
+        metadata = extract_exif(full_path)
+        
+        # 2. Get file details
+        from PIL import Image
+        width, height = 0, 0
+        img_format = "Unknown"
+        try:
+            with Image.open(full_path) as img:
+                width, height = img.size
+                img_format = img.format
+        except Exception:
+            pass
+            
+        file_size_kb = round(os.path.getsize(full_path) / 1024, 1)
+        
+        # 3. Resolve location name via GPS if exists
+        location_desc = "Unknown Location"
+        lat = metadata["gps"]["latitude"]
+        lon = metadata["gps"]["longitude"]
+        if lat is not None and lon is not None:
+            location_desc = f"{lat:.4f}° N, {lon:.4f}° W"
+            
+        return {
+            "status": "success",
+            "filename": filename,
+            "size_kb": file_size_kb,
+            "dimensions": f"{width} × {height} px",
+            "format": img_format,
+            "device": metadata.get("device") or "Unknown Device",
+            "timestamp": metadata.get("timestamp") or "Unknown Time",
+            "gps": {
+                "latitude": lat,
+                "longitude": lon
+            },
+            "location": location_desc
+        }
     except Exception as e:
         return {"status": "error", "message": str(e)}
 

@@ -6,6 +6,8 @@
     <title>Rewind - Curator Hub</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         :root {
             --bg: #E4E0D5;
@@ -915,6 +917,119 @@
             border: 1.5px solid #A0A0A0;
             z-index: 2;
         }
+        .pool-photo-card.selected-card {
+            border: 3px solid var(--accent) !important;
+        }
+
+        /* Photo Metadata Details Panel styling */
+        .photo-detail-container {
+            background: var(--surface);
+            border: 3px solid var(--border);
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            padding: 24px;
+            margin-top: 24px;
+            margin-bottom: 24px;
+            transition: all 0.3s ease;
+        }
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2.5px solid var(--border);
+            padding-bottom: 12px;
+            margin-bottom: 18px;
+        }
+        .detail-header h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 800;
+            margin: 0;
+            color: var(--text);
+            font-size: 1.25rem;
+        }
+        .btn-close-detail {
+            padding: 6px 14px;
+            font-size: 11px;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.2s;
+        }
+        .btn-close-detail:hover {
+            background: var(--bg);
+            transform: translateY(-1px);
+        }
+        .detail-body-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 24px;
+        }
+        @media (max-width: 768px) {
+            .detail-body-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .detail-photo-column {
+            border: 2.5px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            background: #F9FAFB;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 280px;
+            max-height: 420px;
+            box-shadow: 2px 2px 0px var(--border);
+        }
+        .detail-photo-column img {
+            max-width: 100%;
+            max-height: 400px;
+            object-fit: contain;
+            display: block;
+        }
+        .detail-meta-column {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .metadata-card {
+            background: #FFFFFF;
+            border: 2.5px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 3px 3px 0px var(--border);
+        }
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1.5px solid rgba(48, 48, 48, 0.08);
+            font-size: 13px;
+        }
+        .meta-row:last-child {
+            border-bottom: none;
+        }
+        .meta-label {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+        .meta-value {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            color: var(--text);
+            text-align: right;
+            word-break: break-all;
+        }
+        .map-wrapper {
+            border: 2.5px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 3px 3px 0px var(--border);
+        }
 
         /* Simplified Event Manager Styles */
         .event-type-radios {
@@ -1268,6 +1383,57 @@
                     <span style="font-size: 16px; user-select: none;">💡</span>
                     <span><strong>Quick Tip:</strong> Click the <strong>✕</strong> on any photo card below to hide it from your final book. It won't be deleted, it just moves into the <strong>Hidden / Removed</strong> tab so you can bring it back anytime!</span>
                 </div>
+
+                <!-- Photo Details Panel -->
+                <div id="photo-detail-section" class="photo-detail-container" style="display: none;">
+                    <div class="detail-header">
+                        <h3>📷 Photo Details & Metadata</h3>
+                        <button class="btn btn-close-detail" onclick="closePhotoDetails(); event.preventDefault(); event.stopPropagation();">Close Panel</button>
+                    </div>
+                    <div class="detail-body-grid">
+                        <!-- Left: Large Image -->
+                        <div class="detail-photo-column">
+                            <img id="detail-photo-img" src="" alt="Selected Photo Preview" />
+                        </div>
+                        <!-- Right: Metadata & Map -->
+                        <div class="detail-meta-column">
+                            <div class="metadata-card">
+                                <div class="meta-row">
+                                    <span class="meta-label">Filename:</span>
+                                    <span id="meta-filename" class="meta-value">-</span>
+                                </div>
+                                <div class="meta-row">
+                                    <span class="meta-label">Date Taken:</span>
+                                    <span id="meta-date" class="meta-value">-</span>
+                                </div>
+                                <div class="meta-row">
+                                    <span class="meta-label">Camera:</span>
+                                    <span id="meta-device" class="meta-value">-</span>
+                                </div>
+                                <div class="meta-row">
+                                    <span class="meta-label">Dimensions:</span>
+                                    <span id="meta-dimensions" class="meta-value">-</span>
+                                </div>
+                                <div class="meta-row">
+                                    <span class="meta-label">File Size:</span>
+                                    <span id="meta-size" class="meta-value">-</span>
+                                </div>
+                                <div class="meta-row">
+                                    <span class="meta-label">GPS:</span>
+                                    <span id="meta-gps" class="meta-value">-</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Leaflet Map Container -->
+                            <div id="detail-map-wrapper" class="map-wrapper" style="display: none;">
+                                <div id="photo-map" style="height: 180px;"></div>
+                            </div>
+                            <div id="detail-map-placeholder" style="background: rgba(235, 35, 113, 0.04); border: 1.5px dashed var(--accent); border-radius: 12px; height: 180px; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--accent); font-weight: 600;">
+                                📍 No GPS Coordinates Found
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="card" id="card-step-3" style="margin-top: 20px; padding: 20px; transition: all 0.3s;">
@@ -1527,6 +1693,97 @@
             }
         }
 
+        let activeMap = null;
+        let selectedFilename = null;
+
+        function closePhotoDetails() {
+            document.getElementById('photo-detail-section').style.display = 'none';
+            // Clear selected border
+            document.querySelectorAll('.pool-photo-card').forEach(c => {
+                c.classList.remove('selected-card');
+            });
+            selectedFilename = null;
+            if (activeMap) {
+                activeMap.remove();
+                activeMap = null;
+            }
+        }
+
+        async function selectPhoto(filename, cardElement) {
+            // Remove selection class from all cards
+            document.querySelectorAll('.pool-photo-card').forEach(c => {
+                c.classList.remove('selected-card');
+            });
+            
+            // If clicking the already selected card, close detail panel (toggle behavior)
+            if (selectedFilename === filename) {
+                closePhotoDetails();
+                return;
+            }
+            
+            selectedFilename = filename;
+            cardElement.classList.add('selected-card');
+            
+            // Set image preview source
+            const imgUrl = `/media?filename=${encodeURIComponent(filename)}&session_id=${encodeURIComponent(getSessionId())}`;
+            document.getElementById('detail-photo-img').src = imgUrl;
+            
+            // Fetch photo metadata
+            try {
+                const res = await fetch(`/api/photo-metadata?filename=${encodeURIComponent(filename)}&session_id=${encodeURIComponent(getSessionId())}`, {
+                    headers: authHeaders()
+                });
+                const data = await res.json();
+                if (data.status !== 'success') {
+                    console.error("Failed to load photo metadata: " + data.message);
+                    return;
+                }
+                
+                // Populate metadata values
+                document.getElementById('meta-filename').textContent = data.filename;
+                document.getElementById('meta-date').textContent = data.timestamp && data.timestamp !== 'Unknown Time' ? data.timestamp.replace('T', ' ') : 'Not Available';
+                document.getElementById('meta-device').textContent = data.device || 'Unknown';
+                document.getElementById('meta-dimensions').textContent = data.dimensions || 'Unknown';
+                document.getElementById('meta-size').textContent = data.size_kb ? `${data.size_kb} KB` : 'Unknown';
+                document.getElementById('meta-gps').textContent = data.gps && data.gps.latitude ? `${data.gps.latitude.toFixed(5)}°, ${data.gps.longitude.toFixed(5)}°` : 'Not Available';
+                
+                // Toggle details section display
+                document.getElementById('photo-detail-section').style.display = 'block';
+                
+                // Render Leaflet Map if GPS exists
+                const mapWrapper = document.getElementById('detail-map-wrapper');
+                const mapPlaceholder = document.getElementById('detail-map-placeholder');
+                
+                if (activeMap) {
+                    activeMap.remove();
+                    activeMap = null;
+                }
+                
+                if (data.gps && data.gps.latitude !== null && data.gps.longitude !== null) {
+                    mapWrapper.style.display = 'block';
+                    mapPlaceholder.style.display = 'none';
+                    
+                    const lat = data.gps.latitude;
+                    const lon = data.gps.longitude;
+                    
+                    // Create Leaflet map instance
+                    activeMap = L.map('photo-map').setView([lat, lon], 13);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a>'
+                    }).addTo(activeMap);
+                    
+                    L.marker([lat, lon]).addTo(activeMap)
+                        .bindPopup(`<b>Photo location</b><br>${lat.toFixed(4)}, ${lon.toFixed(4)}`)
+                        .openPopup();
+                } else {
+                    mapWrapper.style.display = 'none';
+                    mapPlaceholder.style.display = 'flex';
+                }
+            } catch (err) {
+                console.error("Error fetching photo details:", err);
+            }
+        }
+
         async function loadUploadedPoolTray() {
             const tray = document.getElementById('uploaded-pool-tray');
             tray.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1;">Loading photo pool...</div>';
@@ -1580,6 +1837,14 @@
                     const captureDate = photoObj.date;
                     const card = document.createElement('div');
                     card.className = 'pool-photo-card';
+                    card.style.cursor = 'pointer';
+                    if (selectedFilename === filename) {
+                        card.classList.add('selected-card');
+                    }
+                    card.onclick = (e) => {
+                        if (e.target.closest('.overlay-btn')) return;
+                        selectPhoto(filename, card);
+                    };
                     
                     const img = document.createElement('img');
                     img.src = `/media?filename=${encodeURIComponent(filename)}&session_id=${encodeURIComponent(getSessionId())}`;
