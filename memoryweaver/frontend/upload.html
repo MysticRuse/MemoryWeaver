@@ -1730,7 +1730,7 @@
                 const activeSession = (data.sessions || []).find(s => s.session_id === active);
                 const uploadHeader = document.getElementById('upload-header-title');
                 if (uploadHeader && activeSession) {
-                    uploadHeader.innerHTML = `<i data-lucide="image" style="width: 20px; height: 20px; color: var(--text-muted); vertical-align: middle; margin-right: 8px;"></i>Add Photos to <span style="font-weight: 800; color: #ffffff;">"${activeSession.name}"</span>`;
+                    uploadHeader.innerHTML = `<i data-lucide="image" style="width: 20px; height: 20px; color: var(--text-muted); vertical-align: middle; margin-right: 8px;"></i>Add Photos to <span style="font-weight: 800; color: var(--accent);">"${activeSession.name}"</span>`;
                 }
 
                 // 1. Populate Event Type/Category radio pills
