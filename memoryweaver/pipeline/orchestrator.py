@@ -38,6 +38,33 @@ def get_photo_date_info(path: str) -> tuple[float, str]:
     except:
         return 0.0, "Unknown Date"
 
+def transcribe_audio_file(file_path: str, log=print) -> str:
+    from google import genai
+    from google.genai import types
+    import os
+    
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return "[Transcription Failed: GEMINI_API_KEY environment variable is not set]"
+    
+    log(f"  [Transcription] transcribing audio note: {os.path.basename(file_path)}...")
+    try:
+        client = genai.Client(api_key=api_key)
+        with open(file_path, "rb") as f:
+            audio_bytes = f.read()
+        part = types.Part.from_bytes(data=audio_bytes, mime_type="audio/wav")
+        
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=["Transcribe this voice memo recording text accurately. Do not add explanations or formatting, just return the transcription text.", part]
+        )
+        transcript = response.text.strip()
+        log(f"  [Transcription] Success: \"{transcript[:50]}...\"")
+        return transcript
+    except Exception as e:
+        log(f"  [Transcription] Error: {e}")
+        return f"[Audio Transcription Failed: {e}]"
+
 def execute_trip_pipeline(project_root: str, session_id: str = "default", limit: int = 50, log=print, progress_callback=None, stage: str = "all") -> dict:
     """
     Runs the sequential 5-agent pipeline on all photos in local_storage/uploads.
@@ -497,6 +524,72 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
         }
     })
     
+    # Scan for user uploaded text notes, voice memos, and calendar events
+    all_files = os.listdir(uploads_dir) if os.path.exists(uploads_dir) else []
+    text_files = [f for f in all_files if f.lower().endswith(".txt") and "story_note" in f.lower()]
+    audio_files = [f for f in all_files if f.lower().endswith((".wav", ".mp3", ".m4a"))]
+    
+    # Load calendar events
+    calendar_events = []
+    cal_path = os.path.join(uploads_dir, "calendar_events.json")
+    if os.path.exists(cal_path):
+        try:
+            with open(cal_path, "r", encoding="utf-8") as cf:
+                calendar_events = json.load(cf)
+        except Exception as e:
+            log(f"Warning: Failed to load calendar events: {e}")
+            
+    # Transcribe audio files using Gemini
+    audio_transcriptions = {}
+    for f in audio_files:
+        f_path = os.path.join(uploads_dir, f)
+        audio_transcriptions[f] = transcribe_audio_file(f_path, log)
+        
+    # Read text notes
+    text_notes = {}
+    for f in text_files:
+        f_path = os.path.join(uploads_dir, f)
+        try:
+            with open(f_path, "r", encoding="utf-8") as tf:
+                text_notes[f] = tf.read().strip()
+        except Exception as e:
+            log(f"Warning: Failed to read text file {f}: {e}")
+            
+    # Match extra files to the closest photo moment timestamp
+    scene_notes = {}
+    scene_audios = {}
+    scene_calendars = {}
+    
+    # Helper to find nearest scene label
+    def find_nearest_scene(timestamp):
+        if not selected_photos:
+            return None
+        closest_p = min(selected_photos, key=lambda x: abs(x.get("timestamp", 0.0) - timestamp))
+        return closest_p["scene_label"]
+        
+    for f in text_files:
+        f_path = os.path.join(uploads_dir, f)
+        mtime = os.path.getmtime(f_path)
+        scene = find_nearest_scene(mtime)
+        if scene:
+            if scene not in scene_notes: scene_notes[scene] = []
+            scene_notes[scene].append(text_notes[f])
+            
+    for f in audio_files:
+        f_path = os.path.join(uploads_dir, f)
+        mtime = os.path.getmtime(f_path)
+        scene = find_nearest_scene(mtime)
+        if scene:
+            if scene not in scene_audios: scene_audios[scene] = []
+            scene_audios[scene].append({"filename": f, "transcription": audio_transcriptions[f]})
+            
+    for ev in calendar_events:
+        ts = ev.get("timestamp", 0.0)
+        scene = find_nearest_scene(ts)
+        if scene:
+            if scene not in scene_calendars: scene_calendars[scene] = []
+            scene_calendars[scene].append(ev.get("title", "Event"))
+
     # Run Narrator Journaling in a Single Batched API Call
     log("Starting Phase 5: Batched Narrator Agent synthesis (single API call)...")
     p5_start = time.time()
@@ -516,7 +609,10 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
         batched_moments_data.append({
             "moment": scene,
             "date": moment_date,
-            "top_photos": top3_info
+            "top_photos": top3_info,
+            "user_notes": scene_notes.get(scene, []),
+            "voice_transcripts": [x["transcription"] for x in scene_audios.get(scene, [])],
+            "calendar_events": scene_calendars.get(scene, [])
         })
         
     if progress_callback:
@@ -539,7 +635,10 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
             "moment": scene,
             "entry": entry_text,
             "photos": [x["filename"] for x in items[:3]],
-            "date": moment_date
+            "date": moment_date,
+            "notes": scene_notes.get(scene, []),
+            "audio_notes": scene_audios.get(scene, []),
+            "calendar_events": scene_calendars.get(scene, [])
         })
         
     if progress_callback:

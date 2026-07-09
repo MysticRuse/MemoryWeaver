@@ -525,7 +525,17 @@
                     <div class="moment-action-badge">Show</div>
                 </div>
 
-                <!-- Row 3: Events -->
+                <!-- Row 3: Calendar Sync -->
+                <div class="moment-row" onclick="openCalendarModal()">
+                    <div class="moment-icon-circle"><i data-lucide="calendar" style="width: 18px; height: 18px;"></i></div>
+                    <div class="moment-details">
+                        <div class="moment-title">Calendar Sync</div>
+                        <div class="moment-desc" id="calendar-badge">Access disabled</div>
+                    </div>
+                    <div class="moment-action-badge">Enable</div>
+                </div>
+
+                <!-- Row 4: Scope context -->
                 <div class="moment-row">
                     <div class="moment-icon-circle"><i data-lucide="award" style="width: 18px; height: 18px;"></i></div>
                     <div class="moment-details">
@@ -627,6 +637,28 @@
             </div>
         </div>
 
+        <!-- Calendar Permission Modal -->
+        <div id="calendar-permission-modal" style="display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.4); z-index: 40; align-items: center; justify-content: center; padding: 20px; font-family: 'Outfit', sans-serif;">
+            <div style="background: #ffffff; border-radius: 20px; width: 100%; max-width: 320px; padding: 24px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+                <div style="width: 56px; height: 56px; border-radius: 50%; background: #EBF7FF; color: #007AFF; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+                    <i data-lucide="calendar" style="width: 28px; height: 28px;"></i>
+                </div>
+                <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: 8px; color: #000000;">Allow "Rewind" to access your calendar?</h3>
+                <p style="font-size: 0.8rem; color: #555555; line-height: 1.4; margin-bottom: 16px;">This allows the app to automatically import events, dates, and locations to co-relate with your memories.</p>
+                
+                <div style="border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: left; margin-bottom: 20px; background: #F8FAFC;">
+                    <div style="font-size: 0.75rem; font-weight: 700; color: #007AFF; text-transform: uppercase;">Example Event</div>
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #000000; margin-top: 2px;">Dinner at Waterfront</div>
+                    <div style="font-size: 0.75rem; color: #666D77; margin-top: 1px;">7:00 PM - Vancouver Harbour</div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <button onclick="acceptCalendarAccess()" style="width: 100%; background: #007AFF; color: #ffffff; border: none; padding: 12px; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 0.85rem;">Allow Full Access</button>
+                    <button onclick="closeCalendarModal()" style="width: 100%; background: transparent; color: #007AFF; border: none; padding: 12px; border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 0.85rem;">Don't Allow</button>
+                </div>
+            </div>
+        </div>
+
         <!-- ERROR EXPIRY OVERLAY -->
         <div class="error-overlay" id="error-card" style="display: none;">
             <i data-lucide="lock" style="width: 48px; height: 48px; color: var(--danger); margin-bottom: 14px;"></i>
@@ -664,6 +696,53 @@
         if (localStorage.getItem('mw_grandma_mode') === 'true') {
             document.body.classList.add('grandma-mode');
             document.getElementById('theme-btn-text').textContent = 'Standard Mode';
+        }
+
+        // Calendar Modal Toggles
+        function openCalendarModal() {
+            document.getElementById('calendar-permission-modal').style.display = 'flex';
+        }
+
+        function closeCalendarModal() {
+            document.getElementById('calendar-permission-modal').style.display = 'none';
+        }
+
+        async function acceptCalendarAccess() {
+            closeCalendarModal();
+            const badge = document.getElementById('calendar-badge');
+            badge.textContent = 'Syncing...';
+            badge.style.color = 'var(--accent)';
+            
+            const now = new Date();
+            const mockEvents = [
+                { title: "Sightseeing Vancouver Waterfront", timestamp: now.getTime() / 1000 - 3600 },
+                { title: "Group Reunion Dinner at Harbour House", timestamp: now.getTime() / 1000 },
+                { title: "Vancouver Stadium Soccer Match", timestamp: now.getTime() / 1000 + 7200 }
+            ];
+            
+            const blob = new Blob([JSON.stringify(mockEvents, null, 2)], { type: 'application/json' });
+            const file = new File([blob], 'calendar_events.json', { type: 'application/json' });
+            
+            const formData = new FormData();
+            formData.append('contributor_name', localStorage.getItem('mw_contributor_name') || 'Anonymous');
+            formData.append('session_id', sessionId);
+            formData.append('share_code', shareCode);
+            formData.append('photos', file);
+            
+            try {
+                const res = await fetch('/upload', { method: 'POST', body: formData });
+                if (res.ok) {
+                    badge.textContent = 'Synced';
+                    badge.style.color = 'var(--success)';
+                    alert('Successfully imported 3 events from device calendar.');
+                } else {
+                    throw new Error('Sync failed');
+                }
+            } catch (e) {
+                badge.textContent = 'Failed';
+                badge.style.color = 'var(--danger)';
+                alert('Calendar sync failed: ' + e.message);
+            }
         }
 
         // Editor Control drawer

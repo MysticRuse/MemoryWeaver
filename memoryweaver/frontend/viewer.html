@@ -1261,12 +1261,32 @@
                             video.style.maxWidth = '100%';
                             thumbsContainer.appendChild(video);
                         } else {
+                            const wrapper = document.createElement('div');
+                            wrapper.style.display = 'flex';
+                            wrapper.style.flexDirection = 'column';
+                            
                             const img = document.createElement('img');
                             img.alt = entry.moment;
                             img.style.cursor = 'pointer';
+                            img.style.width = '100%';
+                            img.style.borderRadius = '12px';
                             img.src = mediaUrl(ph);
                             img.onclick = () => openLightbox(img.src, entry.moment);
-                            thumbsContainer.appendChild(img);
+                            wrapper.appendChild(img);
+                            
+                            const meta = photoMetadataMap[ph];
+                            if (meta && meta.caption) {
+                                const captionDiv = document.createElement('div');
+                                captionDiv.style.fontSize = '0.75rem';
+                                captionDiv.style.color = 'var(--text-muted)';
+                                captionDiv.style.marginTop = '6px';
+                                captionDiv.style.lineHeight = '1.3';
+                                captionDiv.style.fontStyle = 'italic';
+                                captionDiv.textContent = meta.caption;
+                                wrapper.appendChild(captionDiv);
+                            }
+                            
+                            thumbsContainer.appendChild(wrapper);
                         }
                     });
                     card.appendChild(thumbsContainer);
@@ -1274,6 +1294,25 @@
 
                 const body = document.createElement('div');
                 body.className = 'journal-body';
+
+                // Display associated Calendar Events as top badges inside the card
+                if (entry.calendar_events && entry.calendar_events.length > 0) {
+                    entry.calendar_events.forEach(evt => {
+                        const badge = document.createElement('div');
+                        badge.style.background = 'rgba(0, 122, 255, 0.08)';
+                        badge.style.color = '#007AFF';
+                        badge.style.fontSize = '0.75rem';
+                        badge.style.fontWeight = '700';
+                        badge.style.padding = '4px 10px';
+                        badge.style.borderRadius = '20px';
+                        badge.style.marginBottom = '10px';
+                        badge.style.display = 'inline-flex';
+                        badge.style.alignItems = 'center';
+                        badge.style.gap = '4px';
+                        badge.innerHTML = `<i data-lucide="calendar" style="width: 12px; height: 12px;"></i> ${evt}`;
+                        body.appendChild(badge);
+                    });
+                }
 
                 const title = document.createElement('h3');
                 title.style.display = 'flex';
@@ -1317,12 +1356,23 @@
                         let promptTitle = cleanName.substring(hash.length + 1).trim();
                         promptTitle = promptTitle.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
                         
+                        let trText = '';
+                        if (entry.audio_notes) {
+                            const matched = entry.audio_notes.find(x => x.filename === ph);
+                            if (matched) trText = matched.transcription;
+                        }
+                        
                         audioCard.innerHTML = `
                             <div class="audio-card-header">
                                 <i data-lucide="mic" style="width: 14px; height: 14px; color: var(--accent-color);"></i>
                                 <span>Spoken Story by ${uploaderName}: <strong>"${promptTitle || 'Voice Note'}"</strong></span>
                             </div>
                             <audio src="${mediaUrl(ph)}" controls></audio>
+                            ${trText ? `
+                            <div class="audio-transcript-box" style="margin-top: 8px; font-size: 0.8rem; background: var(--border-color); border-left: 2px solid var(--accent); padding: 8px 12px; color: var(--text-muted); font-style: italic; border-radius: 4px;">
+                                "${trText}"
+                            </div>
+                            ` : ''}
                         `;
                         body.appendChild(audioCard);
                     } else if (lower.endsWith('.txt')) {
