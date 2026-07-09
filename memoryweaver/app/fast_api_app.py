@@ -579,7 +579,9 @@ def get_trip_stats(session_id: str = "default"):
         if os.path.exists(upload_dir):
             files = [
                 f for f in os.listdir(upload_dir)
-                if os.path.isfile(os.path.join(upload_dir, f)) and not f.startswith('.')
+                if os.path.isfile(os.path.join(upload_dir, f)) 
+                and not f.startswith('.')
+                and f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp'))
             ]
             count = len(files)
             
@@ -772,6 +774,7 @@ def list_uploads(background_tasks: BackgroundTasks, session_id: str = "default")
                 f for f in os.listdir(upload_dir)
                 if os.path.isfile(os.path.join(upload_dir, f)) 
                 and not f.startswith('.')
+                and f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp'))
                 and not f.lower().endswith('_enhanced.jpg')
                 and not f.lower().endswith('_original.jpg')
             ])
@@ -1037,13 +1040,16 @@ async def save_photo_voice(
                         upload_dir = os.path.join(session_storage.local_base, "uploads")
                         ref_audio_path = os.path.join(upload_dir, old_voice_note)
                         
+                    has_reference = False
                     if ref_audio_path and os.path.exists(ref_audio_path):
+                        ref_ext = os.path.splitext(ref_audio_path.lower())[1]
+                        mime_type = "audio/wav" if ref_ext == ".wav" else "audio/webm"
                         with open(ref_audio_path, "rb") as f:
                             ref_bytes = f.read()
                         contents.append(
                             types.Part.from_bytes(
                                 data=ref_bytes,
-                                mime_type="audio/webm"
+                                mime_type=mime_type
                             )
                         )
                         contents.append(
@@ -1051,24 +1057,27 @@ async def save_photo_voice(
                             "Read the following text out loud in the exact same voice, gender, pitch, accent, and speed "
                             "as the speaker in the audio. Return ONLY the synthesized speech: " + transcription
                         )
+                        has_reference = True
                     else:
                         contents.append(
                             "Synthesize the following text as natural spoken audio: " + transcription
                         )
                         
-                    response = client.models.generate_content(
-                        model="gemini-2.0-flash",
-                        contents=contents,
-                        config=types.GenerateContentConfig(
-                            response_modalities=["AUDIO"],
-                            speech_config=types.SpeechConfig(
-                                voice_config=types.VoiceConfig(
-                                    prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                                        voice_name="Puck"
-                                    )
+                    # Use gemini-2.5-flash-preview-tts which natively supports AUDIO response modality
+                    config_args = {"response_modalities": ["AUDIO"]}
+                    if not has_reference:
+                        config_args["speech_config"] = types.SpeechConfig(
+                            voice_config=types.VoiceConfig(
+                                prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                                    voice_name="Puck"
                                 )
                             )
                         )
+                        
+                    response = client.models.generate_content(
+                        model="gemini-2.5-flash-preview-tts",
+                        contents=contents,
+                        config=types.GenerateContentConfig(**config_args)
                     )
                     
                     # Extract synthesized audio bytes
@@ -1083,22 +1092,40 @@ async def save_photo_voice(
                             break
                             
                     if synthesized_bytes:
-                        print(f"Synthesized voice bytes: {len(synthesized_bytes)} bytes")
+                        # Wrap raw PCM in a standard WAV container so browsers can play it natively
+                        import wave
+                        import io
+                        wav_buffer = io.BytesIO()
+                        with wave.open(wav_buffer, 'wb') as wav_file:
+                            wav_file.setnchannels(1)      # mono
+                            wav_file.setsampwidth(2)      # 16-bit
+                            wav_file.setframerate(24000)  # 24kHz
+                            wav_file.writeframes(synthesized_bytes)
+                        wav_bytes = wav_buffer.getvalue()
+                        
+                        print(f"Synthesized WAV audio: {len(wav_bytes)} bytes")
                         base_name, _ = os.path.splitext(filename)
-                        audio_filename = f"voice_{base_name}.webm"
+                        audio_filename = f"voice_{base_name}.wav"
                         upload_dir = os.path.join(session_storage.local_base, "uploads")
                         os.makedirs(upload_dir, exist_ok=True)
                         audio_path = os.path.join(upload_dir, audio_filename)
                         with open(audio_path, "wb") as f:
-                            f.write(synthesized_bytes)
+                            f.write(wav_bytes)
                             
-                        # Estimate wav duration if possible, otherwise let client update it
+                        # If the old voice note has a different extension/name, delete it to avoid clutter
+                        if old_voice_note and old_voice_note != audio_filename:
+                            try:
+                                old_path = os.path.join(upload_dir, old_voice_note)
+                                if os.path.exists(old_path):
+                                    os.remove(old_path)
+                            except Exception as e:
+                                print(f"Error removing old voice note: {e}")
+                                
+                        # Re-open the WAV to calculate accurate duration
                         est_duration = 0.0
                         try:
-                            import wave
-                            import io
-                            with wave.open(io.BytesIO(synthesized_bytes), 'rb') as wav:
-                                est_duration = wav.getnframes() / float(wav.getframerate())
+                            with wave.open(io.BytesIO(wav_bytes), 'rb') as wav_read:
+                                est_duration = wav_read.getnframes() / float(wav_read.getframerate())
                         except Exception:
                             pass
                             
