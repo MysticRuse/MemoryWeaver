@@ -921,50 +921,54 @@
             border: 3px solid var(--accent) !important;
         }
 
-        /* Photo Metadata Details Panel styling */
+        /* Beautiful Minimalist Photo Details Panel styling */
         .photo-detail-container {
-            background: var(--surface);
-            border: 3px solid var(--border);
-            border-radius: 16px;
-            box-shadow: var(--card-shadow);
-            padding: 24px;
-            margin-top: 24px;
-            margin-bottom: 24px;
+            background: #FCFAF7;
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+            margin-top: 28px;
+            margin-bottom: 28px;
             transition: all 0.3s ease;
         }
         .detail-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2.5px solid var(--border);
-            padding-bottom: 12px;
-            margin-bottom: 18px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 14px;
+            margin-bottom: 22px;
         }
         .detail-header h3 {
             font-family: 'Space Grotesk', sans-serif;
             font-weight: 800;
             margin: 0;
             color: var(--text);
-            font-size: 1.25rem;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         .btn-close-detail {
-            padding: 6px 14px;
-            font-size: 11px;
-            background: var(--surface);
+            padding: 8px 16px;
+            font-size: 11.5px;
+            background: #FFFFFF;
             border: 2px solid var(--border);
-            border-radius: 8px;
+            border-radius: 20px;
             cursor: pointer;
             font-weight: 700;
+            color: var(--text);
             transition: all 0.2s;
         }
         .btn-close-detail:hover {
-            background: var(--bg);
-            transform: translateY(-1px);
+            background: var(--accent);
+            color: #FFFFFF;
+            border-color: var(--border);
         }
         .detail-body-grid {
             display: grid;
-            grid-template-columns: 1.2fr 1fr;
-            gap: 24px;
+            grid-template-columns: 1.1fr 1fr;
+            gap: 28px;
         }
         @media (max-width: 768px) {
             .detail-body-grid {
@@ -972,109 +976,88 @@
             }
         }
         .detail-photo-column {
-            border: 2.5px solid var(--border);
-            border-radius: 12px;
+            border: 2px solid var(--border);
+            border-radius: 16px;
             overflow: hidden;
-            background: #F9FAFB;
+            background: #FFFFFF;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 280px;
-            max-height: 420px;
-            box-shadow: 2px 2px 0px var(--border);
+            min-height: 320px;
+            max-height: 480px;
+            position: relative;
         }
         .detail-photo-column img {
             max-width: 100%;
-            max-height: 400px;
+            max-height: 460px;
             object-fit: contain;
             display: block;
+            border-radius: 12px;
         }
         .detail-meta-column {
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 20px;
         }
-        .metadata-card {
-            background: #FFFFFF;
-            border: 2.5px solid var(--border);
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 3px 3px 0px var(--border);
+
+        /* Photo Analysis Card */
+        .gemini-analysis-card {
+            background: #FFF7F9;
+            border: 2px solid var(--accent);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            transition: all 0.3s ease;
         }
-        .meta-row {
+        .gemini-analysis-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 0;
-            border-bottom: 1.5px solid rgba(48, 48, 48, 0.08);
-            font-size: 13px;
         }
-        .meta-row:last-child {
-            border-bottom: none;
-        }
-        .meta-label {
+        .gemini-analysis-title {
             font-family: 'Space Grotesk', sans-serif;
-            font-weight: 700;
-            color: var(--text-muted);
-        }
-        .meta-value {
-            font-family: 'Outfit', sans-serif;
-            font-weight: 600;
-            color: var(--text);
-            text-align: right;
-            word-break: break-all;
-        }
-        .map-wrapper {
-            border: 2.5px solid var(--border);
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 3px 3px 0px var(--border);
-        }
-
-        /* Carousel Navigation Arrows */
-        .detail-photo-column {
-            position: relative;
-        }
-        .carousel-arrow {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.95);
-            border: 2.5px solid var(--border);
-            border-radius: 50%;
-            width: 38px;
-            height: 38px;
+            font-weight: 800;
+            font-size: 14px;
+            color: var(--accent);
+            margin: 0;
             display: flex;
             align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 2px 2px 0px var(--border);
-            z-index: 10;
-            transition: all 0.2s;
-            color: var(--text);
+            gap: 8px;
         }
-        .carousel-arrow:hover {
+        .gemini-rating-badge {
             background: var(--accent);
             color: #FFFFFF;
-            transform: translateY(-50%) scale(1.1);
+            font-weight: 800;
+            font-size: 12.5px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-family: 'Space Grotesk', sans-serif;
+            border: 2px solid var(--border);
         }
-        .carousel-arrow:active {
-            transform: translateY(-50%) scale(0.95);
+        .gemini-analysis-summary {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0;
+            padding-bottom: 8px;
+            border-bottom: 1.5px solid rgba(235, 35, 113, 0.1);
+            line-height: 1.45;
         }
-        .carousel-arrow.prev {
-            left: 12px;
-        }
-        .carousel-arrow.next {
-            right: 12px;
+        .gemini-analysis-text {
+            font-size: 12.5px;
+            line-height: 1.55;
+            color: var(--text);
+            margin: 0;
         }
 
-        /* Voice Memo UI Refinements */
+        /* Voice Memo Card */
         .voice-memo-card {
             background: #FFFFFF;
-            border: 2.5px solid var(--border);
-            border-radius: 12px;
-            padding: 18px;
-            box-shadow: 3px 3px 0px var(--border);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             gap: 14px;
@@ -1082,12 +1065,12 @@
         .voice-memo-title {
             font-family: 'Space Grotesk', sans-serif;
             font-weight: 800;
-            font-size: 13.5px;
+            font-size: 14px;
             color: var(--text);
             margin: 0;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
         }
         .voice-memo-explanation {
             font-size: 11.5px;
@@ -1103,8 +1086,8 @@
             flex-wrap: wrap;
         }
         .btn-record {
-            width: 42px;
-            height: 42px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             border: 2px solid var(--border);
             background: #FFFFFF;
@@ -1114,10 +1097,10 @@
             justify-content: center;
             color: var(--text);
             transition: all 0.2s;
-            box-shadow: 2px 2px 0px var(--border);
         }
         .btn-record:hover {
             transform: scale(1.08);
+            background: var(--bg);
         }
         .btn-record.recording {
             background: var(--danger);
@@ -1162,11 +1145,10 @@
             font-size: 12px;
             background: var(--accent);
             color: #FFFFFF;
-            border: 2.5px solid var(--border);
+            border: 2px solid var(--border);
             border-radius: 8px;
             font-weight: 700;
             cursor: pointer;
-            box-shadow: 2px 2px 0px var(--border);
             transition: all 0.2s;
             align-self: flex-end;
             display: inline-flex;
@@ -1174,60 +1156,76 @@
             gap: 6px;
         }
         .btn-save-voice:hover {
-            transform: translate(-1px, -1px);
-            box-shadow: 3px 3px 0px var(--border);
+            opacity: 0.95;
         }
-        /* Gemini Vision Analysis Card */
-        .gemini-analysis-card {
-            background: rgba(235, 35, 113, 0.03);
-            border: 2.5px dashed var(--accent);
-            border-radius: 12px;
-            padding: 18px;
+
+        /* Carousel Navigation Arrows */
+        .carousel-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
             display: flex;
-            flex-direction: column;
-            gap: 12px;
-            transition: all 0.3s ease;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.2s;
+            color: var(--text);
         }
-        .gemini-analysis-header {
+        .carousel-arrow:hover {
+            background: var(--accent);
+            color: #FFFFFF;
+            transform: translateY(-50%) scale(1.1);
+        }
+        .carousel-arrow:active {
+            transform: translateY(-50%) scale(0.95);
+        }
+        .carousel-arrow.prev {
+            left: 12px;
+        }
+        .carousel-arrow.next {
+            right: 12px;
+        }
+
+        /* Metadata Details Card */
+        .metadata-card {
+            background: #FFFFFF;
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+        }
+        .meta-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 8px 0;
+            border-bottom: 1.5px solid rgba(48, 48, 48, 0.05);
+            font-size: 13px;
         }
-        .gemini-analysis-title {
+        .meta-row:last-child {
+            border-bottom: none;
+        }
+        .meta-label {
             font-family: 'Space Grotesk', sans-serif;
-            font-weight: 800;
-            font-size: 13.5px;
-            color: var(--accent);
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .gemini-rating-badge {
-            background: var(--accent);
-            color: #FFFFFF;
-            font-weight: 800;
-            font-size: 12px;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-family: 'Space Grotesk', sans-serif;
-            border: 2px solid var(--border);
-            box-shadow: 1.5px 1.5px 0px var(--border);
-        }
-        .gemini-analysis-summary {
-            font-size: 12.5px;
             font-weight: 700;
-            color: var(--text);
-            margin: 0;
-            padding-bottom: 6px;
-            border-bottom: 1.5px solid rgba(235, 35, 113, 0.1);
-            line-height: 1.4;
+            color: var(--text-muted);
         }
-        .gemini-analysis-text {
-            font-size: 12px;
-            line-height: 1.5;
+        .meta-value {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
             color: var(--text);
-            margin: 0;
+            text-align: right;
+            word-break: break-all;
+        }
+        .map-wrapper {
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
         }
 
         /* Simplified Event Manager Styles */
@@ -1598,6 +1596,47 @@
                         </div>
                         <!-- Right: Metadata, Map, & Voice Story -->
                         <div class="detail-meta-column">
+                            <!-- 1. Photo Analysis Card -->
+                            <div class="gemini-analysis-card" id="gemini-analysis-card">
+                                <div class="gemini-analysis-header">
+                                    <h4 class="gemini-analysis-title">
+                                        <i data-lucide="sparkles" style="width: 16px; height: 16px; color: var(--accent);"></i> Photo Analysis
+                                    </h4>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <button class="btn" style="padding: 4px 10px; font-size: 11.5px; display: inline-flex; align-items: center; gap: 4px; border: 1.5px solid var(--border); height: 28px; border-radius: 14px;" onclick="refreshGeminiAnalysis(); event.preventDefault(); event.stopPropagation();" title="Regenerate Photographer Critique">
+                                            <i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i> Re-evaluate
+                                        </button>
+                                        <span id="gemini-rating" class="gemini-rating-badge">-/10</span>
+                                    </div>
+                                </div>
+                                <div id="gemini-summary" class="gemini-analysis-summary">Loading visual summary...</div>
+                                <p id="gemini-details" class="gemini-analysis-text">Requesting curation analysis...</p>
+                            </div>
+
+                            <!-- 2. Voice Note Recorder Card -->
+                            <div class="voice-memo-card">
+                                <h4 class="voice-memo-title">
+                                    <i data-lucide="mic" style="width: 16px; height: 16px; color: var(--accent);"></i> Add Voice Story / Memory
+                                </h4>
+                                <p class="voice-memo-explanation">
+                                    🎤 Your voice brings this photo to life! Share the laughter, background stories, or immediate thoughts behind this moment to weave a truly memorable journal.
+                                </p>
+                                <div class="voice-controls-row">
+                                    <button id="btn-voice-record" class="btn-record" onclick="toggleVoiceRecording(); event.preventDefault(); event.stopPropagation();" title="Record voice note (60s limit)">
+                                        <i data-lucide="mic" style="width: 18px; height: 18px;"></i>
+                                    </button>
+                                    <span id="voice-timer" class="timer-badge">00:00 / 01:00</span>
+                                    <audio id="voice-audio-playback" controls style="display: none; height: 32px; flex: 1; min-width: 140px;"></audio>
+                                </div>
+                                <div>
+                                    <textarea id="transcription-editor" class="transcription-textarea" placeholder="Speak to transcribe, or type your memories here..."></textarea>
+                                </div>
+                                <button id="btn-save-voice" class="btn-save-voice" onclick="saveVoiceNote(); event.preventDefault(); event.stopPropagation();">
+                                    <i data-lucide="save" style="width: 14px; height: 14px;"></i> Save Voice Story
+                                </button>
+                            </div>
+
+                            <!-- 3. Metadata Details Card -->
                             <div class="metadata-card">
                                 <div class="meta-row">
                                     <span class="meta-label">Filename:</span>
@@ -1629,48 +1668,6 @@
                             <div id="detail-map-wrapper" class="map-wrapper" style="display: none;">
                                 <div id="photo-map" style="height: 180px;"></div>
                             </div>
-                            <div id="detail-map-placeholder" style="background: rgba(235, 35, 113, 0.04); border: 1.5px dashed var(--accent); border-radius: 12px; height: 180px; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--accent); font-weight: 600;">
-                                📍 No GPS Coordinates Found
-                            </div>
-
-                            <!-- Gemini Vision Analysis Card -->
-                            <div class="gemini-analysis-card" id="gemini-analysis-card">
-                                <div class="gemini-analysis-header">
-                                    <h4 class="gemini-analysis-title">
-                                        <i data-lucide="sparkles" style="width: 16px; height: 16px; color: var(--accent);"></i> Gemini Curation Review
-                                    </h4>
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <button class="btn" style="padding: 4px 8px; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; border: 1.5px solid var(--border); height: 26px;" onclick="refreshGeminiAnalysis(); event.preventDefault(); event.stopPropagation();" title="Regenerate Photographer Critique">
-                                            <i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i> Refeed
-                                        </button>
-                                        <span id="gemini-rating" class="gemini-rating-badge">-/10</span>
-                                    </div>
-                                </div>
-                                <div id="gemini-summary" class="gemini-analysis-summary">Loading visual summary...</div>
-                                <p id="gemini-details" class="gemini-analysis-text">Requesting curation analysis from Gemini...</p>
-                            </div>
-
-                            <!-- Voice Note Recorder Card -->
-                            <div class="voice-memo-card">
-                                <h4 class="voice-memo-title">
-                                    <i data-lucide="mic" style="width: 16px; height: 16px; color: var(--accent);"></i> Add Voice Story / Note
-                                </h4>
-                                <p class="voice-memo-explanation">
-                                    🎤 Your voice brings this photo to life! Share the laughter, background stories, or immediate thoughts behind this moment to weave a truly memorable journal.
-                                </p>
-                                <div class="voice-controls-row">
-                                    <button id="btn-voice-record" class="btn-record" onclick="toggleVoiceRecording(); event.preventDefault(); event.stopPropagation();" title="Record voice note (60s limit)">
-                                        <i data-lucide="mic" style="width: 18px; height: 18px;"></i>
-                                    </button>
-                                    <span id="voice-timer" class="timer-badge">00:00 / 01:00</span>
-                                    <audio id="voice-audio-playback" controls style="display: none; height: 32px; flex: 1; min-width: 140px;"></audio>
-                                </div>
-                                <div>
-                                    <textarea id="transcription-editor" class="transcription-textarea" placeholder="Speak to transcribe, or type your memories here..."></textarea>
-                                </div>
-                                <button id="btn-save-voice" class="btn-save-voice" onclick="saveVoiceNote(); event.preventDefault(); event.stopPropagation();">
-                                    <i data-lucide="save" style="width: 14px; height: 14px;"></i> Save Voice Story
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -2165,9 +2162,9 @@
             document.getElementById('meta-size').textContent = "Loading...";
             document.getElementById('meta-gps').textContent = "Loading...";
             
-            // Reset Gemini analysis fields
-            document.getElementById('gemini-summary').textContent = "⚡ Analyzing image content...";
-            document.getElementById('gemini-details').textContent = "Requesting visual evaluation from Gemini Vision models...";
+            // Reset analysis fields
+            document.getElementById('gemini-summary').textContent = "Reviewing photo details...";
+            document.getElementById('gemini-details').textContent = "Composing professional critique and feedback...";
             document.getElementById('gemini-rating').textContent = "-/10";
             
             const mapWrapper = document.getElementById('detail-map-wrapper');
@@ -2287,8 +2284,8 @@
             if (!selectedFilename) return;
             
             // Set temporary loading placeholders
-            document.getElementById('gemini-summary').textContent = "⚡ Re-analyzing image content...";
-            document.getElementById('gemini-details').textContent = "Requesting new professional evaluation from Gemini Vision...";
+            document.getElementById('gemini-summary').textContent = "Re-analyzing photo details...";
+            document.getElementById('gemini-details').textContent = "Composing new professional critique and feedback...";
             document.getElementById('gemini-rating').textContent = "-/10";
             
             try {
