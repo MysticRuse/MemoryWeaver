@@ -849,7 +849,7 @@
         .pool-photo-card .overlay-btn {
             position: absolute;
             top: 6px;
-            left: 6px;
+            right: 6px;
             background: rgba(255, 255, 255, 0.9);
             border: 1px solid var(--border);
             border-radius: 50%;
@@ -881,7 +881,7 @@
         .pool-photo-card .contributor-tag {
             position: absolute;
             top: 6px;
-            right: 6px;
+            left: 6px;
             background: var(--accent);
             color: white;
             padding: 2px 8px;
@@ -1587,14 +1587,23 @@
                     card.appendChild(img);
                     card.appendChild(btn);
                     
-                    // Add contributor name tag to top right corner
+                    // Add contributor name tag to top left corner
                     const hash = filename.split('_')[0];
-                    const uploaderName = contributorNamesCache[hash];
+                    let uploaderName = contributorNamesCache[hash];
+                    if (hash === 'd748f21151bb') {
+                        uploaderName = 'My Photos';
+                    }
                     if (uploaderName && hash !== 'unsplash') {
                         const cTag = document.createElement('span');
                         cTag.className = 'contributor-tag';
                         cTag.textContent = uploaderName;
                         cTag.title = `Contributed by ${uploaderName}`;
+                        
+                        // Custom styled label for the curator
+                        if (uploaderName === 'My Photos') {
+                            cTag.style.backgroundColor = 'var(--border)';
+                            cTag.style.color = 'var(--surface)';
+                        }
                         card.appendChild(cTag);
                     }
                     
@@ -3477,14 +3486,23 @@
                         card.appendChild(btn);
                     }
 
-                    // Add contributor name tag to top right corner
+                    // Add contributor name tag to top left corner
                     const hash = filename.split('_')[0];
-                    const uploaderName = contributorNamesCache[hash];
+                    let uploaderName = contributorNamesCache[hash];
+                    if (hash === 'd748f21151bb') {
+                        uploaderName = 'My Photos';
+                    }
                     if (uploaderName && hash !== 'unsplash') {
                         const cTag = document.createElement('span');
                         cTag.className = 'contributor-tag';
                         cTag.textContent = uploaderName;
                         cTag.title = `Contributed by ${uploaderName}`;
+                        
+                        // Custom styled label for the curator
+                        if (uploaderName === 'My Photos') {
+                            cTag.style.backgroundColor = 'var(--border)';
+                            cTag.style.color = 'var(--surface)';
+                        }
                         card.appendChild(cTag);
                     }
 
