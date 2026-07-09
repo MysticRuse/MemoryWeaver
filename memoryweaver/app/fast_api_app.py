@@ -31,7 +31,7 @@ from a2a.utils.constants import (
     AGENT_CARD_WELL_KNOWN_PATH,
     EXTENDED_AGENT_CARD_PATH,
 )
-from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, Depends, Header, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, Depends, Header, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from google.adk.a2a.executor.a2a_agent_executor import A2aAgentExecutor
 from google.adk.a2a.utils.agent_card_builder import AgentCardBuilder
@@ -333,7 +333,11 @@ def get_share_info(session_id: str = "default"):
         import qrcode
         img = qrcode.make(share_url if base else f"http://localhost:8000{share_path}")
         buf = _io.BytesIO()
-        img.save(buf, format="PNG")
+        try:
+            kwargs = {"format": "PNG"}
+            img.save(buf, **kwargs)
+        except TypeError:
+            img.save(buf)
         qr_data_uri = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
     except Exception as e:
         print(f"QR generation failed: {e}")
@@ -637,6 +641,10 @@ def list_uploads(session_id: str = "default"):
                     "date": date_str
                 })
         return {"status": "success", "photos": photos, "session_id": session_id}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
 @app.get("/api/photo-metadata", dependencies=[Depends(require_admin_token)])
 def get_photo_metadata(filename: str, session_id: str = "default"):
     """Returns detailed EXIF and file metadata for a specific uploaded photo."""
