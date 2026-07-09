@@ -903,6 +903,21 @@
             gap: 4px;
             user-select: none;
         }
+        .pool-photo-card .photo-date-label {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #303030;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 9px;
+            font-weight: 700;
+            border: 1.5px solid #303030;
+            z-index: 2;
+            box-shadow: 1px 1px 0px #303030;
+        }
 
         /* Simplified Event Manager Styles */
         .event-type-radios {
@@ -1540,17 +1555,17 @@
                 const excluded = sData.session ? (sData.session.excluded_photos || []) : [];
                 
                 const allPhotos = data.photos || [];
-                const includedCount = allPhotos.filter(x => !excluded.includes(x)).length;
-                const excludedCount = allPhotos.filter(x => excluded.includes(x)).length;
+                const includedCount = allPhotos.filter(x => !excluded.includes(x.filename)).length;
+                const excludedCount = allPhotos.filter(x => excluded.includes(x.filename)).length;
 
                 document.getElementById('btn-pool-included').textContent = `Included (${includedCount})`;
                 document.getElementById('btn-pool-excluded').textContent = `Excluded (${excludedCount})`;
 
                 let photos = [];
                 if (poolView === 'included') {
-                    photos = allPhotos.filter(x => !excluded.includes(x));
+                    photos = allPhotos.filter(x => !excluded.includes(x.filename));
                 } else {
-                    photos = allPhotos.filter(x => excluded.includes(x));
+                    photos = allPhotos.filter(x => excluded.includes(x.filename));
                 }
                 
                 if (photos.length === 0) {
@@ -1559,7 +1574,9 @@
                 }
                 
                 tray.innerHTML = '';
-                photos.forEach(filename => {
+                photos.forEach(photoObj => {
+                    const filename = photoObj.filename;
+                    const captureDate = photoObj.date;
                     const card = document.createElement('div');
                     card.className = 'pool-photo-card';
                     
@@ -1594,7 +1611,6 @@
                     card.appendChild(btn);
                     
                     // Add contributor name tag to top left corner
-                    // Add contributor name tag to top left corner
                     const hash = filename.split('_')[0];
                     let uploaderName = contributorNamesCache[hash];
                     if (hash === '0bf7ab78559a' || !uploaderName) {
@@ -1622,6 +1638,15 @@
                             cTag.style.boxShadow = '2px 2px 0px #EB2371';
                         }
                         card.appendChild(cTag);
+                    }
+
+                    // Add date tag to bottom left corner
+                    if (captureDate) {
+                        const dTag = document.createElement('span');
+                        dTag.className = 'photo-date-label';
+                        dTag.textContent = captureDate;
+                        dTag.title = `Taken on ${captureDate}`;
+                        card.appendChild(dTag);
                     }
                     
                     tray.appendChild(card);
@@ -3411,6 +3436,11 @@
                 const listData = await res.json();
                 if (listData.status !== 'success') throw new Error(listData.message);
                 const allPhotos = listData.photos || [];
+                const allPhotoNames = allPhotos.map(x => x.filename);
+                const photoDateMap = {};
+                allPhotos.forEach(x => {
+                    photoDateMap[x.filename] = x.date;
+                });
 
                 // 2. Fetch current session exclusions
                 const sRes = await fetch(`/api/sessions/${getSessionId()}`);
@@ -3425,14 +3455,14 @@
                             if (entry.photos) {
                                 entry.photos.forEach(p => {
                                     // Add filename only if it's on disk
-                                    if (allPhotos.includes(p)) curatedPhotos.add(p);
+                                    if (allPhotoNames.includes(p)) curatedPhotos.add(p);
                                 });
                             }
                         });
                     }
                     if (curationBookData.highlights) {
                         curationBookData.highlights.forEach(h => {
-                            if (h.filename && allPhotos.includes(h.filename)) curatedPhotos.add(h.filename);
+                            if (h.filename && allPhotoNames.includes(h.filename)) curatedPhotos.add(h.filename);
                         });
                     }
                 }
@@ -3440,17 +3470,17 @@
                 // Categorize
                 let photosToRender = [];
                 if (curationView === 'curated') {
-                    photosToRender = allPhotos.filter(x => curatedPhotos.has(x) && !excluded.includes(x));
+                    photosToRender = allPhotoNames.filter(x => curatedPhotos.has(x) && !excluded.includes(x));
                 } else if (curationView === 'uncurated') {
-                    photosToRender = allPhotos.filter(x => !curatedPhotos.has(x) && !excluded.includes(x));
+                    photosToRender = allPhotoNames.filter(x => !curatedPhotos.has(x) && !excluded.includes(x));
                 } else {
-                    photosToRender = allPhotos.filter(x => excluded.includes(x));
+                    photosToRender = allPhotoNames.filter(x => excluded.includes(x));
                 }
 
                 // Update tab counters
-                const countCurated = allPhotos.filter(x => curatedPhotos.has(x) && !excluded.includes(x)).length;
-                const countUncurated = allPhotos.filter(x => !curatedPhotos.has(x) && !excluded.includes(x)).length;
-                const countExcluded = allPhotos.filter(x => excluded.includes(x)).length;
+                const countCurated = allPhotoNames.filter(x => curatedPhotos.has(x) && !excluded.includes(x)).length;
+                const countUncurated = allPhotoNames.filter(x => !curatedPhotos.has(x) && !excluded.includes(x)).length;
+                const countExcluded = allPhotoNames.filter(x => excluded.includes(x)).length;
 
                 document.getElementById('btn-curation-selected').textContent = `Curated Highlights (${countCurated})`;
                 document.getElementById('btn-curation-unselected').textContent = `Other Photos (${countUncurated})`;
@@ -3463,6 +3493,7 @@
 
                 tray.innerHTML = '';
                 photosToRender.forEach(filename => {
+                    const captureDate = photoDateMap[filename];
                     const card = document.createElement('div');
                     card.className = 'pool-photo-card';
                     
@@ -3531,6 +3562,15 @@
                             cTag.style.boxShadow = '2px 2px 0px #EB2371';
                         }
                         card.appendChild(cTag);
+                    }
+
+                    // Add date tag to bottom left corner
+                    if (captureDate) {
+                        const dTag = document.createElement('span');
+                        dTag.className = 'photo-date-label';
+                        dTag.textContent = captureDate;
+                        dTag.title = `Taken on ${captureDate}`;
+                        card.appendChild(dTag);
                     }
 
                     tray.appendChild(card);

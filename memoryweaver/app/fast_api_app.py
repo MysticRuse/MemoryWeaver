@@ -581,18 +581,61 @@ def get_trip_stats(session_id: str = "default"):
         return {"status": "error", "message": str(e)}
 
 
+def get_photo_date(file_path: str) -> str:
+    """Helper to extract the photo capture date or file date for uploader display."""
+    # 1. Try parsing from EXIF
+    try:
+        from PIL import Image
+        from PIL.ExifTags import TAGS
+        with Image.open(file_path) as img:
+            exif = img._getexif()
+            if exif:
+                for tag, value in exif.items():
+                    decoded = TAGS.get(tag, tag)
+                    if decoded in ("DateTimeOriginal", "DateTime"):
+                        # Format: 'YYYY:MM:DD HH:MM:SS'
+                        parts = value.split(" ")[0].split(":")
+                        if len(parts) == 3:
+                            return f"{parts[0]}-{parts[1]}-{parts[2]}"
+    except Exception:
+        pass
+
+    # 2. Try parsing from filename prefix (format: hash_20260709_055450_name.jpg)
+    basename = os.path.basename(file_path)
+    parts = basename.split("_")
+    if len(parts) >= 3 and len(parts[1]) == 8 and parts[1].isdigit():
+        # YYYYMMDD -> YYYY-MM-DD
+        date_str = parts[1]
+        return f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
+
+    # 3. Fallback to file modification date
+    try:
+        mtime = os.path.getmtime(file_path)
+        import datetime
+        return datetime.datetime.fromtimestamp(mtime).strftime("%Y-%m-%d")
+    except Exception:
+        return "Unknown Date"
+
+
 @app.get("/api/list-uploads", dependencies=[Depends(require_admin_token)])
 def list_uploads(session_id: str = "default"):
-    """Lists the filenames of all uploaded photos in a session."""
+    """Lists the filenames and metadata of all uploaded photos in a session."""
     try:
         session_storage = StorageHelper(session_id=session_id)
         upload_dir = os.path.join(session_storage.local_base, "uploads")
         photos = []
         if os.path.exists(upload_dir):
-            photos = sorted([
+            file_list = sorted([
                 f for f in os.listdir(upload_dir)
                 if os.path.isfile(os.path.join(upload_dir, f)) and not f.startswith('.')
             ])
+            for f in file_list:
+                full_path = os.path.join(upload_dir, f)
+                date_str = get_photo_date(full_path)
+                photos.append({
+                    "filename": f,
+                    "date": date_str
+                })
         return {"status": "success", "photos": photos, "session_id": session_id}
     except Exception as e:
         return {"status": "error", "message": str(e)}
