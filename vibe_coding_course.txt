@@ -1,0 +1,270 @@
+Vibe Coding - 5 Days Intensive Course
+
+Day 1 - the New SDLC
+The provided paper outlines the transformation of the software development life cycle (SDLC) from manual coding to an intent-based model driven by AI agents.
+Introduction & The Shift from Syntax to Intent
+Software engineering is moving from a focus on precise syntax (writing code) to expressing intent (describing what to build). As of early 2026, 85% of professional developers use AI coding agents, and roughly 41% of new code is AI-generated. This shift evolved from simple autocomplete to autonomous agents capable of planning and executing multi-file edits without human keystrokes.
+AI Agents & Vibe Coding
+AI Agents: These are software systems that perceive goals, plan steps, and take actions through tools in a self-correcting loop.
+Vibe Coding: A term for a casual, natural language approach where developers prompt an AI and iterate based on "vibes" rather than formal specs.
+The Spectrum: Development exists on a spectrum from "vibe coding" (high risk, low structure) to "agentic engineering" (low risk, systematic verification).
+Context Engineering
+The quality of AI output depends heavily on the context provided. Context engineering involves managing six elements: instructions, knowledge, memory, examples, tools, and guardrails. A key practice is using "Agent Skills," which are portable packages of knowledge loaded only when a task requires them, optimizing token costs and accuracy.
+The New SDLC & The Factory Model
+The Transformation: AI dramatically compresses the implementation phase, shifting the developer's role from primary implementor to system designer and quality arbiter.
+Phase Impact: While implementation takes minutes or hours, requirements, architecture, and verification remain human-paced bottlenecks.
+Factory Model: Developers are reframed as factory managers who design the system (specifications, guardrails, and tests) that produces the code, rather than assembling the code by hand.
+Harness Engineering
+An agent is defined by the equation Agent = Model + Harness. The "harness" is the approximately 90% of the system that surrounds the raw AI model, including tools, sandboxes, orchestration logic, and observability. Most agent failures are actually configuration failures within this harness.
+Developer Roles: Conductors and Orchestrators
+Conductor: Hands-on, real-time direction within the IDE, watching code appear and making fine-grained corrections.
+Orchestrator: High-level, asynchronous delegation where the developer assigns tasks to agents and reviews the final outcomes rather than individual keystrokes.
+The Economics of AI Development
+The paper compares the Total Cost of Ownership (TCO) for different approaches:
+Vibe Coding: Low upfront investment (CapEx) but high ongoing operational costs (OpEx) due to high token burn and maintenance debt.
+Agentic Engineering: High upfront investment to build harnesses and tests, but low marginal costs for shipping and maintaining features at scale.
+Conclusion: Intent as the New Interface
+The durable principles for this era are that structure scales while vibes do not, AI multiplies the existing strengths or weaknesses of an engineering culture, and human roles are evolving toward judgment and system design. Verification and direction are the new essential crafts of the engineer.
+
+Sources:
+Day_1_v3.pdf
+
+
+Day 2 - Agent Tools and Interoperatbility
+Day 2 - Agent Tools and Interoperatbility
+
+
+Summary:
+
+This summary outlines the "Agent Tools & Interoperability" framework, which focuses on transitioning from isolated, custom-built agents to orchestrated systems using standardized, interoperable protocols.
+
+### Core Agent Protocols
+
+  * **Model Context Protocol (MCP):** Functions as the "USB-C" of agent harnesses, standardizing how models connect to databases, filesystems, and web APIs.
+  * **Agent-to-Agent (A2A):** Acts as a "Factory Radio," enabling specialized agents to negotiate, brainstorm, and delegate tasks across network boundaries, frameworks, and programming languages.
+  * **Agent-to-User Interface (A2UI):** Serves as a "Generative Display Window," translating complex JSON outputs into safe, interactive visual components for human operators.
+  * **Universal Commerce Protocol (UCP) & Agent Payments Protocol (AP2):** Operate as the "Global Supply Chain & Transaction Network," allowing agents to discover offerings, build orders, and securely execute payments within established guardrails.
+
+### Architectural Evolution
+
+The industry is shifting from "Single Agent Monoliths"—where one agent handles all tasks and tools, often leading to hallucination and context overload—to "Distributed Multi-Agent Architectures".
+
+  * **Specialization:** By partitioning monolithic agents into domain-specific sub-agents, developers reduce the "search space" and improve contextual focus.
+  * **Maintenance:** Rather than building custom integration code, developers can "hire" official, maintained specialist agents, offloading the maintenance burden.
+
+### Best Practices for Vibe Coders
+
+  * **Consumption over Creation:** Prioritize utilizing existing, pre-vetted registries over building bespoke wrappers.
+  * **Security:** Always audit public servers, use environment variables for credentials, and implement "Human-in-the-Loop" (HITL) checks before executing tool calls.
+  * **Development Workflow:** Use the MCP Inspector to debug transport layers rather than modifying system instructions, and ensure development environments use non-production data.
+
+
+
+
+This paper outlines a framework for Agentic Engineering through standardized interoperability protocols, moving away from isolated "custom machines" toward a modular, global digital workforce.
+Introduction & Vision
+Core Concept: An agent is defined as a combination of a Model and a Harness.
+Standardization: Protocols like MCP, A2A, A2UI, AP2, and UCP serve as industry standards that allow agents to safely interact with the world, transforming developers from "builders" into high-level "orchestrators".
+The Ecosystem: MCP connects models to data; A2A allows agents to collaborate; A2UI provides generative user interfaces; and AP2/UCP manage secure commerce.
+Model Context Protocol (MCP)
+Efficiency: Replaces bespoke hardwiring with a standardized "socket" for tool integration.
+Complexity Reduction: Bypasses the "NxM Prototyping Problem" (integrating N models with M tools) by reducing integration complexity from exponential $O(N \times M)$ to linear $O(N + M)$.
+Consumption Best Practices: Focuses on discovering pre-built servers (public, 3P managed, or internal) and using tools like the MCP Inspector for debugging instead of tweaking system prompts.
+Agent-to-Agent (A2A) Interoperability
+Evolution: Moves from Monolithic Multi-agent architectures (internal sub-agents sharing one runtime) to Distributed Multi-Agent architectures where an orchestrator delegates tasks across network boundaries to remote domain specialists.
+Lingua Franca: A2A abstracts away differences in programming languages and transport layers, allowing diverse agents to negotiate and delegate tasks.
+Bounded vs. Unbounded: Explains that agents differ from tools because they operate in "unbounded" problem spaces requiring multi-turn collaboration rather than simple "fire-and-forget" requests.
+Discovery: Agents are identified via Agent Cards (standardized machine-readable CVs) and registered in public or private registries.
+Monetization: Introduces the Agent-as-a-Service (AaaS) model, utilizing marketplaces for consumption-based billing or machine-to-machine microtransactions (L402).
+Agent-to-User Interface (A2UI)
+Generative UI: Enables agents to dynamically create interactive interfaces at runtime based on user intent rather than returning raw JSON.
+Safety via Declarative Design: A2UI acts as "sheet music" for UI; the agent describes the intent using a trusted catalog of components, and the client natively renders them, preventing the execution of arbitrary, unsafe code.
+Patterns: Offers two ways to generate UI: LLM-driven (the model owns the layout) or Tool-as-template (deterministic, fixed structures for predictable outputs).
+Agents and Commerce (AP2 & UCP)
+Universal Commerce Protocol (UCP): Acts as a "universal translator" for commerce, allowing agents to browse menus, check availability, and build carts in a standardized machine language.
+Agent Payments Protocol (AP2): Provides secure financial guardrails via Mandates (human-approved spending rules) and Handshakes (encrypted proof of approval), ensuring agents can pay for items without exposing sensitive card data or incurring unauthorized fees.
+
+
+Sources:
+Agent Tools & Interoperability_Day_2.pdf
+Day 3 - Agent Skills
+Day 3 - Agent Skills
+
+Summary 
+This summary outlines the concept, development, and evaluation of **Agent Skills**, a standardized primitive designed to equip general-purpose agents with on-demand specialist competence.
+
+### **Core Concept**
+
+An Agent Skill is a portable, lightweight folder containing a `SKILL.md` file, which may optionally include `scripts/`, `references/`, and `assets/` directories. They address four primary development friction points:
+
+  * **Context Rot:** By loading only on-demand, skills prevent the performance degradation associated with overly dense system prompts.
+  * **Procedural Memory:** Skills provide a mechanism to remember "how" to perform tasks, acting as a procedural memory primitive.
+  * **Multi-agent Overload:** Skills allow a single general-purpose agent to adopt various specialist roles, simplifying architectures.
+  * **Portability:** The lightweight folder structure ensures compatibility across a multi-vendor AI landscape.
+
+### **Skill Anatomy & Progressive Disclosure**
+
+Skills utilize progressive disclosure to manage token budgets efficiently:
+
+1.  **Metadata (Name + Description):** Always loaded in the agent's context.
+2.  **SKILL.md Body:** Loaded only when the skill is triggered.
+3.  **Bundled Resources:** Loaded strictly as needed.
+
+### **Evaluation and Production**
+
+An unverified skill can actively degrade performance. The whitepaper emphasizes **Evaluation-Driven Development (EDD)**, which requires defining JSON evaluation cases (input, expected tools, expected output) before drafting the `SKILL.md`.
+
+Skills must satisfy four conditions for full "eval coverage":
+
+  * **Trigger:** Verifying positive and negative trigger behavior.
+  * **Execution:** Ensuring correct outputs across representative inputs.
+  * **Regression:** Confirming no performance drops in the existing library.
+  * **Token Budget:** Ensuring the skill footprint does not degrade performance under realistic co-loaded conditions.
+
+### **Governance & Best Practices**
+
+  * **Ownership:** Distribute skill ownership to domain teams rather than a central platform team.
+  * **Tiered Authority:** Skills should graduate through **Read-Only**, **Draft-Only**, and **Action-Allowed** tiers based on rigorous evaluation and human review.
+  * **Composition:** Utilize **DAG orchestration** for multi-skill systems, avoiding the use of context windows as a message bus.
+
+
+Agent Skills - Main Points
+
+The document details several official first-party skill examples from tech vendors and companies, including:
+google/agents-cli: A package that installs seven skills covering the full agent development lifecycle (scaffold, build, eval, deploy, publish, and observability) for agents built on Google Cloud.
+google/skills: Google's official agent skills repository, which includes tools like a BigQuery skill.
+google-gemini/gemini-skills: Houses the Gemini API developer skill, which has been shown to drastically improve Gemini 3.1 Pro code generation performance.
+anthropics/skills: Anthropic's public repository containing example skills for processing documents (such as PDFs, DOCX, XLSX, and PPTX), building MCP servers, and skill creation itself.
+stripe/ai: Contains the stripe-best-practices skill, which provides guidance on API selection, Connect setup, billing, and security.
+microsoft/skills: Microsoft's official collection of skills used to ground coding agents in Azure SDKs and the Microsoft Foundry.
+
+
+Sources:
+Agent Skills_Day_3.pdf
+
+
+Day 4 - Vibe Coding Agent Security and Evaluation
+Day 4 - Vibe Coding Agent Security and Evaluation
+
+Overall Summary:
+
+This summary outlines the "Vibe Coding Agent Security and Evaluation" framework as presented in the document dated May 2026.
+
+### **Security: The 7-Pillar Architecture**
+
+To operationalize secure, intent-driven agentic development, the framework moves beyond static security to "Effective Trust," which is continuously verified. This is achieved through a 7-pillar foundational baseline:
+
+  * **Infrastructure & Networking:** Isolates execution in ephemeral, kernel-level sandboxes (e.g., gVisor) with strict egress governance.
+  * **Data:** Protects context windows and long-term memory (e.g., vector databases) using encryption and tenant partitioning to prevent poisoning.
+  * **Model:** Treats system instructions and prompt templates as cryptographically attested artifacts.
+  * **Application & Runtime:** Employs LLM firewalls and Centralized Agent Gateways to govern agent-to-agent/tool interactions.
+  * **Identity & Access Management (IAM):** Assigns unique cryptographic identities (e.g., SPIFFE IDs) and uses Just-In-Time (JIT) downscoping to ensure zero ambient authority.
+  * **Observability & Security Ops:** Deploys an autonomous triad: the Blue Team (behavioural analytics), the Red Team (adversarial simulations), and the Green Team (stateful quarantine and auto-refactoring).
+  * **Governance:** Establishes immutable audit trails and uses "Logic Reviews" to ensure autonomous actions meet regulatory standards.
+
+### **Evaluation Framework**
+
+Evaluation measures if an agent's internal reasoning is worth shipping, bridging the gap between "the agent thinks it succeeded" and "the code is correct".
+
+  * **Key Dimensions:** Evaluation covers seven dimensions: Intent satisfaction, functional correctness, visual/behavioral correctness, cost/efficiency, code quality, trajectory quality, and self-repair behavior.
+  * **Evaluation Methods:** Pipelines combine various methods, including automated functional testing, LLM-as-judge, browser-based testing, trajectory inspection, and human review.
+  * **Crucial Prerequisite:** Observability (e.g., using OpenTelemetry) is mandatory to analyze the "Vibe Trajectory" and prevent issues like infinite API loops or logic drift.
+
+The paper "Vibe Coding Agent Security and Evaluation" details a framework for securing and assessing autonomous AI agents that translate natural language intent into code.
+
+Section Summaries
+Introduction
+Highlights the shift from writing code to expressing intent, termed "vibe coding" or "agentic engineering."
+Defines the core problem: autonomous agents break traditional deterministic trust models by having the agency to execute code and access sensitive APIs.
+Establishes two critical axes for operationalizing these agents: Security (ensuring agents stay within safe boundaries) and Evaluation (determining if the output is worth shipping).
+Security: The Evolution to Secure Agentic Development
+Argues that a raw AI model is not an agent until it is wrapped in a "harness" of state, tools, and constraints.
+Introduces "Effective Trust," a continuous metric that replaces static, binary identity gates with dynamic enforcement based on runtime context.
+Presents a layered defense-in-depth architecture building on a 7-pillar foundational baseline.
+The Foundation: The 7-Pillar Agent Security Architecture
+Pillar 1: Infrastructure & Networking: Uses ephemeral kernel-level sandboxing (e.g., gVisor) and strict network egress governance.
+Pillar 2: Data: Protects context and RAG data using encryption (CMEK), mTLS, and strict tenant partitioning in vector databases.
+Pillar 3: Model: Treats system instructions and prompt templates as sensitive, cryptographically attested artifacts to prevent semantic attacks.
+Pillar 4: Application & Runtime: Employs LLM firewalls and centralized Agent Gateways to govern tool calls and prevent unauthorized lateral movement.
+Pillar 5: IAM: Assigns unique cryptographic identities (SPIFFE IDs) to agents and uses Just-In-Time (JIT) token downscoping to enforce least privilege.
+Pillar 6: Observability & Security Ops: Deploys an automated triad (Red, Blue, and Green teams) to monitor behavior and respond to anomalies.
+Pillar 7: Governance: Mandates algorithmic impact assessments, immutable audit trails, and "Logic Reviews" to translate generated code into plain-English summaries for human approval.
+Sandboxes and Supply Chain Defence (Pillars 1 & 4)
+Stresses the need for ephemeral sandboxing because vibe-coded agents often write and rewrite untrusted code iteratively.
+Addresses "slopsquatting," where attackers publish malicious packages under hallucinated names that agents might inadvertently download.
+Restricts agents to non-interactive internet access through pre-sanitized web-crawling services or offline caches.
+Vibe-Coding Specifics: Securing Application Logic (Pillar 4)
+Identifies common vulnerabilities in AI-generated apps, such as over-trusting the browser (putting secrets on the frontend) and skipping backend security controls like row-level security.
+Advocates for "shifting left" using IDE linters for guidance while maintaining strict, deterministic enforcement in CI/CD pipelines (SAST/SCA).
+Discusses Model Context Protocol (MCP) spoofing and the need for contextual authorization via centralized gateways.
+Identity, Trust & High-Stakes Actions (Pillar 5)
+Addresses the "Confused Deputy" problem by ensuring agents use dedicated agentic identities rather than inheriting a human's broad ambient authority.
+Implements the "Vibe Diff," which translates complex generated code into plain English for human operators before they provide cryptographic consent (via MFA) for high-stakes actions.
+Red, Blue, and Green Security Teaming (Pillar 6)
+Red Team: Proactively injects "Adversarial Vibes" and roleplay jailbreaks to find semantic vulnerabilities.
+Blue Team: Uses Agent Behavioral Analytics (ABA) to monitor the "Runtime Agent Bill of Materials" (AgBOM) for intent drift.
+Green Team: Performs "Stateful Quarantines" to freeze compromised agents and "Auto-Refactoring" to automatically patch insecure scripts.
+Observability: Auditing the Agent’s Mind (Pillar 6 & 7)
+Details the construction of a "Vibe Trajectory" using OpenTelemetry to record an agent's cognitive steps, API calls, and tool usage.
+Defines "Trust Decay" as the loss of trust when an agent's internal chain of thought diverges from the original human intent.
+Suggests "Stateful Circuit Breakers" that use version control checkpoints to roll back changes if an agent's trust score drops too low.
+Evaluation: Orchestrating Quality in Intent-Driven Agentic Systems
+Differentiates evaluation from security: evaluation measures if the agent successfully achieved the user's nuanced intent.
+Identifies three unique challenges: the underspecification gap (no rigid spec), the difficulty for users to validate code, and the iterative nature of the multi-turn session.
+Outlines seven evaluation dimensions, including intent satisfaction, functional correctness, visual correctness, cost, code quality, trajectory quality, and self-repair behavior.
+Describes various evaluation methods: automated testing, LLM-as-judge, browser-based testing, trajectory inspection, and human review.
+Standardised Benchmarks & Kaggle Agent Exams
+Discusses the role of standardized tests like SWE-bench and the new "zero-setup" Kaggle Standardized Agent Exams (SAE) for cognitive calibration.
+Warns against benchmark overfitting, noting that high scores on static datasets do not guarantee success with messy, real-world human intent.
+Applied tips for vibe-coding agent evaluation
+Suggests using the initial user prompt as an "intent rubric" to automatically score subsequent turns.
+Recommends judging rendered artifacts (visuals) using multimodal models rather than just inspecting code diffs.
+Advises tracking "session convergence" (whether the user got what they wanted) rather than just turn-level accuracy.
+Explains how to mine user corrections (e.g., "no, not like that") as labeled failure data for improvement.
+Conclusion
+Summarizes that in 2026, software bottlenecks have shifted from boilerplate typing to architectural judgment, security, and verification.
+Reiterates that AI agents must be wrapped in a robust harness (7-pillar security) and rigorously evaluated to be enterprise-ready.
+
+
+Sources:
+Vibe Coding Agent Security and Evaluation_Day_4.pdf
+
+
+Day 5 - Spec-DrivenProduction Grade Development i…
+Day 5 - Spec-DrivenProduction Grade Development in the Age ofVibe Coding
+
+Overall Summary
+This summary outlines the transition to Spec-Driven Development (SDD) in an era where AI agents rapidly generate production-grade code.
+
+### The Shift to Spec-Driven Development
+
+  * **From Code-First to Spec-First**: Developers have transitioned from manual, code-first workflows to becoming technical architects who draft high-quality specifications.
+  * **Disposable Code**: Because code can be regenerated from rock-solid specifications, it is treated as disposable, reducing emotional attachment and allowing for rapid experimentation.
+  * **The Blueprint**: A good specification serves as an "Architectural North Star" to prevent context fragmentation, ideally stored as Markdown or YAML within the project's `specs/` folder.
+  * **Optimizing Format**: Research indicates that LLM agents perform best when specifications use a hybrid Markdown (for narrative) and YAML (for structured data) approach.
+  * **Behavior-Driven Development (BDD)**: Using Gherkin syntax (Scenario / Given / When / Then) helps define precise system behavior, eliminating ambiguity and "vibe-consistent" but broken logic.
+
+### Execution and Tooling
+
+  * **Instruction Hierarchy**: Instructions should be organized across different levels: the Chat Interface (short-lived), the `specs/` folder (task-specific), Agent Skills (reusable), and System Prompts (global identity).
+  * **MCP Integration**: The Model Context Protocol (MCP) provides an open standard for connecting agents to databases and tools without custom integrations.
+  * **Execution Modes**: Developers should tailor prompts based on the task: Project Generation (Architect), Feature Generation (Builder), Bug Fixing (Forensic Specialist), and Documentation Writing (Author).
+
+### Security, Guardrails, and Sustainability
+
+  * **Zero-Trust Development**: To prevent agents from going "rogue," developers must implement security guardrails such as sandboxing, which confines agent tasks to low-privilege, disposable containers.
+  * **Policy Servers**: Implementing a policy engine that intercepts tool calls for both structural (role-based) and semantic (content-based) checks is critical for enterprise safety.
+  * **Human-in-the-Loop (HITL)**: High-stakes operations, such as production deployments, require manual sign-off to balance AI speed with human oversight.
+  * **Sustainability**: To counter "approval fatigue," teams should implement digital quiet hours and structured boundaries to maintain code quality and developer well-being.
+
+Main Points
+
+Based on the document provided, here is the parsing accuracy of different structured formatting formats when handling deeply nested data configurations (nesting depth > 3) for Gemini:
+YAML: 51.9% parsing accuracy
+JSON: 43.1% parsing accuracy
+XML: 33.8% parsing accuracy
+Because of this, the study highlights that a hybrid Markdown and conditional YAML approach—using YAML for any structured configuration or schemas with a nesting depth greater than 3—is the optimal formatting strategy to achieve maximum accuracy and bypass the reasoning "format tax".
+
+Sources:
+Day_5_v3.pdf
+

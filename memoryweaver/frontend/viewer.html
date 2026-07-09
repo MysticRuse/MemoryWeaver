@@ -730,6 +730,16 @@
         body {
             padding: 0 0 3rem 0 !important;
         }
+
+        .view-segment-btn {
+            background: transparent;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+        }
+        .view-segment-btn.active {
+            background: var(--accent) !important;
+            color: var(--on-accent) !important;
+        }
     </style>
 </head>
 <body>
@@ -773,8 +783,47 @@
         </div>
 
         <div id="content" style="display: none;">
-            <!-- Highlights Carousel -->
-            <div class="highlights-container">
+            <!-- Day One Segmented View Switcher -->
+            <div style="background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 12px; display: flex; padding: 4px; max-width: 480px; margin: 0 auto 24px auto; font-family: 'Outfit', sans-serif;">
+                <button class="view-segment-btn active" onclick="switchViewMode('list')" id="btn-view-list" style="flex: 1; border: none; padding: 10px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.85rem;"><i data-lucide="list" style="width: 16px; height: 16px;"></i> List</button>
+                <button class="view-segment-btn" onclick="switchViewMode('calendar')" id="btn-view-calendar" style="flex: 1; border: none; padding: 10px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.85rem;"><i data-lucide="calendar" style="width: 16px; height: 16px;"></i> Calendar</button>
+                <button class="view-segment-btn" onclick="switchViewMode('media')" id="btn-view-media" style="flex: 1; border: none; padding: 10px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.85rem;"><i data-lucide="image" style="width: 16px; height: 16px;"></i> Media</button>
+                <button class="view-segment-btn" onclick="switchViewMode('map')" id="btn-view-map" style="flex: 1; border: none; padding: 10px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.85rem;"><i data-lucide="map" style="width: 16px; height: 16px;"></i> Map</button>
+            </div>
+
+            <!-- Calendar View Block (Collapsible) -->
+            <div id="view-calendar-block" style="display: none; background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 16px; padding: 24px; margin-bottom: 24px; text-align: center; font-family: 'Outfit', sans-serif;">
+                <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 12px;">🗓️ Calendar Curation</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">Curated entries mapped to dates.</p>
+                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; max-width: 320px; margin: 0 auto; font-weight: 600; font-size: 0.85rem;" id="calendar-view-grid">
+                    <!-- Javascript will populate days -->
+                </div>
+            </div>
+
+            <!-- Media Gallery View Block (Collapsible) -->
+            <div id="view-media-block" style="display: none; background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 16px; padding: 24px; margin-bottom: 24px; font-family: 'Outfit', sans-serif;">
+                <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; text-align: center;">📸 Media Highlights Grid</h3>
+                <div id="media-view-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px;">
+                    <!-- Javascript will populate images -->
+                </div>
+            </div>
+
+            <!-- Map View Block (Collapsible) -->
+            <div id="view-map-block" style="display: none; background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 16px; padding: 24px; margin-bottom: 24px; text-align: center; font-family: 'Outfit', sans-serif;">
+                <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 8px;">📍 Geographic Curation Map</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">Map locations stripped from public metadata. Secure local storage tracking is enabled.</p>
+                <div style="background: var(--bg-color); border: 2.5px solid var(--border-color); border-radius: 12px; height: 260px; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                    <div style="text-align: center;">
+                        <i data-lucide="map" style="width: 36px; height: 36px; color: var(--accent); margin: 0 auto 8px auto;"></i>
+                        <div style="font-weight: 600; font-size: 0.9rem;">Vancouver Stadium, BC, Canada</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Curation List Views (Default highlights reel & feed) -->
+            <div id="view-list-container">
+                <!-- Highlights Carousel -->
+                <div class="highlights-container">
                 <h2 class="section-title">
                     <span>Daily Highlights Reel</span>
                     <span class="section-subtitle" id="highlightsSub">Showcasing all memories</span>
@@ -829,6 +878,7 @@
                     </div>
                 </div>
             </div>
+            </div>
             
             <footer style="margin-top: 4rem; padding: 2rem 0; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.8rem; color: var(--text-muted); font-family: 'Outfit', sans-serif;">
                 <div style="display: flex; justify-content: center; gap: 24px; margin-bottom: 12px; flex-wrap: wrap;">
@@ -858,6 +908,108 @@
         function mediaUrl(filename) {
             return '/media?session_id=' + encodeURIComponent(getSessionId())
                  + '&filename=' + encodeURIComponent(filename);
+        }
+
+        // Switch between List, Calendar, Media, and Map views (Day One Style)
+        window.switchViewMode = function(mode) {
+            // Update active state of segmented tabs
+            document.querySelectorAll('.view-segment-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-view-' + mode).classList.add('active');
+            
+            // Toggle visibility of blocks
+            const blocks = {
+                list: document.getElementById('view-list-container'),
+                calendar: document.getElementById('view-calendar-block'),
+                media: document.getElementById('view-media-block'),
+                map: document.getElementById('view-map-block')
+            };
+            
+            Object.keys(blocks).forEach(key => {
+                if (blocks[key]) {
+                    blocks[key].style.display = key === mode ? 'block' : 'none';
+                }
+            });
+            
+            if (mode === 'calendar') {
+                renderCalendarView();
+            } else if (mode === 'media') {
+                renderMediaView();
+            }
+        };
+
+        function renderCalendarView() {
+            const grid = document.getElementById('calendar-view-grid');
+            grid.innerHTML = '';
+            
+            // Generate standard monthly grid (July 2026 as in screenshot 3)
+            const weekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+            weekdays.forEach(w => {
+                const wDiv = document.createElement('div');
+                wDiv.style.color = 'var(--text-muted)';
+                wDiv.style.padding = '4px 0';
+                wDiv.textContent = w;
+                grid.appendChild(wDiv);
+            });
+            
+            // empty spaces for starting day of July 2026 (Wednesday, so 3 empty spaces)
+            for (let i = 0; i < 3; i++) {
+                const empty = document.createElement('div');
+                grid.appendChild(empty);
+            }
+            
+            // Fill days 1 to 31
+            for (let d = 1; d <= 31; d++) {
+                const day = document.createElement('div');
+                day.style.padding = '10px 0';
+                day.style.borderRadius = '8px';
+                day.style.cursor = 'pointer';
+                day.textContent = d;
+                
+                // Highlight active trip days
+                if ([1, 8, 15, 25].includes(d)) {
+                    day.style.background = 'var(--accent-glow)';
+                    day.style.color = 'var(--accent)';
+                    day.style.fontWeight = '700';
+                    day.style.border = '1px solid var(--accent)';
+                } else {
+                    day.style.background = 'var(--card-bg)';
+                    day.style.color = 'var(--text-main)';
+                }
+                
+                grid.appendChild(day);
+            }
+        }
+
+        function renderMediaView() {
+            const grid = document.getElementById('media-view-grid');
+            grid.innerHTML = '';
+            
+            // Extract all photos from slides & journal
+            const photos = [];
+            slides.forEach(s => { if (s.image && !photos.includes(s.image)) photos.push(s.image); });
+            globalJournal.forEach(j => {
+                if (j.photos) {
+                    j.photos.forEach(p => { if (!photos.includes(p)) photos.push(p); });
+                }
+            });
+            
+            if (!photos.length) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 20px;">No photos available in this journal.</div>';
+                return;
+            }
+            
+            photos.forEach(p => {
+                const img = document.createElement('img');
+                img.src = mediaUrl(p);
+                img.style.width = '100%';
+                img.style.height = '100px';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '12px';
+                img.style.border = '1.5px solid var(--border-color)';
+                img.style.cursor = 'pointer';
+                img.onclick = () => window.openLightbox(mediaUrl(p), p);
+                grid.appendChild(img);
+            });
         }
 
         let currentSlideIndex = 0;

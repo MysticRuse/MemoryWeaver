@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rewind - Add Your Memories</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rewind Contributor App</title>
+    <!-- Outfit and Space Grotesk fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
@@ -20,24 +21,14 @@
             --danger: #E11D48;
             --success: #10B981;
             --accent-glow: rgba(0, 162, 255, 0.08);
-            --card-padding: 32px 24px;
+            --card-padding: 24px;
             --btn-height: 48px;
             --font-size-base: 0.9rem;
         }
 
         /* Grandma Mode scales text/inputs larger but keeps the clean gallery theme */
         body.grandma-mode {
-            --bg: #F4F6F9;
-            --surface: #FFFFFF;
-            --surface-hover: #F8FAFC;
-            --border: #E6E9ED;
-            --accent: #00A2FF;
-            --accent-hover: #0084E0;
-            --on-accent: #FFFFFF;
-            --text: #1A1A1A;
-            --text-muted: #666D77;
-            --accent-glow: rgba(0, 162, 255, 0.08);
-            --card-padding: 40px 28px;
+            --card-padding: 32px;
             --btn-height: 58px;
             --font-size-base: 1.15rem;
         }
@@ -57,709 +48,691 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 24px 16px;
+            padding: 0;
             transition: all 0.3s ease;
         }
 
-        .wrap {
+        /* Mobile Mockup Container for Desktop, full screen on actual mobile devices */
+        .phone-container {
             width: 100%;
-            max-width: 480px;
-        }
-
-        /* Theme Toggle Header */
-        .toggle-header {
+            max-width: 450px;
+            height: 100vh;
+            max-height: 850px;
+            background-color: var(--bg);
+            border: 2px solid var(--border);
+            border-radius: 40px;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
             display: flex;
-            justify-content: flex-end;
-            margin-bottom: 12px;
+            flex-direction: column;
+            position: relative;
         }
 
-        .theme-toggle-btn {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-family: inherit;
-            font-size: 0.8rem;
-            font-weight: 700;
-            cursor: pointer;
-            display: inline-flex;
+        @media (max-width: 500px) {
+            .phone-container {
+                max-height: 100vh;
+                border-radius: 0;
+                border: none;
+            }
+        }
+
+        /* Phone Header Status Bar */
+        .phone-header {
+            background-color: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 6px;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10;
         }
 
-        body.grandma-mode .theme-toggle-btn {
-            font-size: 0.95rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        .phone-header-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text);
         }
 
-        .theme-toggle-btn:hover {
+        .phone-header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .header-icon-btn {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .header-icon-btn:hover {
             background: var(--surface-hover);
         }
 
-        .card {
+        /* Scrollable main view list */
+        .main-scroll-view {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: 90px; /* Safe area for floating plus button */
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Paywall-like Premium Banner */
+        .banner-card {
             background: var(--surface);
-            border: 2px solid var(--border);
-            border-radius: 16px;
-            padding: var(--card-padding);
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        body.grandma-mode .card {
-            box-shadow: 0 6px 30px rgba(0, 0, 0, 0.06);
-        }
-
-        h1 {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 1.6rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            text-align: center;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        body.grandma-mode h1 {
-            font-size: 2.1rem;
-        }
-
-        .sub {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            line-height: 1.5;
-            text-align: center;
-            margin-bottom: 24px;
-            font-weight: 400;
-        }
-
-        body.grandma-mode .sub {
-            font-size: 1.05rem;
-            margin-bottom: 28px;
-        }
-
-        .count-pill {
-            display: inline-block;
-            padding: 6px 14px;
+            border: 2.5px solid var(--border);
             border-radius: 20px;
-            background: rgba(255, 255, 255, 0.03);
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            font-weight: 600;
-            border: 1px solid var(--border);
-            margin: 0 auto 24px auto;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+            position: relative;
+            overflow: hidden;
         }
 
-        body.grandma-mode .count-pill {
-            font-size: 0.9rem;
-            padding: 8px 18px;
-            background: rgba(0, 0, 0, 0.02);
-        }
-
-        .pill-wrapper {
-            display: flex;
-            justify-content: center;
-        }
-
-        label {
-            display: block;
-            font-size: 0.75rem;
+        .banner-tag {
+            background: linear-gradient(135deg, #00A2FF, #0066CC);
+            color: #ffffff;
+            font-size: 0.7rem;
             font-weight: 700;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-            letter-spacing: 0.05em;
+            padding: 4px 10px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 10px;
             text-transform: uppercase;
         }
 
-        body.grandma-mode label {
-            font-size: 0.95rem;
-            margin-bottom: 10px;
-        }
-
-        /* Inputs */
-        input[type="text"], textarea, select {
-            width: 100%;
-            padding: 14px 16px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            background: var(--bg);
-            color: var(--text);
-            font-family: inherit;
-            font-size: 0.9rem;
-            outline: none;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        body.grandma-mode input[type="text"], 
-        body.grandma-mode textarea,
-        body.grandma-mode select {
+        .banner-title {
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 1.15rem;
-            padding: 18px;
-            background: #F4F2ED;
-            border-color: #C2C0BB;
-        }
-
-        input[type="text"]:focus, textarea:focus, select:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px var(--accent-glow);
-        }
-
-        textarea {
-            resize: none;
-            min-height: 120px;
-            line-height: 1.5;
-        }
-
-        body.grandma-mode textarea {
-            min-height: 150px;
-        }
-
-        /* Context Selector Styling */
-        .context-selector-group {
-            margin-bottom: 24px;
-        }
-
-        /* Grandma-Friendly Menu Options */
-        .option-button-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            margin-top: 16px;
-        }
-
-        .option-btn {
-            background: var(--bg);
-            border: 1.5px solid var(--border);
-            border-radius: 12px;
-            padding: 18px;
+            font-weight: 700;
+            margin-bottom: 6px;
             color: var(--text);
-            font-family: inherit;
-            text-align: left;
-            cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .banner-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* Moments Menu List */
+        .moments-group-card {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            padding: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+        }
+
+        .moment-row {
             display: flex;
             align-items: center;
-            gap: 16px;
+            padding: 14px 12px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.2s;
         }
 
-        body.grandma-mode .option-btn {
-            padding: 24px;
-            border-width: 2px;
+        .moment-row:last-child {
+            border-bottom: none;
         }
 
-        .option-btn:hover {
-            border-color: var(--accent);
+        .moment-row:hover {
             background: var(--surface-hover);
-            transform: translateY(-2px);
         }
 
-        .option-icon {
+        .moment-icon-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--accent-glow);
+            color: var(--accent);
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 44px;
-            height: 44px;
-            border-radius: 10px;
-            background: var(--surface);
-            color: var(--accent);
-            border: 1px solid var(--border);
+            margin-right: 12px;
         }
 
-        body.grandma-mode .option-icon {
-            width: 52px;
-            height: 52px;
-            border-radius: 12px;
+        .moment-details {
+            flex: 1;
         }
 
-        .option-details h3 {
-            font-family: 'Space Grotesk', sans-serif;
+        .moment-title {
+            font-weight: 600;
             font-size: 0.95rem;
-            font-weight: 700;
+            color: var(--text);
         }
 
-        body.grandma-mode .option-details h3 {
-            font-size: 1.2rem;
-        }
-
-        .option-details p {
+        .moment-desc {
             font-size: 0.75rem;
             color: var(--text-muted);
             margin-top: 2px;
         }
 
-        body.grandma-mode .option-details p {
-            font-size: 0.95rem;
-        }
-
-        /* Focus Section Controls */
-        .focus-section {
-            display: none;
-            animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .focus-section.active {
-            display: block;
-        }
-
-        .back-bar {
-            display: flex;
-            align-items: center;
-            gap: 6px;
+        .moment-action-badge {
+            background: var(--bg);
             color: var(--accent);
-            font-weight: 700;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            cursor: pointer;
-            margin-bottom: 20px;
-            background: none;
-            border: none;
-            font-family: inherit;
-        }
-
-        body.grandma-mode .back-bar {
-            font-size: 1rem;
-            margin-bottom: 24px;
-        }
-
-        /* Dropzone */
-        .dropzone {
-            border: 2px dashed var(--border);
-            border-radius: 12px;
-            padding: 48px 24px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-            background: rgba(255, 255, 255, 0.01);
-        }
-
-        body.grandma-mode .dropzone {
-            padding: 60px 30px;
-            border-width: 3px;
-        }
-
-        .dropzone:hover {
-            border-color: var(--accent);
-            background: var(--accent-glow);
-        }
-
-        .dz-title {
-            font-size: 1rem;
-            font-weight: 700;
-            color: var(--text);
-            margin-top: 12px;
-        }
-
-        body.grandma-mode .dz-title {
-            font-size: 1.25rem;
-        }
-
-        .dz-desc {
             font-size: 0.75rem;
-            color: var(--text-muted);
-            margin-top: 6px;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
         }
 
-        body.grandma-mode .dz-desc {
-            font-size: 0.95rem;
-        }
-
-        /* Buttons */
-        .btn {
-            display: inline-flex;
+        /* Floating plus button */
+        .fab-btn {
+            position: absolute;
+            bottom: 74px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            box-shadow: 0 6px 20px rgba(0, 162, 255, 0.4);
+            cursor: pointer;
+            display: flex;
             align-items: center;
             justify-content: center;
-            width: 100%;
-            margin-top: 16px;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 10px;
-            background: var(--accent);
-            color: var(--on-accent);
-            font-family: inherit;
-            font-size: 0.85rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-            min-height: var(--btn-height);
+            z-index: 20;
+            transition: transform 0.2s, background-color 0.2s;
         }
 
-        .btn:hover:not(:disabled) {
-            background: var(--accent-hover);
+        .fab-btn:active {
+            transform: scale(0.95);
         }
 
-        .btn:active:not(:disabled) {
-            transform: scale(0.98);
-        }
-
-        .btn:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
-
-        .btn.secondary {
-            background: transparent;
-            border: 1.5px solid var(--border);
-            color: var(--text);
-        }
-
-        body.grandma-mode .btn.secondary {
-            border-width: 2px;
-        }
-
-        .btn.secondary:hover {
-            background: rgba(255, 255, 255, 0.03);
-            border-color: var(--text-muted);
-        }
-
-        #status {
-            margin-top: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-align: center;
-            line-height: 1.4;
-            min-height: 1.4em;
-        }
-
-        body.grandma-mode #status {
-            font-size: 1.05rem;
-        }
-
-        /* Guided Prompts Pills */
-        .prompt-chips {
+        /* Bottom Tab Navigation */
+        .bottom-nav-bar {
+            height: 60px;
+            background-color: var(--surface);
+            border-top: 1px solid var(--border);
             display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding-bottom: 8px;
-            margin-bottom: 18px;
-            scrollbar-width: none;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 10;
         }
 
-        .prompt-chips::-webkit-scrollbar {
-            display: none;
-        }
-
-        .prompt-chip {
-            white-space: nowrap;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1.5px solid var(--border);
-            color: var(--text-muted);
-            padding: 8px 16px;
-            border-radius: 24px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        body.grandma-mode .prompt-chip {
-            font-size: 0.95rem;
-            padding: 12px 20px;
-            border-width: 2px;
-        }
-
-        .prompt-chip:hover {
-            color: var(--text);
-            border-color: var(--text-muted);
-        }
-
-        .prompt-chip.active {
-            background: var(--accent-tint-bg);
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
-        /* Minimalist Voice Recorder dashboard */
-        .recorder-container {
+        .nav-tab-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 28px 20px;
-            border: 1.5px solid var(--border);
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.01);
-        }
-
-        body.grandma-mode .recorder-container {
-            border-width: 2px;
-            padding: 36px 24px;
-        }
-
-        .recorder-status-text {
-            font-size: 0.75rem;
             color: var(--text-muted);
-            font-weight: 700;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            background: none;
+            border: none;
+            font-family: inherit;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            flex: 1;
+            padding: 4px 0;
+            transition: color 0.2s;
         }
 
-        body.grandma-mode .recorder-status-text {
+        .nav-tab-item.active {
+            color: var(--accent);
+        }
+
+        .nav-tab-item i {
+            margin-bottom: 3px;
+        }
+
+        /* Editor Slide-Up Drawer Sheet */
+        .editor-sheet {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--surface);
+            z-index: 30;
+            display: flex;
+            flex-direction: column;
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .editor-sheet.active {
+            transform: translateY(0);
+        }
+
+        .editor-header {
+            background: var(--accent);
+            color: #ffffff;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .editor-title {
+            font-weight: 700;
             font-size: 0.95rem;
         }
 
-        .record-timer {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--text);
-            margin-bottom: 24px;
+        .editor-close-btn {
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
         }
 
-        body.grandma-mode .record-timer {
-            font-size: 3.2rem;
+        .editor-scroll-view {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .editor-textarea {
+            width: 100%;
+            height: 160px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            color: var(--text);
+            resize: none;
+            outline: none;
+            background: var(--bg);
+        }
+
+        .editor-actions-strip {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding-top: 8px;
+        }
+
+        .editor-strip-btn {
+            background: var(--bg);
+            border: 1.5px solid var(--border);
+            color: var(--text);
+            padding: 8px 14px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+
+        .editor-strip-btn:hover {
+            background: var(--surface-hover);
+        }
+
+        /* Voice note layout */
+        .voice-section {
+            background: var(--bg);
+            border: 1.5px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
         }
 
         .record-btn-round {
-            width: 64px;
-            height: 64px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
             border: none;
-            display: inline-flex;
+            cursor: pointer;
+            display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-        }
-
-        body.grandma-mode .record-btn-round {
-            width: 80px;
-            height: 80px;
+            transition: all 0.2s;
         }
 
         .record-btn-start {
             background: var(--danger);
-            color: #fff;
-        }
-
-        .record-btn-start:hover {
-            transform: scale(1.06);
-            background: #f43f5e;
+            color: #ffffff;
         }
 
         .record-btn-stop {
             background: var(--text);
-            color: var(--bg);
+            color: #ffffff;
         }
 
-        .record-btn-stop:hover {
-            transform: scale(1.06);
+        .record-timer {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
         }
 
         .audio-preview {
             width: 100%;
-            margin-top: 20px;
-            border-radius: 10px;
+            height: 40px;
+            border-radius: 30px;
             outline: none;
         }
 
-        /* Note Ingress Draft indicator */
-        .draft-indicator {
-            font-size: 0.75rem;
-            color: var(--success);
-            font-weight: 700;
-            margin-top: 8px;
+        /* Prompts Carousel inside Editor */
+        .prompts-carousel {
             display: flex;
-            align-items: center;
-            gap: 4px;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 6px;
+            scrollbar-width: none;
+        }
+
+        .prompts-carousel::-webkit-scrollbar {
             display: none;
         }
 
-        body.grandma-mode .draft-indicator {
-            font-size: 0.95rem;
+        .prompt-chip {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            color: var(--text);
         }
 
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
+        .prompt-chip.active {
+            background: var(--accent);
+            color: #ffffff;
+            border-color: var(--accent);
         }
 
-        #error-card {
-            display: none;
+        /* Status logger overlay */
+        .status-logger {
+            font-size: 0.85rem;
+            font-weight: 600;
             text-align: center;
+            margin-top: 10px;
+        }
+
+        /* Error Screen */
+        .error-overlay {
+            position: absolute;
+            inset: 0;
+            background: var(--surface);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            text-align: center;
+            z-index: 100;
         }
     </style>
 </head>
 <body>
-    <div class="wrap">
-        <!-- Theme Toggle Switcher -->
-        <div class="toggle-header">
-            <button class="theme-toggle-btn" id="theme-toggle" onclick="toggleTheme()">
-                <i data-lucide="sun" style="width: 13px; height: 13px;"></i>
-                <span id="theme-btn-text">Grandma Mode (Light / Big Text)</span>
-            </button>
-        </div>
 
-        <div class="card" id="main-card" style="display: none;">
-            <h1 id="event-title">Loading journal...</h1>
-            <p class="sub" id="event-subtitle">Let's compile a beautiful keepsake of our moments together.</p>
+    <div class="phone-container">
+        
+        <!-- PHONE HEADER -->
+        <header class="phone-header">
+            <span class="phone-header-title" id="event-title">Rewind Journal</span>
+            <div class="phone-header-actions">
+                <button class="header-icon-btn" onclick="openNavTab('more')" title="Settings"><i data-lucide="settings" style="width: 18px; height: 18px;"></i></button>
+            </div>
+        </header>
+
+        <!-- MAIN SCROLLABLE VIEW -->
+        <main class="main-scroll-view" id="main-scroll">
             
-            <div class="pill-wrapper">
-                <span class="count-pill" id="photo-count"></span>
+            <!-- Daily Chat Banner Card -->
+            <div class="banner-card">
+                <span class="banner-tag">✨ Daily Chat</span>
+                <h3 class="banner-title" id="chat-title">Ready to capture memories?</h3>
+                <p class="banner-desc" id="event-subtitle">Tap below to add photos or speak your story. We'll automatically build your keepsake storybook.</p>
             </div>
 
-            <!-- Dynamic Category/Scope Selection (Universal Journal) -->
-            <div class="context-selector-group" id="theme-selector-area">
-                <label for="journal-theme-select">Choose Journal Type:</label>
-                <select id="journal-theme-select" onchange="changeJournalTheme(this.value)">
-                    <option value="trip">🏞️ Family Trip Journal</option>
-                    <option value="reunion">💖 Family Precious Moments</option>
-                    <option value="other">📅 Daily Personal Diary</option>
-                    <option value="sports_match">🏫 Co-Journal with School Friends</option>
-                </select>
-            </div>
-
-            <div style="margin-bottom: 24px;">
-                <label for="contributor-name">Who is adding this memory?</label>
-                <input type="text" id="contributor-name" placeholder="e.g. Grandma Lena" oninput="saveName(this.value)">
-            </div>
-
-            <!-- Menu Menu Option Buttons (Elderly-Friendly Menu) -->
-            <div class="option-button-grid" id="main-menu">
-                <button class="option-btn" onclick="openSection('sec-upload')">
-                    <div class="option-icon"><i data-lucide="image" style="width: 20px; height: 20px;"></i></div>
-                    <div class="option-details">
-                        <h3>Add Photos or Videos</h3>
-                        <p>Select pictures or clips directly from your phone camera</p>
+            <!-- Moments Actions Menu Card -->
+            <div class="moments-group-card">
+                <!-- Row 1: Photos -->
+                <div class="moment-row" onclick="triggerEditorWithTab('photo')">
+                    <div class="moment-icon-circle"><i data-lucide="image" style="width: 18px; height: 18px;"></i></div>
+                    <div class="moment-details">
+                        <div class="moment-title">Photos</div>
+                        <div class="moment-desc" id="photo-count">No photos added yet</div>
                     </div>
-                </button>
-                <button class="option-btn" onclick="openSection('sec-voice')">
-                    <div class="option-icon"><i data-lucide="mic" style="width: 20px; height: 20px;"></i></div>
-                    <div class="option-details">
-                        <h3>Tap & Speak Your Story</h3>
-                        <p>Record your voice to describe a memory without typing</p>
-                    </div>
-                </button>
-                <button class="option-btn" onclick="openSection('sec-note')">
-                    <div class="option-icon"><i data-lucide="pen-line" style="width: 20px; height: 20px;"></i></div>
-                    <div class="option-details">
-                        <h3>Write Your Story</h3>
-                        <p>Type down custom notes or descriptions of what happened</p>
-                    </div>
-                </button>
-            </div>
-
-            <!-- Focus Screen: Photo/Video -->
-            <div class="focus-section" id="sec-upload">
-                <button class="back-bar" onclick="backToMenu()"><i data-lucide="chevron-left" style="width: 14px; height: 14px; vertical-align: middle;"></i> Back to options</button>
-                <div class="dropzone" onclick="document.getElementById('file-input').click()">
-                    <div style="color: var(--accent);"><i data-lucide="plus" style="width: 36px; height: 36px; margin: 0 auto;"></i></div>
-                    <div class="dz-title">Choose photos or videos</div>
-                    <div class="dz-desc">JPEG, PNG, HEIC, MP4, MOV, or PDF</div>
-                    <input type="file" id="file-input" multiple accept=".jpg,.jpeg,.png,.heic,.mp4,.mov,.pdf,image/*,video/*" style="display: none;" onchange="uploadFiles(this.files)">
+                    <div class="moment-action-badge">Add</div>
                 </div>
 
-                <div class="dropzone" id="folder-zone" style="margin-top: 14px; padding: 20px;" onclick="document.getElementById('folder-input').click()">
-                    <div style="font-weight: 700; color: var(--text); font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                        <i data-lucide="folder" style="width: 14px; height: 14px; color: var(--accent);"></i> Upload entire folder
+                <!-- Row 2: Places -->
+                <div class="moment-row" onclick="triggerEditorWithTab('places')">
+                    <div class="moment-icon-circle"><i data-lucide="map-pin" style="width: 18px; height: 18px;"></i></div>
+                    <div class="moment-details">
+                        <div class="moment-title">Places</div>
+                        <div class="moment-desc">GPS tags stripped for privacy</div>
                     </div>
-                    <input type="file" id="folder-input" webkitdirectory style="display: none;" onchange="uploadFiles(this.files)">
+                    <div class="moment-action-badge">Show</div>
+                </div>
+
+                <!-- Row 3: Events -->
+                <div class="moment-row">
+                    <div class="moment-icon-circle"><i data-lucide="award" style="width: 18px; height: 18px;"></i></div>
+                    <div class="moment-details">
+                        <div class="moment-title">Scope context</div>
+                        <div class="moment-desc">
+                            <select id="journal-theme-select" style="background:transparent; border:none; color:inherit; font-size:inherit; font-family:inherit; outline:none; font-weight:600;" onchange="changeJournalTheme(this.value)">
+                                <option value="trip">🏞️ Family Trip Journal</option>
+                                <option value="reunion">💖 Family Precious Moments</option>
+                                <option value="other">📅 Daily Personal Diary</option>
+                                <option value="sports_match">🏫 School Friends</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Focus Screen: Voice Note -->
-            <div class="focus-section" id="sec-voice">
-                <button class="back-bar" onclick="backToMenu()"><i data-lucide="chevron-left" style="width: 14px; height: 14px; vertical-align: middle;"></i> Back to options</button>
+            <!-- Settings Settings View (Hidden inside feed unless navigated) -->
+            <div id="settings-area" style="display: none; flex-direction: column; gap: 16px;">
+                <div style="font-weight: 700; font-size: 1rem; margin-bottom: 4px;">Contributor Settings</div>
+                <div>
+                    <label style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:6px;">Your Name</label>
+                    <input type="text" id="contributor-name" placeholder="e.g. Grandma Lena" style="width:100%; padding:10px 14px; border:1.5px solid var(--border); border-radius:10px; font-family:inherit; font-size:0.95rem;" oninput="saveName(this.value)">
+                </div>
+                <div style="margin-top: 10px;">
+                    <button class="theme-toggle-btn" id="theme-toggle" onclick="toggleTheme()" style="width:100%; display:flex; justify-content:center; align-items:center; gap:8px; background:var(--surface); border:1.5px solid var(--border); padding:10px; border-radius:10px; cursor:pointer; font-weight:600;">
+                        <i data-lucide="sun" style="width:16px; height:16px;"></i>
+                        <span id="theme-btn-text">Grandma Mode (Light / Big Text)</span>
+                    </button>
+                </div>
                 
-                <label style="margin-bottom: 10px;">Select a prompt question to talk about:</label>
-                <div class="prompt-chips" id="voice-prompts-container"></div>
-
-                <div class="recorder-container">
-                    <div id="active-prompt-banner" style="display: none; font-size: 0.85rem; font-weight: 700; color: var(--accent); background: var(--accent-glow); border: 1.5px solid rgba(224,145,107,0.3); border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; text-align: center; width: 100%;"></div>
-                    <span class="recorder-status-text" id="recorder-status">Ready to record</span>
-                    <div class="record-timer" id="record-timer">00:00</div>
-                    
-                    <div style="display: flex; justify-content: center;">
-                        <button class="record-btn-round record-btn-start" id="btn-record-start" onclick="startRecording()"><i data-lucide="mic" style="width: 24px; height: 24px;"></i></button>
-                        <button class="record-btn-round record-btn-stop" id="btn-record-stop" style="display: none;" onclick="stopRecording()"><i data-lucide="square" style="width: 22px; height: 22px;"></i></button>
-                    </div>
-
-                    <audio id="audio-player" class="audio-preview" controls style="display: none;"></audio>
-
-                    <div id="voice-upload-controls" style="display: none; width: 100%; gap: 12px; margin-top: 20px;">
-                        <button class="btn secondary" style="margin-top: 0; flex: 1;" onclick="discardVoice()"><i data-lucide="rotate-ccw" style="width:14px;height:14px;margin-right:4px;"></i> Redo</button>
-                        <button class="btn" style="margin-top: 0; flex: 1.5;" onclick="uploadVoice()"><i data-lucide="upload" style="width:14px;height:14px;margin-right:4px;"></i> Save Memory</button>
-                    </div>
-                </div>
+                <a class="theme-toggle-btn" id="viewer-link" style="display: none; justify-content:center; align-items:center; gap:8px; background:var(--accent); color:#ffffff; border:none; padding:12px; border-radius:10px; cursor:pointer; font-weight:600; text-decoration:none; margin-top:20px;">
+                    <i data-lucide="book-open" style="width:16px; height:16px;"></i>
+                    <span>Keepsake Viewer</span>
+                </a>
             </div>
 
-            <!-- Focus Screen: Write Note -->
-            <div class="focus-section" id="sec-note">
-                <button class="back-bar" onclick="backToMenu()"><i data-lucide="chevron-left" style="width: 14px; height: 14px; vertical-align: middle;"></i> Back to options</button>
-                <textarea id="note-body" placeholder="Share a special memory or story from this moment..." oninput="saveNoteDraft(this.value)"></textarea>
-                <div class="draft-indicator" id="draft-saved"><i data-lucide="check" style="width:12px;height:12px;color:var(--success);"></i> Draft saved safely</div>
+        </main>
 
-                <div style="display: flex; gap: 12px; margin-top: 16px;">
-                    <button class="btn secondary" style="margin-top: 0; flex: 1;" onclick="clearNoteDraft()"><i data-lucide="trash-2" style="width:14px;height:14px;margin-right:4px;"></i> Clear</button>
-                    <button class="btn" style="margin-top: 0; flex: 2;" id="btn-submit-note" onclick="submitNote()"><i data-lucide="send" style="width:14px;height:14px;margin-right:4px;"></i> Save Story</button>
+        <!-- FLOATING PLUS ACTION BUTTON -->
+        <button class="fab-btn" onclick="openEditor()" title="Write Journal Entry"><i data-lucide="plus" style="width: 28px; height: 28px; stroke-width: 2.5;"></i></button>
+
+        <!-- TAB NAVIGATION -->
+        <nav class="bottom-nav-bar">
+            <button class="nav-tab-item active" id="tab-today" onclick="openNavTab('today')"><i data-lucide="sun" style="width: 20px; height: 20px;"></i>Today</button>
+            <button class="nav-tab-item" id="tab-journals" onclick="openNavTab('today')"><i data-lucide="book" style="width: 20px; height: 20px;"></i>Journals</button>
+            <button class="nav-tab-item" id="tab-prompts" onclick="triggerEditorWithTab('prompts')"><i data-lucide="message-square" style="width: 20px; height: 20px;"></i>Prompts</button>
+            <button class="nav-tab-item" id="tab-more" onclick="openNavTab('more')"><i data-lucide="more-horizontal" style="width: 20px; height: 20px;"></i>More</button>
+        </nav>
+
+        <!-- SLIDE-UP EDITOR SHEET -->
+        <div class="editor-sheet" id="editor-sheet">
+            <header class="editor-header">
+                <span class="editor-close-btn" onclick="closeEditor()">Cancel</span>
+                <span class="editor-title" id="editor-datetime-header">Wed, Jul 8, 2026 6:24 PM</span>
+                <span class="editor-close-btn" onclick="submitNote()" id="btn-done">Done</span>
+            </header>
+
+            <div class="editor-scroll-view">
+                <!-- Text entry area -->
+                <textarea class="editor-textarea" id="note-body" placeholder="Share a special memory or story from this moment..." oninput="saveNoteDraft(this.value)"></textarea>
+                <div id="draft-saved" style="display: none; font-size: 0.75rem; color: var(--success); font-weight: 600;"><i data-lucide="check" style="width: 12px; height: 12px; vertical-align: middle;"></i> Draft saved safely</div>
+
+                <!-- Input triggers strip -->
+                <div class="editor-actions-strip">
+                    <button class="editor-strip-btn" onclick="document.getElementById('file-input').click()"><i data-lucide="image" style="width: 14px; height: 14px; color: var(--accent);"></i> Add Photos</button>
+                    <button class="editor-strip-btn" onclick="toggleVoiceInput()"><i data-lucide="mic" style="width: 14px; height: 14px; color: var(--accent);"></i> Speak Story</button>
+                    <button class="editor-strip-btn" onclick="togglePromptsList()"><i data-lucide="sparkles" style="width: 14px; height: 14px; color: var(--accent);"></i> Prompts</button>
                 </div>
+
+                <!-- Hidden file inputs -->
+                <input type="file" id="file-input" multiple accept=".jpg,.jpeg,.png,.heic,.mp4,.mov,.pdf,image/*,video/*" style="display: none;" onchange="uploadFiles(this.files)">
+
+                <!-- Prompts Deck (Collapsible) -->
+                <div id="prompts-list" style="display: none; flex-direction: column; gap: 8px;">
+                    <label style="font-size: 0.8rem; font-weight: 600;">Choose a question prompt:</label>
+                    <div class="prompts-carousel" id="voice-prompts-container"></div>
+                </div>
+
+                <!-- Voice Note Module (Collapsible) -->
+                <div id="voice-module" style="display: none; border-top: 1px solid var(--border); padding-top: 14px;">
+                    <div class="voice-section">
+                        <span id="recorder-status" style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Ready to record</span>
+                        <div class="record-timer" id="record-timer">00:00</div>
+                        <div style="display: flex; gap: 12px; justify-content: center; width: 100%;">
+                            <button class="record-btn-round record-btn-start" id="btn-record-start" onclick="startRecording()"><i data-lucide="mic" style="width: 18px; height: 18px;"></i></button>
+                            <button class="record-btn-round record-btn-stop" id="btn-record-stop" style="display: none;" onclick="stopRecording()"><i data-lucide="square" style="width: 18px; height: 18px;"></i></button>
+                        </div>
+                        <audio id="audio-player" class="audio-player" controls style="display: none; margin-top: 10px; width: 100%;"></audio>
+                        
+                        <div id="voice-upload-controls" style="display: none; width: 100%; gap: 12px; margin-top: 10px;">
+                            <button class="editor-strip-btn" style="flex: 1; justify-content: center;" onclick="discardVoice()"><i data-lucide="rotate-ccw" style="width:14px; height:14px;"></i> Redo</button>
+                            <button class="editor-strip-btn" style="flex: 1.5; justify-content: center; background: var(--accent); color:#ffffff; border:none;" onclick="uploadVoice()"><i data-lucide="upload" style="width:14px; height:14px;"></i> Save</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Curation/Action status log -->
+                <div class="status-logger" id="status"></div>
             </div>
-
-            <div id="status"></div>
-
-            <a class="btn secondary" id="viewer-link" style="display: none; margin-top: 24px;"><i data-lucide="book-open" style="width: 14px; height: 14px; margin-right: 6px;"></i> Keepsake ready - view highlights</a>
         </div>
 
-        <div class="card" id="error-card">
-            <h1><i data-lucide="lock" style="width: 22px; height: 22px; color: var(--danger); vertical-align: middle; margin-right: 8px;"></i> Link expired</h1>
-            <p class="sub" id="error-msg" style="margin-top: 12px;">Ask the event organizer for a new invite link.</p>
+        <!-- ERROR EXPIRY OVERLAY -->
+        <div class="error-overlay" id="error-card" style="display: none;">
+            <i data-lucide="lock" style="width: 48px; height: 48px; color: var(--danger); margin-bottom: 14px;"></i>
+            <h2 style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; margin-bottom: 8px;">Invite Expired</h2>
+            <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.4;">This link has expired or is invalid. Please request a new invitation link from the organizer.</p>
         </div>
+
     </div>
 
+    <!-- CODE LOGIC -->
     <script>
         const sessionId = decodeURIComponent(window.location.pathname.split('/').pop());
         const shareCode = new URLSearchParams(window.location.search).get('code') || '';
         const EVENT_ICONS = { trip: 'compass', birthday: 'gift', wedding: 'heart', sports_match: 'award', reunion: 'users', other: 'camera' };
 
-        // Toggle Grandma Mode (Light Canvas & Large Text)
+        // Theme Toggle (Grandma mode)
         function toggleTheme() {
             const body = document.body;
             const text = document.getElementById('theme-btn-text');
             const icon = document.querySelector('#theme-toggle i');
             
             body.classList.toggle('grandma-mode');
-            
             if (body.classList.contains('grandma-mode')) {
-                text.textContent = 'Standard Mode (Dark)';
+                text.textContent = 'Standard Mode';
                 icon.setAttribute('data-lucide', 'moon');
                 localStorage.setItem('mw_grandma_mode', 'true');
             } else {
-                text.textContent = 'Grandma Mode (Light / Big Text)';
+                text.textContent = 'Grandma Mode';
                 icon.setAttribute('data-lucide', 'sun');
                 localStorage.setItem('mw_grandma_mode', 'false');
             }
             lucide.createIcons();
         }
 
-        // Initialize user preferences
         if (localStorage.getItem('mw_grandma_mode') === 'true') {
             document.body.classList.add('grandma-mode');
-            document.getElementById('theme-btn-text').textContent = 'Standard Mode (Dark)';
+            document.getElementById('theme-btn-text').textContent = 'Standard Mode';
+        }
+
+        // Editor Control drawer
+        function openEditor() {
+            // Update time stamp header dynamically
+            const now = new Date();
+            const options = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+            document.getElementById('editor-datetime-header').textContent = now.toLocaleDateString('en-US', options);
+            
+            document.getElementById('editor-sheet').classList.add('active');
+        }
+
+        // Clean draft indicator state on launch
+        document.getElementById('draft-saved').style.display = 'none';
+
+        function closeEditor() {
+            document.getElementById('editor-sheet').classList.remove('active');
+            document.getElementById('status').textContent = '';
+        }
+
+        function triggerEditorWithTab(type) {
+            openEditor();
+            if (type === 'photo') {
+                document.getElementById('file-input').click();
+            } else if (type === 'prompts') {
+                togglePromptsList();
+            } else if (type === 'places') {
+                // Focus note editor to enter places
+                document.getElementById('note-body').focus();
+            }
+        }
+
+        function togglePromptsList() {
+            const list = document.getElementById('prompts-list');
+            list.style.display = list.style.display === 'none' ? 'flex' : 'none';
+        }
+
+        function toggleVoiceInput() {
+            const block = document.getElementById('voice-module');
+            block.style.display = block.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Navigation Tabs Router
+        function openNavTab(tabId) {
+            document.querySelectorAll('.nav-tab-item').forEach(btn => btn.classList.remove('active'));
+            const elements = {
+                today: document.getElementById('main-scroll'),
+                more: document.getElementById('settings-area')
+            };
+
+            if (tabId === 'today') {
+                document.getElementById('tab-today').classList.add('active');
+                elements.today.style.display = 'flex';
+                elements.more.style.display = 'none';
+            } else if (tabId === 'more') {
+                document.getElementById('tab-more').classList.add('active');
+                elements.today.style.display = 'none';
+                elements.more.style.display = 'flex';
+            }
         }
 
         function saveName(val) {
             localStorage.setItem('mw_contributor_name', val.trim());
         }
 
-        // Simplified linear navigation (Grandma-Proof)
-        function openSection(secId) {
-            document.getElementById('main-menu').style.display = 'none';
-            document.getElementById('theme-selector-area').style.display = 'none';
-            document.querySelectorAll('.focus-section').forEach(s => s.classList.remove('active'));
-            document.getElementById(secId).classList.add('active');
-            document.getElementById('status').textContent = '';
-        }
-
-        function backToMenu() {
-            document.querySelectorAll('.focus-section').forEach(s => s.classList.remove('active'));
-            document.getElementById('main-menu').style.display = 'flex';
-            document.getElementById('theme-selector-area').style.display = 'block';
-            document.getElementById('status').textContent = '';
+        // Populate details from localStorage
+        const cachedName = localStorage.getItem('mw_contributor_name');
+        if (cachedName) {
+            document.getElementById('contributor-name').value = cachedName;
         }
 
         const PROMPTS_BY_TYPE = {
@@ -780,19 +753,16 @@
             other: [
                 { text: '🎙️ Custom Note', prompt: '' },
                 { text: '🌟 Joy of the Day', prompt: 'What made me smile or laugh today' },
-                { text: '✍️ Thoughts & Feelings', prompt: 'My personal reflections and thoughts today' },
-                { text: '📸 Behind the scenes', prompt: 'The story of what is happening in this photo' }
+                { text: '✍️ Thoughts & Feelings', prompt: 'My personal reflections and thoughts today' }
             ],
             sports_match: [
                 { text: '🎙️ Custom Note', prompt: '' },
                 { text: '🏫 School Memory', prompt: 'A fun class or playground memory' },
-                { text: '🌟 Favorite Joke', prompt: 'The funniest joke or meme in school today' },
-                { text: '👥 Friends Message', prompt: 'A message of appreciation to our class' }
+                { text: '🌟 Favorite Joke', prompt: 'The funniest joke or meme in school today' }
             ]
         };
 
         function changeJournalTheme(val) {
-            // Build dynamic prompts based on selector
             const promptsContainer = document.getElementById('voice-prompts-container');
             if (promptsContainer) {
                 promptsContainer.innerHTML = '';
@@ -806,7 +776,6 @@
                 });
             }
 
-            // Adjust event subtitles dynamically
             const sub = document.getElementById('event-subtitle');
             if (val === 'trip') {
                 sub.textContent = "🏞️ Let's compile a beautiful keepsake of our trip memories together.";
@@ -819,6 +788,16 @@
             }
         }
 
+        function selectPrompt(btn, text) {
+            document.querySelectorAll('.prompt-chip').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            const editor = document.getElementById('note-body');
+            if (text) {
+                editor.value = text + ":\n";
+                saveNoteDraft(editor.value);
+            }
+        }
+
         async function loadEvent() {
             try {
                 const res = await fetch(`/api/session-public/${encodeURIComponent(sessionId)}?code=${encodeURIComponent(shareCode)}`);
@@ -827,21 +806,17 @@
 
                 const iconName = EVENT_ICONS[data.event_type] || 'camera';
                 document.getElementById('event-title').innerHTML =
-                    `<i data-lucide="${iconName}" style="width: 24px; height: 24px; color: var(--accent); margin-right: 8px; vertical-align: middle;"></i>${data.name}`;
-                lucide.createIcons();
+                    `<i data-lucide="${iconName}" style="width: 18px; height: 18px; color: var(--accent); margin-right: 6px; vertical-align: middle;"></i>${data.name}`;
+                
                 document.getElementById('photo-count').textContent =
-                    `${data.photo_count} memory items collected`;
+                    `${data.photo_count} items collected`;
 
-                // Set type switcher value
                 const selector = document.getElementById('journal-theme-select');
                 if (data.event_type && ['trip', 'reunion', 'other', 'sports_match'].includes(data.event_type)) {
                     selector.value = data.event_type;
-                } else if (data.event_type === 'birthday' || data.event_type === 'wedding') {
-                    selector.value = 'reunion'; // Map celebration events to Precious Moments category
                 } else {
                     selector.value = 'other';
                 }
-                
                 changeJournalTheme(selector.value);
 
                 const viewerLink = document.getElementById('viewer-link');
@@ -849,14 +824,15 @@
                     viewerLink.href = data.viewer_url;
                     viewerLink.style.display = 'flex';
                 }
-                document.getElementById('main-card').style.display = 'block';
+                
+                lucide.createIcons();
             } catch (e) {
-                document.getElementById('error-card').style.display = 'block';
+                document.getElementById('error-card').style.display = 'flex';
                 lucide.createIcons();
             }
         }
 
-        // --- Upload Logic ---
+        // --- File Uploader ---
         const SUPPORTED_EXT = /\.(jpe?g|png|heic|mp4|mov|pdf)$/i;
         const BATCH_SIZE = 10;
 
@@ -868,7 +844,7 @@
             const status = document.getElementById('status');
             if (!files.length) {
                 status.style.color = 'var(--danger)';
-                status.textContent = 'Supported types only (JPEG/PNG/HEIC/MP4/MOV/PDF).';
+                status.textContent = 'Supported formats only (JPEG/PNG/HEIC/MP4/MOV/PDF).';
                 return;
             }
 
@@ -876,7 +852,6 @@
             saveName(name);
 
             let uploaded = 0;
-            let failed = 0;
             status.style.color = 'var(--accent)';
 
             try {
@@ -892,39 +867,30 @@
 
                     const res = await fetch('/upload', { method: 'POST', body: formData });
                     const data = await res.json();
-                    if (res.ok && (data.status === 'success' || data.status === 'partial_success')) {
+                    if (res.ok) {
                         uploaded += (data.uploaded || []).length;
-                        failed += (data.errors || []).length;
-                    } else {
-                        throw new Error(data.detail || data.message || 'Upload failed');
                     }
                 }
-                status.style.color = failed ? 'var(--accent)' : 'var(--success)';
-                let msg = `Saved ${uploaded} memory item(s). Thank you!`;
-                if (failed) msg += ` (${failed} failed)`;
-                status.textContent = msg;
+                status.style.color = 'var(--success)';
+                status.textContent = `Saved ${uploaded} photos successfully!`;
                 loadEvent();
-                setTimeout(backToMenu, 1500); // Auto close uploader screen on success
+                setTimeout(closeEditor, 1200);
             } catch (e) {
                 status.style.color = 'var(--danger)';
                 status.textContent = 'Upload failed: ' + e.message;
             }
-            document.getElementById('file-input').value = '';
-            document.getElementById('folder-input').value = '';
         }
 
-        // --- Note Draft Persistence ---
+        // --- Note Drafts ---
         function saveNoteDraft(text) {
             localStorage.setItem(`mw_note_draft_${sessionId}`, text);
-            const indicator = document.getElementById('draft-saved');
-            indicator.style.display = text.trim().length > 0 ? 'flex' : 'none';
+            document.getElementById('draft-saved').style.display = text.trim().length > 0 ? 'block' : 'none';
         }
 
-        function clearNoteDraft() {
-            document.getElementById('note-body').value = '';
-            localStorage.removeItem(`mw_note_draft_${sessionId}`);
-            document.getElementById('draft-saved').style.display = 'none';
-            document.getElementById('status').textContent = '';
+        const savedDraft = localStorage.getItem(`mw_note_draft_${sessionId}`);
+        if (savedDraft) {
+            document.getElementById('note-body').value = savedDraft;
+            document.getElementById('draft-saved').style.display = 'block';
         }
 
         async function submitNote() {
@@ -933,7 +899,7 @@
 
             if (!bodyText) {
                 status.style.color = 'var(--danger)';
-                status.textContent = 'Please write a note before submitting.';
+                status.textContent = 'Please write a message before done.';
                 return;
             }
 
@@ -954,133 +920,91 @@
                 formData.append('photos', file);
 
                 const res = await fetch('/upload', { method: 'POST', body: formData });
-                const data = await res.json();
+                if (!res.ok) throw new Error('Note upload failed');
 
-                if (res.ok && (data.status === 'success' || data.status === 'partial_success')) {
-                    status.style.color = 'var(--success)';
-                    status.textContent = 'Saved note to the keepsake!';
-                    clearNoteDraft();
-                    loadEvent();
-                    setTimeout(backToMenu, 1500); // Auto close screen
-                } else {
-                    throw new Error(data.detail || data.message || 'Saving note failed');
-                }
+                status.style.color = 'var(--success)';
+                status.textContent = 'Story written and saved!';
+                localStorage.removeItem(`mw_note_draft_${sessionId}`);
+                document.getElementById('draft-saved').style.display = 'none';
+                document.getElementById('note-body').value = '';
+                loadEvent();
+                setTimeout(closeEditor, 1200);
             } catch (e) {
                 status.style.color = 'var(--danger)';
                 status.textContent = 'Failed: ' + e.message;
             }
         }
 
-        // --- Minimalist Voice Recording ---
-        let mediaRecorder;
+        // --- Voice Recorder ---
+        let mediaRecorder = null;
         let audioChunks = [];
-        let audioBlob;
-        let isRecording = false;
-        let recordTimerInterval;
-        let recordSeconds = 0;
-        let activePrompt = "";
+        let recordTimerInterval = null;
+        let recordDuration = 0;
+        let recordedBlob = null;
 
-        function selectPrompt(elem, promptText) {
-            document.querySelectorAll('.prompt-chip').forEach(chip => {
-                chip.classList.remove('active');
-            });
-            elem.classList.add('active');
-
-            activePrompt = promptText;
-
-            const banner = document.getElementById('active-prompt-banner');
-            if (promptText) {
-                banner.textContent = `Topic: "${promptText}"`;
-                banner.style.display = 'block';
-            } else {
-                banner.style.display = 'none';
-            }
-        }
-
-        function updateRecordTimer() {
-            recordSeconds++;
-            const m = Math.floor(recordSeconds / 60).toString().padStart(2, '0');
-            const s = (recordSeconds % 60).toString().padStart(2, '0');
-            document.getElementById('record-timer').textContent = `${m}:${s}`;
-        }
-
-        async function startRecording() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
+        function startRecording() {
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
                 audioChunks = [];
-
-                mediaRecorder.ondataavailable = (event) => {
-                    audioChunks.push(event.data);
-                };
-
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                
                 mediaRecorder.onstop = () => {
-                    audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                    const audioUrl = URL.createObjectURL(audioBlob);
+                    recordedBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const url = URL.createObjectURL(recordedBlob);
                     const player = document.getElementById('audio-player');
-                    player.src = audioUrl;
+                    player.src = url;
                     player.style.display = 'block';
+                    document.getElementById('voice-upload-controls').style.display = 'flex';
                 };
 
                 mediaRecorder.start();
-                isRecording = true;
-                recordSeconds = 0;
-                document.getElementById('record-timer').textContent = '00:00';
-                clearInterval(recordTimerInterval);
-                recordTimerInterval = setInterval(updateRecordTimer, 1000);
-
+                recordDuration = 0;
+                document.getElementById('record-timer').textContent = "00:00";
+                document.getElementById('recorder-status').textContent = "Recording your voice story...";
                 document.getElementById('btn-record-start').style.display = 'none';
-                document.getElementById('btn-record-stop').style.display = 'inline-flex';
-                document.getElementById('recorder-status').textContent = 'Recording memory...';
-                document.getElementById('audio-player').style.display = 'none';
-                document.getElementById('voice-upload-controls').style.display = 'none';
-                document.getElementById('status').textContent = '';
-            } catch (e) {
-                alert('Audio capture permission is required to record voice notes.');
-            }
+                document.getElementById('btn-record-stop').style.display = 'flex';
+
+                recordTimerInterval = setInterval(() => {
+                    recordDuration++;
+                    const min = String(Math.floor(recordDuration / 60)).padStart(2, '0');
+                    const sec = String(recordDuration % 60).padStart(2, '0');
+                    document.getElementById('record-timer').textContent = `${min}:${sec}`;
+                }, 1000);
+            }).catch(err => {
+                alert('Microphone permission is required to speak your story.');
+            });
         }
 
         function stopRecording() {
-            if (mediaRecorder && isRecording) {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
                 mediaRecorder.stop();
-                isRecording = false;
-                clearInterval(recordTimerInterval);
-                document.getElementById('btn-record-start').style.display = 'inline-flex';
-                document.getElementById('btn-record-stop').style.display = 'none';
-                document.getElementById('recorder-status').textContent = 'Listen below';
-                document.getElementById('voice-upload-controls').style.display = 'flex';
+                mediaRecorder.stream.getTracks().forEach(t => t.stop());
             }
+            clearInterval(recordTimerInterval);
+            document.getElementById('btn-record-stop').style.display = 'none';
+            document.getElementById('btn-record-start').style.display = 'flex';
+            document.getElementById('recorder-status').textContent = "Voice note complete!";
         }
 
         function discardVoice() {
-            audioBlob = null;
-            document.getElementById('audio-player').src = '';
+            recordedBlob = null;
             document.getElementById('audio-player').style.display = 'none';
+            document.getElementById('audio-player').src = '';
             document.getElementById('voice-upload-controls').style.display = 'none';
-            document.getElementById('record-timer').textContent = '00:00';
-            document.getElementById('recorder-status').textContent = 'Ready to record';
-            document.getElementById('status').textContent = '';
+            document.getElementById('record-timer').textContent = "00:00";
+            document.getElementById('recorder-status').textContent = "Ready to record";
         }
 
         async function uploadVoice() {
+            if (!recordedBlob) return;
             const status = document.getElementById('status');
-            if (!audioBlob) {
-                status.style.color = 'var(--danger)';
-                status.textContent = 'No recording found to save.';
-                return;
-            }
-
             const name = document.getElementById('contributor-name').value.trim() || 'Anonymous';
             saveName(name);
 
-            const promptSlug = activePrompt 
-                ? activePrompt.toLowerCase().replace(/[^a-z0-9]+/g, '_').substring(0, 30) + '_' 
-                : '';
-            const filename = `${promptSlug}voice_note.wav`;
-            const file = new File([audioBlob], filename, { type: 'audio/wav' });
-            
             status.style.color = 'var(--accent)';
-            status.textContent = 'Saving voice note...';
+            status.textContent = 'Saving audio note...';
+
+            const file = new File([recordedBlob], 'voice_journal.wav', { type: 'audio/wav' });
 
             try {
                 const formData = new FormData();
@@ -1090,36 +1014,21 @@
                 formData.append('photos', file);
 
                 const res = await fetch('/upload', { method: 'POST', body: formData });
-                const data = await res.json();
+                if (!res.ok) throw new Error('Audio upload failed');
 
-                if (res.ok && (data.status === 'success' || data.status === 'partial_success')) {
-                    status.style.color = 'var(--success)';
-                    status.textContent = 'Saved voice note to the keepsake!';
-                    discardVoice();
-                    loadEvent();
-                    setTimeout(backToMenu, 1500); // Auto close screen
-                } else {
-                    throw new Error(data.detail || data.message || 'Voice upload failed');
-                }
+                status.style.color = 'var(--success)';
+                status.textContent = 'Voice story saved safely!';
+                discardVoice();
+                loadEvent();
+                setTimeout(closeEditor, 1200);
             } catch (e) {
                 status.style.color = 'var(--danger)';
                 status.textContent = 'Failed: ' + e.message;
             }
         }
 
-        if (!('webkitdirectory' in document.createElement('input'))) {
-            document.getElementById('folder-zone').style.display = 'none';
-        }
-
-        document.getElementById('contributor-name').value = localStorage.getItem('mw_contributor_name') || '';
-        const savedNote = localStorage.getItem(`mw_note_draft_${sessionId}`);
-        if (savedNote) {
-            document.getElementById('note-body').value = savedNote;
-            document.getElementById('draft-saved').style.display = 'flex';
-        }
-
+        // Load initialization
         loadEvent();
-        lucide.createIcons();
     </script>
 </body>
 </html>

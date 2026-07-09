@@ -1058,36 +1058,66 @@
             </div>
         </div>
 
-        <!-- Trust, Security, and Pricing Panel (Minimalist Day One Style) -->
-        <div class="card" id="pricing-security-disclosures" style="background: rgba(224, 145, 107, 0.03); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-top: 24px; margin-bottom: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-family: 'Outfit', sans-serif;">
-            <!-- Left Column: Security and Encryption Disclosures -->
-            <div style="border-right: 1px solid var(--border); padding-right: 20px;">
-                <h4 style="font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 700; color: #ffffff; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
-                    <i data-lucide="shield-check" style="width: 16px; height: 16px; color: var(--accent);"></i> Privacy & Security Shield
-                </h4>
-                <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 8px;">
-                    Your family memories are private. Rewind is built with strict privacy constraints:
-                </p>
-                <ul style="margin: 0; padding-left: 16px; font-size: 11px; color: var(--text-muted); display: flex; flex-direction: column; gap: 4px; line-height: 1.4;">
-                    <li><strong>EXIF Cleansing:</strong> All GPS and camera tags are stripped from images served publicly.</li>
-                    <li><strong>Secure GCS Vaults:</strong> Assets are isolated using Google Cloud CMEK encryption keys.</li>
-                    <li><strong>Zero Ad Tracking:</strong> Your photos are never used for profiling or advertising.</li>
-                </ul>
+        <!-- High-Fidelity Day One Paywall Replica -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; font-family: 'Outfit', sans-serif;">
+            <!-- Silver Plan Card: Cloud Sharing & Sync -->
+            <div class="card" style="border: 2px solid var(--border); border-radius: 20px; padding: 24px; background: #ffffff; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+                <div>
+                    <span style="background: var(--accent-glow); color: var(--accent); font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">Silver Sync</span>
+                    <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.3rem; font-weight: 700; margin-top: 10px; margin-bottom: 4px; color: var(--text);">Cloud Share & Sync</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">Keep memories active and sync to all family members.</p>
+                    
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; font-size: 0.85rem; color: var(--text-muted);">
+                        <li style="display: flex; align-items: center; gap: 8px;"><i data-lucide="check" style="width: 16px; height: 16px; color: var(--accent);"></i> Unlimited viewer access links</li>
+                        <li style="display: flex; align-items: center; gap: 8px;"><i data-lucide="check" style="width: 16px; height: 16px; color: var(--accent);"></i> Automated agent curation logs</li>
+                        <li style="display: flex; align-items: center; gap: 8px;"><i data-lucide="check" style="width: 16px; height: 16px; color: var(--accent);"></i> EXIF privacy cleansing active</li>
+                    </ul>
+                </div>
+                <div>
+                    <div style="font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 12px;">$49.99<span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 400;">/year</span></div>
+                    <button class="btn btn-primary" style="width: 100%; border-radius: 12px; margin-top: 0; min-height: 44px; font-weight: 700;">Subscribe to Sync</button>
+                </div>
             </div>
-            
-            <!-- Right Column: Transparent Billing Terms -->
-            <div>
-                <h4 style="font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 700; color: #ffffff; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
-                    <i data-lucide="credit-card" style="width: 16px; height: 16px; color: var(--accent);"></i> Transparent Flat Billing
-                </h4>
-                <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 8px;">
-                    Keep your memory books online forever. Clean, upfront terms:
-                </p>
-                <ul style="margin: 0; padding-left: 16px; font-size: 11px; color: var(--text-muted); display: flex; flex-direction: column; gap: 4px; line-height: 1.4;">
-                    <li><strong>Cloud Sync & Share:</strong> <strong>$49.99/year</strong> flat subscription for unlimited devices and viewers.</li>
-                    <li><strong>Keepsake Print Book:</strong> <strong>$39.00 flat</strong> per physical linen hardcover copy (free shipping).</li>
-                    <li><strong>Cancel Anytime:</strong> Easily download a zip of all original high-res photos if you cancel.</li>
-                </ul>
+
+            <!-- Gold Plan Card: Keepsake printed hardcover -->
+            <div class="card" style="border: 2px solid var(--border); border-radius: 20px; padding: 24px; background: #ffffff; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+                <div style="position: absolute; top: -12px; right: 24px; background: var(--text); color: #ffffff; font-size: 0.7rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">⭐ Grandma's Choice</div>
+                <div>
+                    <span style="background: rgba(255, 170, 0, 0.1); color: #FF9900; font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">Gold Keepsake</span>
+                    <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.3rem; font-weight: 700; margin-top: 10px; margin-bottom: 4px; color: var(--text);">Hardcover Printed Book</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">Physical premium linen book delivered to your doorstep.</p>
+                    
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; font-size: 0.85rem; color: var(--text-muted);">
+                        <li style="display: flex; align-items: center; gap: 8px;"><i data-lucide="check" style="width: 16px; height: 16px; color: #FF9900;"></i> Linen hardcover with foil printing</li>
+                        <li style="display: flex; align-items: center; gap: 8px;"><i data-lucide="check" style="width: 16px; height: 16px; color: #FF9900;"></i> Premium photo paper (up to 120 pages)</li>
+                        <li style="display: flex; align-items: center; gap: 8px;"><i data-lucide="check" style="width: 16px; height: 16px; color: #FF9900;"></i> Free global shipping & tracking</li>
+                    </ul>
+                </div>
+                <div>
+                    <div style="font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 12px;">$39.00<span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 400;"> flat</span></div>
+                    <button class="btn btn-primary" style="width: 100%; border-radius: 12px; margin-top: 0; min-height: 44px; font-weight: 700; background: var(--text); border-color: var(--text);">Print Keepsake Book</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security and Encryption Disclosures Block -->
+        <div class="card" style="margin-bottom: 24px; padding: 20px; border: 2px solid var(--border); border-radius: 16px; background: #ffffff; font-family: 'Outfit', sans-serif;">
+            <h4 style="font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 6px; margin-bottom: 10px;">
+                <i data-lucide="shield-check" style="width: 16px; height: 16px; color: var(--accent);"></i> Advanced Security & Privacy Settings
+            </h4>
+            <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                    <span>🔒 End-to-End Encryption status</span>
+                    <span style="font-weight: 700; color: var(--accent);">Active</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                    <span>🛡️ Google Cloud CMEK Vault Isolation</span>
+                    <span style="font-weight: 700; color: var(--accent);">Active</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>🧼 GPS Location Tag Stripping on Share links</span>
+                    <span style="font-weight: 700; color: var(--accent);">Active</span>
+                </div>
             </div>
         </div>
 
