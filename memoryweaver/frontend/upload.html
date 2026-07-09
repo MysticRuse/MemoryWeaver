@@ -862,7 +862,6 @@
             font-size: 10px;
             color: var(--text);
             transition: all 0.2s;
-            box-shadow: 1px 1px 0px var(--border);
             z-index: 2;
         }
         .pool-photo-card .overlay-btn:hover {
@@ -891,13 +890,12 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            border: 1.5px solid #303030;
+            border: 1.5px solid #EB2371;
             z-index: 2;
             max-width: calc(100% - 38px);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            box-shadow: 1px 1px 0px #303030;
             display: inline-flex;
             align-items: center;
             gap: 4px;
@@ -914,9 +912,8 @@
             font-family: 'Space Grotesk', sans-serif;
             font-size: 9px;
             font-weight: 700;
-            border: 1.5px solid #303030;
+            border: 1.5px solid #A0A0A0;
             z-index: 2;
-            box-shadow: 1px 1px 0px #303030;
         }
 
         /* Simplified Event Manager Styles */
@@ -1631,16 +1628,15 @@
                         
                         // Custom styled label for the curator
                         if (uploaderName === 'My Photos') {
-                            cTag.style.backgroundColor = '#303030';
+                            cTag.style.backgroundColor = '#EB2371';
                             cTag.style.color = '#FFFFFF';
-                            cTag.style.borderColor = '#303030';
-                            cTag.style.boxShadow = '1px 1px 0px #EB2371';
+                            cTag.style.borderColor = '#EB2371';
                         } else {
                             cTag.style.backgroundColor = '#FFFFFF';
-                            cTag.style.color = '#303030';
-                            cTag.style.borderColor = '#303030';
-                            cTag.style.boxShadow = '1px 1px 0px #EB2371';
+                            cTag.style.color = '#EB2371';
+                            cTag.style.borderColor = '#EB2371';
                         }
+                        cTag.style.boxShadow = 'none';
                         card.appendChild(cTag);
                     }
 
@@ -3559,16 +3555,15 @@
                         
                         // Custom styled label for the curator
                         if (uploaderName === 'My Photos') {
-                            cTag.style.backgroundColor = '#303030';
+                            cTag.style.backgroundColor = '#EB2371';
                             cTag.style.color = '#FFFFFF';
-                            cTag.style.borderColor = '#303030';
-                            cTag.style.boxShadow = '1px 1px 0px #EB2371';
+                            cTag.style.borderColor = '#EB2371';
                         } else {
                             cTag.style.backgroundColor = '#FFFFFF';
-                            cTag.style.color = '#303030';
-                            cTag.style.borderColor = '#303030';
-                            cTag.style.boxShadow = '1px 1px 0px #EB2371';
+                            cTag.style.color = '#EB2371';
+                            cTag.style.borderColor = '#EB2371';
                         }
+                        cTag.style.boxShadow = 'none';
                         card.appendChild(cTag);
                     }
 
