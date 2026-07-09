@@ -1012,6 +1012,67 @@
             });
         }
 
+        // Voice Reaction Recording for Individual Photos
+        let reactionRecorder = null;
+        let reactionChunks = [];
+        let reactionRecordingTarget = null;
+        
+        window.startPhotoVoiceReaction = function(ph, btn) {
+            const cleanId = ph.replace(/[^a-zA-Z0-9]/g, '');
+            const statusDiv = document.getElementById(`react-status-${cleanId}`);
+            
+            if (reactionRecorder && reactionRecorder.state === 'recording') {
+                // Stop recording
+                reactionRecorder.stop();
+                reactionRecorder.stream.getTracks().forEach(t => t.stop());
+                btn.innerHTML = `<i data-lucide="mic" style="width: 10px; height: 10px;"></i> Record`;
+                btn.style.background = '';
+                lucide.createIcons();
+                return;
+            }
+            
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                reactionChunks = [];
+                reactionRecordingTarget = ph;
+                
+                reactionRecorder = new MediaRecorder(stream);
+                reactionRecorder.ondataavailable = e => reactionChunks.push(e.data);
+                
+                reactionRecorder.onstop = async () => {
+                    statusDiv.textContent = "Uploading reaction...";
+                    const blob = new Blob(reactionChunks, { type: 'audio/wav' });
+                    const reactionFilename = ph.replace(/\.[a-z0-9]+$/i, '') + '_reaction.wav';
+                    const file = new File([blob], reactionFilename, { type: 'audio/wav' });
+                    
+                    const formData = new FormData();
+                    formData.append('contributor_name', 'Grandma Lena');
+                    formData.append('session_id', getSessionId());
+                    formData.append('photos', file);
+                    
+                    try {
+                        const res = await fetch('/upload', { method: 'POST', body: formData });
+                        if (res.ok) {
+                            statusDiv.textContent = "Reaction saved!";
+                            const playbackDiv = document.getElementById(`react-playback-${cleanId}`);
+                            playbackDiv.innerHTML = `<audio src="${mediaUrl(reactionFilename)}?t=${Date.now()}" controls style="width:100%; height:32px; margin-top:6px; outline:none;"></audio>`;
+                        } else {
+                            throw new Error("Upload error");
+                        }
+                    } catch (e) {
+                        statusDiv.textContent = "Upload failed: " + e.message;
+                    }
+                };
+                
+                reactionRecorder.start();
+                btn.innerHTML = `<i data-lucide="square" style="width: 10px; height: 10px;"></i> Stop`;
+                btn.style.background = '#E11D48';
+                statusDiv.textContent = "Recording voice reaction (speak now)...";
+                lucide.createIcons();
+            }).catch(err => {
+                alert('Microphone permission is required to record photo reactions.');
+            });
+        };
+
         let currentSlideIndex = 0;
         let slides = [];
         let globalJournal = [];
@@ -1264,7 +1325,15 @@
                             const wrapper = document.createElement('div');
                             wrapper.style.display = 'flex';
                             wrapper.style.flexDirection = 'column';
+                            wrapper.style.background = 'var(--bg-color-light, #f8f9fa)';
+                            wrapper.style.border = '1px solid var(--border-color)';
+                            wrapper.style.borderRadius = '16px';
+                            wrapper.style.padding = '12px';
+                            wrapper.style.gap = '8px';
+                            wrapper.style.marginBottom = '12px';
+                            wrapper.style.width = '100%';
                             
+                            // Image element
                             const img = document.createElement('img');
                             img.alt = entry.moment;
                             img.style.cursor = 'pointer';
@@ -1277,15 +1346,77 @@
                             const meta = photoMetadataMap[ph];
                             if (meta && meta.caption) {
                                 const captionDiv = document.createElement('div');
-                                captionDiv.style.fontSize = '0.75rem';
-                                captionDiv.style.color = 'var(--text-muted)';
-                                captionDiv.style.marginTop = '6px';
+                                captionDiv.style.fontSize = '0.8rem';
+                                captionDiv.style.color = 'var(--text-color, #1a1a1a)';
+                                captionDiv.style.fontWeight = '600';
                                 captionDiv.style.lineHeight = '1.3';
-                                captionDiv.style.fontStyle = 'italic';
                                 captionDiv.textContent = meta.caption;
                                 wrapper.appendChild(captionDiv);
                             }
                             
+                            // Metadata badges (Date, Curator score)
+                            const metaStrip = document.createElement('div');
+                            metaStrip.style.display = 'flex';
+                            metaStrip.style.flexWrap = 'wrap';
+                            metaStrip.style.gap = '6px';
+                            
+                            const dateVal = meta && meta.date ? meta.date : (entry.date || 'Unknown Date');
+                            const scoreVal = meta && meta.score ? `⭐ ${meta.score.toFixed(1)}/10` : '⭐ 8.0/10';
+                            const sharpVal = meta && meta.sharpness ? `Sharpness: ${meta.sharpness.toFixed(1)}` : 'Sharpness: 8.0';
+                            
+                            metaStrip.innerHTML = `
+                                <span style="background: rgba(0,0,0,0.04); font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 20px; color: var(--text-muted); display:inline-flex; align-items:center; gap:3px;"><i data-lucide="calendar" style="width: 10px; height: 10px;"></i> ${dateVal}</span>
+                                <span style="background: rgba(0,0,0,0.04); font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 20px; color: var(--text-muted); display:inline-flex; align-items:center; gap:3px;"><i data-lucide="award" style="width: 10px; height: 10px;"></i> ${scoreVal} (${sharpVal})</span>
+                            `;
+                            wrapper.appendChild(metaStrip);
+                            
+                            // Map location directions pin
+                            const mapLoc = document.createElement('div');
+                            mapLoc.style.fontSize = '0.75rem';
+                            mapLoc.style.color = 'var(--accent, #00A2FF)';
+                            mapLoc.style.fontWeight = '700';
+                            mapLoc.style.display = 'flex';
+                            mapLoc.style.alignItems = 'center';
+                            mapLoc.style.gap = '4px';
+                            mapLoc.style.cursor = 'pointer';
+                            mapLoc.style.marginTop = '4px';
+                            const sceneClean = meta && meta.scene_label ? meta.scene_label.replace(/_/g, ' ') : entry.moment.replace(/_/g, ' ');
+                            mapLoc.innerHTML = `<i data-lucide="map-pin" style="width: 12px; height: 12px;"></i> 🗺️ Map: ${sceneClean} (Show Directions)`;
+                            mapLoc.onclick = () => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(sceneClean)}`, '_blank');
+                            wrapper.appendChild(mapLoc);
+
+                            // Audio reaction recorder module
+                            const cleanPhId = ph.replace(/[^a-zA-Z0-9]/g, '');
+                            const audioReact = document.createElement('div');
+                            audioReact.style.display = 'flex';
+                            audioReact.style.flexDirection = 'column';
+                            audioReact.style.gap = '6px';
+                            audioReact.style.borderTop = '1px solid var(--border-color)';
+                            audioReact.style.paddingTop = '8px';
+                            audioReact.style.marginTop = '4px';
+                            
+                            audioReact.innerHTML = `
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);"><i data-lucide="mic" style="width: 12px; height: 12px; vertical-align: middle;"></i> Voice reaction</span>
+                                    <button class="nav-btn" id="btn-react-rec-${cleanPhId}" onclick="startPhotoVoiceReaction('${ph}', this)" style="padding: 4px 10px; font-size: 0.7rem; margin-top: 0; min-height: 24px; border-radius: 6px; display:inline-flex; align-items:center; gap:2px;"><i data-lucide="mic" style="width: 10px; height: 10px;"></i> Record</button>
+                                </div>
+                                <div id="react-status-${cleanPhId}" style="font-size: 0.7rem; color: var(--text-muted); font-style: italic;"></div>
+                                <div id="react-playback-${cleanPhId}"></div>
+                            `;
+                            wrapper.appendChild(audioReact);
+
+                            // Load existing reaction if it is inside the upload pool or matches the name
+                            const reactionFilename = ph.replace(/\.[a-z0-9]+$/i, '') + '_reaction.wav';
+                            const hasReaction = entry.photos.includes(reactionFilename) || entry.photos.some(x => x.toLowerCase() === reactionFilename.toLowerCase());
+                            if (hasReaction) {
+                                setTimeout(() => {
+                                    const playbackDiv = document.getElementById(`react-playback-${cleanPhId}`);
+                                    if (playbackDiv) {
+                                        playbackDiv.innerHTML = `<audio src="${mediaUrl(reactionFilename)}" controls style="width:100%; height:32px; margin-top:6px; outline:none;"></audio>`;
+                                    }
+                                }, 100);
+                            }
+
                             thumbsContainer.appendChild(wrapper);
                         }
                     });
