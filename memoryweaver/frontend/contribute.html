@@ -8,38 +8,38 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
-            --bg: #0C0D0F;
-            --surface: #141518;
-            --surface-hover: #17191D;
-            --border: #26282D;
-            --accent: #E0916B;
-            --accent-hover: #D9835A;
-            --on-accent: #151517;
-            --text: #F4F2EE;
-            --text-muted: #8A877F;
+            --bg: #FAF9F5;
+            --surface: #FFFFFF;
+            --surface-hover: #F5F3ED;
+            --border: #1A1A1A;
+            --accent: #0066CC;
+            --accent-hover: #004499;
+            --on-accent: #FFFFFF;
+            --text: #1A1A1A;
+            --text-muted: #5A5A5A;
             --danger: #E11D48;
             --success: #10B981;
-            --accent-glow: rgba(224, 145, 107, 0.08);
+            --accent-glow: rgba(0, 102, 204, 0.08);
             --card-padding: 32px 24px;
             --btn-height: 48px;
             --font-size-base: 0.9rem;
         }
 
-        /* Grandma Mode / High Contrast Warm Light Theme */
+        /* Grandma Mode scales text/inputs larger but keeps the clean gallery theme */
         body.grandma-mode {
-            --bg: #FBFBFA;
+            --bg: #FAF9F5;
             --surface: #FFFFFF;
-            --surface-hover: #F6F4EF;
-            --border: #D8D6D1;
-            --accent: #D9835A;
-            --accent-hover: #C9744B;
+            --surface-hover: #F5F3ED;
+            --border: #1A1A1A;
+            --accent: #0052A3;
+            --accent-hover: #003D7A;
             --on-accent: #FFFFFF;
-            --text: #1C1D1F;
-            --text-muted: #615E57;
-            --accent-glow: rgba(217, 131, 90, 0.08);
+            --text: #1A1A1A;
+            --text-muted: #4F4F4F;
+            --accent-glow: rgba(0, 82, 163, 0.08);
             --card-padding: 40px 28px;
-            --btn-height: 56px;
-            --font-size-base: 1.1rem;
+            --btn-height: 58px;
+            --font-size-base: 1.15rem;
         }
 
         * {
@@ -101,15 +101,15 @@
 
         .card {
             background: var(--surface);
-            border: 1px solid var(--border);
+            border: 2px solid var(--border);
             border-radius: 16px;
             padding: var(--card-padding);
-            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         body.grandma-mode .card {
-            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 6px 30px rgba(0, 0, 0, 0.06);
         }
 
         h1 {
