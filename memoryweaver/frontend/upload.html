@@ -8,25 +8,27 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
-            --bg: #F4F6F9;
+            --bg: #FCFCF9;
             --card-bg: #FFFFFF;
-            --border: #E6E9ED;
+            --border: #1A1A1A;
             --text: #1A1A1A;
-            --text-muted: #666D77;
-            --accent: #00A2FF;
-            --accent-glow: rgba(0, 162, 255, 0.08);
-            --accent-grad: #00A2FF;
+            --text-muted: #5D5D5D;
+            --accent: #FF5A5F;
+            --accent-glow: rgba(255, 90, 95, 0.08);
+            --accent-grad: #FF5A5F;
             --on-accent: #FFFFFF;
-            --danger: #E11D48;
+            --danger: #FF4D4D;
             --success: #10B981;
+            --card-shadow: 6px 6px 0px #1A1A1A;
+            --btn-shadow: 3px 3px 0px #1A1A1A;
         }
 
         body {
             font-family: 'Outfit', sans-serif;
-            background-color: var(--bg);
+            background-color: #F0F2F5;
             color: var(--text);
             margin: 0;
-            padding: 0 0 3rem 0;
+            padding: 2rem 0 4rem 0;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -39,7 +41,7 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
-            padding: 12px;
+            padding: 16px;
             box-sizing: border-box;
         }
 
@@ -52,10 +54,10 @@
 
         .card {
             background-color: var(--card-bg);
-            border: 2px solid var(--border);
-            border-radius: 16px;
-            padding: 16px;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+            border: 3.5px solid var(--border);
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: var(--card-shadow);
         }
 
         @media (min-width: 768px) {
@@ -66,42 +68,48 @@
 
         header {
             text-align: center;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
         }
 
         header h1 {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 2.2rem;
+            font-size: 2.4rem;
             font-weight: 800;
             color: var(--text);
-            margin: 0 0 6px 0;
-            letter-spacing: -0.5px;
+            margin: 0 0 8px 0;
+            letter-spacing: -1px;
         }
 
         header p {
             color: var(--text-muted);
-            font-size: 0.95rem;
+            font-size: 1rem;
         }
 
         /* Tabs */
         .tabs-header {
             display: flex;
             gap: 12px;
-            margin-bottom: 8px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 10px;
+            margin-bottom: 12px;
+            border-bottom: 2.5px solid var(--border);
+            padding-bottom: 12px;
         }
 
         .tab-btn {
             background: none;
-            border: none;
-            color: var(--text-muted);
+            border: 2.5px solid var(--border);
+            color: var(--text);
             font-size: 0.95rem;
-            font-weight: 600;
-            padding: 6px 14px;
+            font-weight: 700;
+            padding: 8px 16px;
             cursor: pointer;
-            border-radius: 8px;
+            border-radius: 12px;
+            box-shadow: var(--btn-shadow);
             transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 4px 4px 0px var(--border);
         }
 
         .tab-btn.active {
