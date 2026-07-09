@@ -475,6 +475,13 @@ class IngestRequest(BaseModel):
     session_id: str = "default"
 
 
+class PhotoActionRequest(BaseModel):
+    session_id: str
+    filename: str
+    action: str
+    text_context: str = None
+
+
 class CreateSessionRequest(BaseModel):
     name: str
     event_type: str = "trip"
@@ -827,6 +834,97 @@ async def save_photo_voice(
             json.dump(photos_meta, f, indent=4)
             
         return {"status": "success", "message": "Voice note and transcription saved successfully."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@app.post("/api/photo-action", dependencies=[Depends(require_admin_token)])
+def run_photo_action(req: PhotoActionRequest):
+    """Executes professional post-processing critique, transcription polishing, or exposure slider filters."""
+    try:
+        session_storage = StorageHelper(session_id=req.session_id)
+        safe_filename = os.path.basename(req.filename)
+        full_path = os.path.join(session_storage.local_base, "uploads", safe_filename)
+        if not os.path.exists(full_path):
+            raise HTTPException(status_code=404, detail="Photo not found")
+            
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            return {"status": "error", "message": "Gemini API key is not set."}
+            
+        from google import genai
+        from PIL import Image
+        client = genai.Client(api_key=api_key)
+        
+        result_text = ""
+        
+        if req.action == "enhance_text":
+            text_to_clean = req.text_context or ""
+            if not text_to_clean.strip():
+                return {"status": "success", "result": ""}
+            prompt = (
+                "You are an editor for a travel journal. Take the following raw speech-to-text transcript "
+                "and clean up its grammar, punctuation, and phrasing so it reads like a warm, descriptive diary memory. "
+                "Keep it concise, and retain the original voice and sentiment. Output ONLY the polished narrative:\n\n"
+                f"{text_to_clean}"
+            )
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt
+            )
+            result_text = response.text.strip()
+            
+            # Save it back to metadata file as the new transcription
+            try:
+                session_dir = os.path.join(session_storage.local_base, "sessions", req.session_id)
+                metadata_file = os.path.join(session_dir, "photos_metadata.json")
+                photos_meta = {}
+                if os.path.exists(metadata_file):
+                    with open(metadata_file, "r") as f:
+                        photos_meta = json.load(f)
+                if req.filename not in photos_meta:
+                    photos_meta[req.filename] = {}
+                photos_meta[req.filename]["transcription"] = result_text
+                os.makedirs(session_dir, exist_ok=True)
+                with open(metadata_file, "w") as f:
+                    json.dump(photos_meta, f, indent=4)
+            except Exception:
+                pass
+                
+        else:
+            # Actions involving Gemini Vision
+            with Image.open(full_path) as img:
+                if img.mode not in ('RGB', 'RGBA'):
+                    img = img.convert('RGB')
+                    
+                if req.action == "crop_guide":
+                    prompt = (
+                        "You are a professional photographer. Analyze the composition of this photo and "
+                        "recommend optimal cropping options. Provide clear rule-of-thirds advice, focal subject position, "
+                        "and potential aspect ratio adjustments (e.g. 4:3, 16:9) to enhance its visual impact."
+                    )
+                elif req.action == "exposure_slider":
+                    prompt = (
+                        "You are a professional Lightroom colorist. Critique the lighting and color balance of this photo. "
+                        "Suggest exact slider values between -100 and +100 for: Exposure, Contrast, Highlights, Shadows, "
+                        "Whites, Blacks, Temp, and Tint to make the colors pop beautifully."
+                    )
+                elif req.action == "quality_check":
+                    prompt = (
+                        "You are a technical camera inspector. Perform a quality check on this photo. "
+                        "Determine if it has blurriness, compression artifacts, focus issues, or if it is a screenshot/meme. "
+                        "Provide a brief report confirming if it is high quality or noting any defects."
+                    )
+                else:
+                    return {"status": "error", "message": f"Unsupported action: {req.action}"}
+                    
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=[img, prompt]
+                )
+                result_text = response.text.strip()
+                
+        return {"status": "success", "result": result_text}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 

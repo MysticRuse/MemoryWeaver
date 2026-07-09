@@ -1611,6 +1611,23 @@
                                 </div>
                                 <div id="gemini-summary" class="gemini-analysis-summary">Loading visual summary...</div>
                                 <p id="gemini-details" class="gemini-analysis-text">Requesting curation analysis...</p>
+                                
+                                <!-- Photographic Actions Toolbar -->
+                                <div style="display: flex; gap: 8px; margin-top: 10px; border-top: 1.5px solid rgba(235, 35, 113, 0.1); padding-top: 12px; flex-wrap: wrap;">
+                                    <button class="btn btn-action" onclick="runPhotoAction('crop_guide'); event.preventDefault();" style="flex: 1; min-width: 80px; padding: 6px; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1.5px solid var(--border); border-radius: 12px; background: #FFFFFF; font-weight: 700; cursor: pointer;" title="Composition & Crop Guide">
+                                        <i data-lucide="crop" style="width: 13px; height: 13px; color: var(--accent);"></i> Crop
+                                    </button>
+                                    <button class="btn btn-action" onclick="runPhotoAction('exposure_slider'); event.preventDefault();" style="flex: 1; min-width: 80px; padding: 6px; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1.5px solid var(--border); border-radius: 12px; background: #FFFFFF; font-weight: 700; cursor: pointer;" title="Lightroom Slider Adjustments">
+                                        <i data-lucide="sliders" style="width: 13px; height: 13px; color: var(--accent);"></i> Colors
+                                    </button>
+                                    <button class="btn btn-action" onclick="runPhotoAction('quality_check'); event.preventDefault();" style="flex: 1; min-width: 80px; padding: 6px; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1.5px solid var(--border); border-radius: 12px; background: #FFFFFF; font-weight: 700; cursor: pointer;" title="Blur & Blurriness Check">
+                                        <i data-lucide="shield-alert" style="width: 13px; height: 13px; color: var(--accent);"></i> Quality
+                                    </button>
+                                    <button class="btn btn-action" onclick="runPhotoAction('enhance_text'); event.preventDefault();" style="flex: 1; min-width: 80px; padding: 6px; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1.5px solid var(--border); border-radius: 12px; background: #FFFFFF; font-weight: 700; cursor: pointer;" title="Polish Transcription Narrative">
+                                        <i data-lucide="feather" style="width: 13px; height: 13px; color: var(--accent);"></i> Polish
+                                    </button>
+                                </div>
+                                <div id="analysis-action-result" style="display: none; background: #FFFFFF; border: 1.5px solid var(--border); border-radius: 12px; padding: 12px; font-size: 12px; margin-top: 10px; line-height: 1.5; color: var(--text);"></div>
                             </div>
 
                             <!-- 2. Voice Note Recorder Card -->
@@ -2123,6 +2140,7 @@
         function closePhotoDetails() {
             stopVoiceRecording();
             document.getElementById('photo-detail-section').style.display = 'none';
+            document.getElementById('analysis-action-result').style.display = 'none';
             // Clear selected border
             document.querySelectorAll('.pool-photo-card').forEach(c => {
                 c.classList.remove('selected-card');
@@ -2148,6 +2166,7 @@
             
             selectedFilename = filename;
             cardElement.classList.add('selected-card');
+            document.getElementById('analysis-action-result').style.display = 'none';
             
             // 1. Immediately show details panel & enlarged image preview
             const imgUrl = `/media?filename=${encodeURIComponent(filename)}&session_id=${encodeURIComponent(getSessionId())}`;
@@ -2313,6 +2332,62 @@
                 document.getElementById('gemini-summary').textContent = 'Visual Summary Unavailable';
                 document.getElementById('gemini-details').textContent = 'Could not refresh photo analysis.';
                 document.getElementById('gemini-rating').textContent = 'N/A';
+            }
+        }
+
+        async function runPhotoAction(actionName) {
+            if (!selectedFilename) return;
+            
+            const resultBox = document.getElementById('analysis-action-result');
+            resultBox.style.display = 'block';
+            resultBox.innerHTML = `<strong>Processing ${actionName.replace('_', ' ')}...</strong><br>Sending request to photographer tools...`;
+            
+            let textContext = null;
+            if (actionName === 'enhance_text') {
+                textContext = document.getElementById('transcription-editor').value;
+                if (!textContext.trim()) {
+                    resultBox.innerHTML = `<strong>Warning:</strong> Voice Story text is empty. Type some notes first!`;
+                    return;
+                }
+            }
+            
+            try {
+                const res = await fetch('/api/photo-action', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...authHeaders()
+                    },
+                    body: JSON.stringify({
+                        session_id: getSessionId(),
+                        filename: selectedFilename,
+                        action: actionName,
+                        text_context: textContext
+                    })
+                });
+                
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                
+                if (data.status !== 'success') {
+                    throw new Error(data.message || "Failed to process photo action");
+                }
+                
+                // Print output in user-friendly format
+                let prefix = "";
+                if (actionName === 'crop_guide') prefix = "✂️ <strong>Composition & Crop Guide:</strong><br>";
+                if (actionName === 'exposure_slider') prefix = "🎨 <strong>Sliders Suggestion:</strong><br>";
+                if (actionName === 'quality_check') prefix = "🔍 <strong>Quality Inspector Report:</strong><br>";
+                if (actionName === 'enhance_text') {
+                    prefix = "✍️ <strong>Polished Narrative saved!</strong><br>";
+                    // Also update the text area with the enhanced narrative!
+                    document.getElementById('transcription-editor').value = data.result || '';
+                }
+                
+                resultBox.innerHTML = `${prefix}${data.result.replace(/\n/g, '<br>')}`;
+            } catch (err) {
+                console.error("Error executing photo action:", err);
+                resultBox.innerHTML = `<span style="color: var(--danger);"><strong>Error:</strong> ${err.message}</span>`;
             }
         }
 
