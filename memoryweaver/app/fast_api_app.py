@@ -724,7 +724,7 @@ def analyze_all_photos_background(session_id: str):
                         "}"
                     )
                     response = client.models.generate_content(
-                        model='gemini-2.5-flash',
+                        model='gemini-3-flash-preview',
                         contents=[img, prompt]
                     )
                     text = response.text
@@ -904,7 +904,7 @@ def get_photo_metadata(filename: str, session_id: str = "default", force_refresh
                             "}"
                         )
                         response = client.models.generate_content(
-                            model='gemini-2.5-flash',
+                            model='gemini-3-flash-preview',
                             contents=[img, prompt]
                         )
                         text = response.text
@@ -1220,7 +1220,7 @@ def run_photo_action(req: PhotoActionRequest):
                 f"{text_to_clean}"
             )
             response = client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-3-flash-preview',
                 contents=prompt
             )
             result_text = response.text.strip()
@@ -1281,7 +1281,7 @@ def run_photo_action(req: PhotoActionRequest):
                     return {"status": "error", "message": f"Unsupported action: {req.action}"}
                     
                 response = client.models.generate_content(
-                    model='gemini-2.5-flash',
+                    model='gemini-3-flash-preview',
                     contents=[img, prompt]
                 )
                 result_text = response.text.strip()
@@ -1381,7 +1381,7 @@ def run_magic_enhance(req: MagicEnhanceRequest):
                 "}"
             )
             response = client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-3-flash-preview',
                 contents=[img, prompt]
             )
             text = response.text
@@ -1545,7 +1545,7 @@ async def curation_chat(request: Request):
     
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3-flash-preview",
             contents=contents,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction

@@ -107,7 +107,7 @@ def score_photos_as_judge_batch(photo_batch: list, others_summary: str = "") -> 
     results_map = {}
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3-flash-preview",
             contents=contents
         )
         

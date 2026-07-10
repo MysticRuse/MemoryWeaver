@@ -55,7 +55,7 @@ def transcribe_audio_file(file_path: str, log=print) -> str:
         part = types.Part.from_bytes(data=audio_bytes, mime_type="audio/wav")
         
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3-flash-preview",
             contents=["Transcribe this voice memo recording text accurately. Do not add explanations or formatting, just return the transcription text.", part]
         )
         transcript = response.text.strip()
@@ -92,7 +92,7 @@ def ocr_and_classify_document(file_path: str, log=print) -> dict:
         )
         
         res = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3-flash-preview",
             contents=[
                 types.Part.from_bytes(data=file_bytes, mime_type=mime),
                 prompt

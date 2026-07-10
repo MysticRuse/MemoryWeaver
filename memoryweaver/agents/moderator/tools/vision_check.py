@@ -79,7 +79,7 @@ def run_vision_moderation_batch(photo_batch: list) -> list:
     results_map = {}
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3-flash-preview",
             contents=contents
         )
         

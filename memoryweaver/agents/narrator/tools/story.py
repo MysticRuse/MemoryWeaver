@@ -40,7 +40,7 @@ def generate_trip_story(journal_entries_json: str, destination: str = "our trip"
 
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3-flash-preview",
             contents=story_prompt
         )
         return response.text.strip()
