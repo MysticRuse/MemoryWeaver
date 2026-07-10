@@ -495,19 +495,6 @@
     </nav>
 
     <div class="container">
-        <header style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
-            <div>
-                <h1>AI Album Cleaner & Vault</h1>
-            </div>
-            
-            <div style="display: flex; gap: 8px; align-items: center;">
-                <label style="font-weight: 700; font-size: 12px; color: var(--text-muted);">Active Event:</label>
-                <select id="session-select" class="select-input" onchange="loadSessionData()">
-                    <option value="default">Default Session</option>
-                </select>
-                <button class="btn btn-primary" onclick="startAIScan()"><i data-lucide="sparkles"></i> Run AI Album Scan</button>
-            </div>
-        </header>
 
         <!-- Progress Log -->
         <div class="progress-container" id="scan-progress-area">
@@ -658,22 +645,24 @@
                 const res = await fetch('/api/sessions');
                 const data = await res.json();
                 const select = document.getElementById('session-select');
-                select.innerHTML = '';
-                if (data.sessions && data.sessions.length > 0) {
-                    data.sessions.forEach(s => {
+                if (select) {
+                    select.innerHTML = '';
+                    if (data.sessions && data.sessions.length > 0) {
+                        data.sessions.forEach(s => {
+                            const opt = document.createElement('option');
+                            opt.value = s.session_id;
+                            opt.textContent = s.name;
+                            if (s.session_id === getSessionId()) {
+                                opt.selected = true;
+                            }
+                            select.appendChild(opt);
+                        });
+                    } else {
                         const opt = document.createElement('option');
-                        opt.value = s.session_id;
-                        opt.textContent = s.name;
-                        if (s.session_id === getSessionId()) {
-                            opt.selected = true;
-                        }
+                        opt.value = 'default';
+                        opt.textContent = 'Default Session';
                         select.appendChild(opt);
-                    });
-                } else {
-                    const opt = document.createElement('option');
-                    opt.value = 'default';
-                    opt.textContent = 'Default Session';
-                    select.appendChild(opt);
+                    }
                 }
                 loadSessionData();
             } catch (e) {
