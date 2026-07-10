@@ -35,16 +35,28 @@ def generate_all_moments_journal(moments_list: list) -> dict:
         "You are the family archivist writing a day-by-day travel journal for a family trip.\n"
         "Here is the chronological list of daily moments/scenes along with details of the top photos captured:\n\n"
         f"{yaml.dump(moments_list)}\n\n"
+        "Each photo entry may include rich EXIF metadata such as:\n"
+        "  - scene_type: Portrait / Landscape / Night Scene — use this to set the scene\n"
+        "  - light_source / brightness: e.g. 'Daylight', 'Cloudy', 'Dim (2.1 EV)' — use for mood/atmosphere\n"
+        "  - flash: whether flash was fired — 'Did not fire' implies natural light\n"
+        "  - subject_distance: Macro / Close / Medium / Far — use for depth of scene description\n"
+        "  - gps_speed / gps_track: motion context (e.g. shot from a moving car)\n"
+        "  - artist / image_description / user_comment: embedded photographer notes\n"
+        "  - timestamp_original: the true capture time — use for time-of-day references\n"
+        "  - altitude / heading: elevation and direction faced\n\n"
         "Generate a factual, personal journal entry for each moment in the first-person plural (we/our).\n"
         "CRITICAL INSTRUCTIONS:\n"
         "- Respond with a YAML array of objects. Each object in the array must contain exactly these two keys:\n"
         "  * moment: (string matching the input moment key exactly)\n"
         "  * entry: (string, exactly 2-3 sentences long describing the moment)\n"
-        "- Do NOT use generic travel clichés or fluffy/flowery filler sentences (e.g. 'creating memories to last a lifetime', 'captivated by the beauty', 'a sight to behold').\n"
-        "- Do refer to specific names of places, buildings, landmarks, or objects visible in the photo details (e.g. Manaus City Palace, Teatro Amazonas, Panama, jungle lodge).\n"
+        "- Actively weave in the EXIF metadata where present (light, mood, motion, distance, direction) to write specific, grounded sentences.\n"
+        "- If artist or image_description is present, attribute the photo and use the caption as context.\n"
+        "- Do NOT use generic travel clichés or fluffy/flowery filler sentences (e.g. 'creating memories to last a lifetime').\n"
+        "- Do refer to specific names of places, buildings, landmarks, or objects visible in the photo details.\n"
         "- Keep the narrative grounded, factual, and interesting.\n"
         "- Respond ONLY with a raw YAML array matching the schema."
     )
+
 
     try:
         response = client.models.generate_content(

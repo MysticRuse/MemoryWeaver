@@ -673,12 +673,41 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
     batched_moments_data = []
     for scene, items in sorted_moments:
         items.sort(key=lambda x: x["score"], reverse=True)
-        top3_info = [{"filename": x["filename"], "caption": x["caption"], "score": x["score"]} for x in items[:3]]
-        
+
+        # Build rich photo details including all EXIF fields for the narrator
+        top3_info = []
+        for x in items[:3]:
+            photo_detail = {
+                "filename": x["filename"],
+                "caption": x["caption"],
+                "score": x["score"],
+            }
+            # Attach EXIF metadata if available using the full rich extractor
+            try:
+                from agents.collector.tools.upload import extract_exif
+                exif_meta = extract_exif(os.path.join(uploads_dir, x["filename"]))
+                # Map rich EXIF fields that are useful for journaling
+                for field in [
+                    "scene_type", "light_source", "flash", "subject_distance",
+                    "brightness", "exposure_program", "artist", "image_description",
+                    "user_comment", "gps_speed", "gps_track", "altitude", "heading",
+                    "timestamp_original", "aperture", "focal_length", "iso"
+                ]:
+                    val = exif_meta.get(field)
+                    if val:
+                        photo_detail[field] = val
+                # GPS as readable coords
+                gps = exif_meta.get("gps", {})
+                if gps.get("latitude") and gps.get("longitude"):
+                    photo_detail["gps"] = f"{gps['latitude']:.4f}, {gps['longitude']:.4f}"
+            except Exception:
+                pass
+            top3_info.append(photo_detail)
+
         # Get coordinates and date
         earliest_p = min(items, key=lambda x: x.get("timestamp", 9999999999.0))
         moment_date = earliest_p.get("date", "Unknown Date")
-        
+
         batched_moments_data.append({
             "moment": scene,
             "date": moment_date,
