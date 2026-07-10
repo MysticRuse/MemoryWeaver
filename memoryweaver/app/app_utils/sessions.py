@@ -57,11 +57,20 @@ class SessionStore:
             except Exception as e:
                 print(f"Failed to initialize GCS client for SessionStore: {e}. Falling back to local storage.")
 
-        if not self.use_gcs:
-            os.makedirs(self.local_base, exist_ok=True)
+        # Check if new install before loading
+        is_new_install = False
+        if self.use_gcs:
+            try:
+                blob = self._bucket.blob(SESSIONS_INDEX_FILE)
+                is_new_install = not blob.exists()
+            except Exception:
+                is_new_install = True
+        else:
+            path = os.path.join(self.local_base, SESSIONS_INDEX_FILE)
+            is_new_install = not os.path.exists(path)
 
         self.data = self._load()
-        self._ensure_default_session()
+        self._ensure_default_session(is_new_install)
         self._backfill_share_codes()
 
     def _load(self) -> dict:
@@ -94,10 +103,12 @@ class SessionStore:
             with open(path, "w") as f:
                 f.write(content)
 
-    def _ensure_default_session(self):
-        """Registers 'default' if missing, so GET /api/sessions always lists the
-        pre-existing single-session install without requiring a migration step."""
-        if DEFAULT_SESSION_ID not in self.data["sessions"]:
+    def _ensure_default_session(self, is_new_install: bool):
+        """Registers 'default' if this is a fresh install and 'default' is missing,
+        so the user has a starting point, but lets them delete it later."""
+        if "sessions" not in self.data:
+            self.data["sessions"] = {}
+        if is_new_install and DEFAULT_SESSION_ID not in self.data["sessions"]:
             self.data["sessions"][DEFAULT_SESSION_ID] = {
                 "session_id": DEFAULT_SESSION_ID,
                 "name": "My Event",
@@ -158,21 +169,42 @@ class SessionStore:
 
     def delete_session(self, session_id: str):
         """Admin-only: Deletes the session metadata and all its local or GCS storage recursively."""
-        if session_id == DEFAULT_SESSION_ID:
-            raise ValueError("The default session cannot be deleted.")
         if session_id in self.data["sessions"]:
             del self.data["sessions"][session_id]
             self._save()
         
         if self.use_gcs:
             try:
-                prefix = f"sessions/{session_id}/"
-                blobs = self._bucket.list_blobs(prefix=prefix)
-                for blob in blobs:
-                    blob.delete()
+                if session_id == DEFAULT_SESSION_ID:
+                    # Clean default flat directories in GCS
+                    for prefix in ("uploads/", "thumbs/", "artefacts/"):
+                        blobs = self._bucket.list_blobs(prefix=prefix)
+                        for blob in blobs:
+                            blob.delete()
+                else:
+                    prefix = f"sessions/{session_id}/"
+                    blobs = self._bucket.list_blobs(prefix=prefix)
+                    for blob in blobs:
+                        blob.delete()
             except Exception as e:
                 print(f"Error deleting GCS session prefix: {e}")
         else:
             import shutil
-            session_path = os.path.join(self.local_base, "sessions", session_id)
-            shutil.rmtree(session_path, ignore_errors=True)
+            if session_id == DEFAULT_SESSION_ID:
+                # Clean default flat directories locally
+                shutil.rmtree(os.path.join(self.local_base, "uploads"), ignore_errors=True)
+                shutil.rmtree(os.path.join(self.local_base, "thumbs"), ignore_errors=True)
+                shutil.rmtree(os.path.join(self.local_base, "artefacts"), ignore_errors=True)
+                # Recreate clean local directories
+                os.makedirs(os.path.join(self.local_base, "uploads"), exist_ok=True)
+                os.makedirs(os.path.join(self.local_base, "thumbs"), exist_ok=True)
+                os.makedirs(os.path.join(self.local_base, "artefacts"), exist_ok=True)
+                mb_path = os.path.join(self.local_base, "memory_bank.json")
+                if os.path.exists(mb_path):
+                    try:
+                        os.remove(mb_path)
+                    except Exception:
+                        pass
+            else:
+                session_path = os.path.join(self.local_base, "sessions", session_id)
+                shutil.rmtree(session_path, ignore_errors=True)

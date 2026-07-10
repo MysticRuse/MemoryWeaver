@@ -520,7 +520,7 @@
             border-bottom: 1px solid rgba(255,255,255,0.03);
             font-family: 'Outfit', sans-serif;
             font-size: 0.8rem;
-            color: var(--text);
+            color: #e2e8f0;
             line-height: 1.4;
         }
         .trajectory-step:last-child {
@@ -530,54 +530,38 @@
             font-family: 'Space Grotesk', sans-serif;
             font-size: 0.75rem;
             font-weight: 700;
-            color: var(--text-muted);
+            color: #94a3b8;
             min-width: 55px;
         }
         .step-agent-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.65rem;
+            font-family: monospace;
+            font-size: 0.72rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.02em;
+            letter-spacing: 0.05em;
+            display: inline-block;
+            min-width: 100px;
         }
         .agent-collector {
-            background: rgba(224, 145, 107, 0.12);
-            color: var(--accent);
-            border: 1px solid rgba(224, 145, 107, 0.3);
+            color: #e0916b;
         }
         .agent-moderator {
-            background: rgba(225, 29, 72, 0.12);
-            color: #E11D48;
-            border: 1px solid rgba(225, 29, 72, 0.3);
+            color: #ef4444;
         }
         .agent-curator {
-            background: rgba(59, 130, 246, 0.12);
             color: #3b82f6;
-            border: 1px solid rgba(59, 130, 246, 0.3);
         }
         .agent-memory {
-            background: rgba(168, 85, 247, 0.12);
             color: #a855f7;
-            border: 1px solid rgba(168, 85, 247, 0.3);
         }
         .agent-narrator {
-            background: rgba(16, 185, 129, 0.12);
             color: #10b981;
-            border: 1px solid rgba(16, 185, 129, 0.3);
         }
         .agent-system {
-            background: rgba(245, 158, 11, 0.12);
             color: #f59e0b;
-            border: 1px solid rgba(245, 158, 11, 0.3);
         }
         .agent-orchestrator {
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--text-muted);
-            border: 1px solid var(--border);
+            color: #94a3b8;
         }
 
         .spinner {
@@ -1653,6 +1637,161 @@
             flex: 1;
             min-width: 200px;
         }
+        .disabled-step-card {
+            opacity: 0.55;
+            pointer-events: none;
+            filter: grayscale(40%);
+            position: relative;
+        }
+
+        /* Share Modal Styles */
+        .share-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            animation: modalFadeIn 0.2s ease-out;
+        }
+        .share-modal-card {
+            background: var(--card-bg);
+            border: 3.5px solid var(--border);
+            border-radius: 24px;
+            box-shadow: var(--card-shadow);
+            max-width: 460px;
+            width: 90%;
+            padding: 24px;
+            box-sizing: border-box;
+            position: relative;
+            animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .share-modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .share-modal-close:hover {
+            background: rgba(0,0,0,0.05);
+            color: var(--text);
+        }
+        .share-qr-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 16px 0;
+            background: #fff;
+            padding: 16px;
+            border: 2.5px solid var(--border);
+            border-radius: 16px;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .share-qr-container:hover {
+            transform: scale(1.02);
+        }
+        .share-link-input-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .share-link-input {
+            flex: 1;
+            padding: 10px 12px;
+            font-size: 13px;
+            font-family: monospace;
+            background: rgba(0,0,0,0.02);
+            border: 2.5px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .share-section-title {
+            font-weight: 700;
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 18px 0 8px 0;
+        }
+        .share-apps-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .share-app-btn {
+            flex: 1;
+            min-width: 100px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: 12px;
+            border: 2.5px solid var(--border);
+            background: #fff;
+            color: var(--text);
+            cursor: pointer;
+            box-shadow: 2px 2px 0px var(--border);
+            transition: all 0.15s;
+        }
+        .share-app-btn:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 3px 3px 0px var(--border);
+        }
+        .share-app-btn:active {
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0px var(--border);
+        }
+        .share-app-btn.btn-whatsapp {
+            background: #25D366;
+            color: #fff;
+        }
+        .share-app-btn.btn-email {
+            background: #3B82F6;
+            color: #fff;
+        }
+        .share-app-btn.btn-sms {
+            background: #10B981;
+            color: #fff;
+        }
+        .share-utilities-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes modalSlideUp {
+            from { transform: translateY(16px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -1815,6 +1954,11 @@
             <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 16px 0;">
                 Pick folders or individual pictures to add to your event album. Blurry pictures and duplicates are automatically filtered out!
             </p>
+
+            <div id="no-active-session-warning-step-2" style="display: none; background: rgba(225, 29, 72, 0.08); border: 2.5px solid var(--danger); border-radius: 16px; padding: 16px; margin-bottom: 16px; color: var(--danger); font-size: 14px; font-weight: 600; align-items: center; gap: 8px;">
+                <i data-lucide="alert-triangle" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
+                <span>⚠️ Please select or create an event in Step 1 first to start adding photos.</span>
+            </div>
 
             <div class="upload-zones-grid">
                 <!-- Folder picking convenience -->
@@ -2083,6 +2227,12 @@
                 <span id="curation-header-title"><i data-lucide="zap" style="width: 20px; height: 20px; color: var(--text-muted); vertical-align: middle; margin-right: 8px;"></i>📖 Step 3: Create Your Memory Storybook</span>
                 <div id="badge-step-3" style="display: flex; flex: 1; justify-content: flex-end;"></div>
             </div>
+            
+            <div id="no-active-session-warning-step-3" style="display: none; background: rgba(225, 29, 72, 0.08); border: 2.5px solid var(--danger); border-radius: 16px; padding: 16px; margin-bottom: 16px; color: var(--danger); font-size: 14px; font-weight: 600; align-items: center; gap: 8px;">
+                <i data-lucide="alert-triangle" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
+                <span>⚠️ Please select or create an event in Step 1 first to build your memory storybook.</span>
+            </div>
+
             <p id="pipeline-only-count" style="font-size: 13px; color: var(--text-muted); margin: 0 0 12px 0;">Checking photo count...</p>
             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                 <select id="pipeline-only-limit" class="input-text" style="padding: 8px 12px; width: 280px; max-width: 100%; flex-shrink: 0;">
@@ -2092,7 +2242,7 @@
                     <option value="100">100 Photos (Comprehensive - Takes Longer)</option>
                     <option value="0">All Photos</option>
                 </select>
-                <button class="btn btn-primary" id="btnRunPipelineOnly" onclick="runPipelineOnly()"><i data-lucide="play" style="width: 14px; height: 14px; margin-right: 6px;"></i> ✨ Write & Build Storybook Now</button>
+                <button class="btn btn-primary" id="btnRunPipelineOnly" onclick="runPipelineOnly()"><i data-lucide="play" style="width: 14px; height: 14px; margin-right: 6px;"></i> ⚡ Curate Photo Pool</button>
             </div>
             <div style="margin-top: 8px; font-size: 12px; color: var(--accent); display: flex; align-items: center; gap: 6px;">
                 <span>🛡️</span> <span><strong>Don't worry:</strong> Clicking this will not finalize your book. You will have a final step to review, swap photos, and approve everything!</span>
@@ -2109,6 +2259,37 @@
                         <li><strong>What does the size mean (50 vs 100)?</strong> Choosing "50 Photos" compiles your top 50 moments. Selecting a larger size (like 100 Photos) builds a longer, more detailed storybook. Because the system performs deep quality analysis on each photo to pick the perfect highlights, larger books take a few extra minutes to compile.</li>
                     </ul>
                 </span>
+            </div>
+            <!-- Curation Console Area -->
+            <div id="curation-console-area" style="display: none; margin-top: 18px;">
+                <!-- Curation Progress Bar -->
+                <div id="curation-progress-container" class="progress-container" style="display: none; margin-bottom: 12px;">
+                    <div class="progress-header">
+                        <span id="curation-progress-phase" style="color: var(--accent);">Running agent processing steps...</span>
+                        <span id="curation-progress-text" style="color: var(--text-muted);">0% (0/0)</span>
+                    </div>
+                    <div class="progress-track">
+                        <div id="curation-progress-fill" class="progress-fill"></div>
+                    </div>
+                </div>
+
+                <div class="console-header" style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <span class="console-title" style="font-size: 13px;">Live Curation Logs</span>
+                    <button class="btn" style="padding: 4px 10px; font-size: 10px; border-radius: 12px; min-height: 24px;" onclick="document.getElementById('curation-log-box').innerHTML = ''">Clear Logs</button>
+                </div>
+                <div class="terminal-wrapper" style="border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: #05070a; box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
+                    <div class="terminal-header" style="background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border); padding: 6px 12px; display: flex; align-items: center; gap: 6px;">
+                        <span style="display:inline-block; width: 10px; height: 10px; border-radius: 50%; background: #ff5f56;"></span>
+                        <span style="display:inline-block; width: 10px; height: 10px; border-radius: 50%; background: #ffbd2e;"></span>
+                        <span style="display:inline-block; width: 10px; height: 10px; border-radius: 50%; background: #27c93f;"></span>
+                        <span style="margin-left: 8px; font-size: 10px; font-weight: 700; color: var(--text-muted); font-family: monospace; letter-spacing: 0.5px;">bash - curation_agent.sh</span>
+                    </div>
+                    <div class="console-window" id="curation-log-box" style="border: none; border-radius: 0; background: transparent; height: 180px; box-shadow: none; white-space: pre-wrap; color: #e2e8f0; text-align: left; padding: 12px; font-family: monospace; font-size: 12px; line-height: 1.4; overflow-y: auto;">
+                        Waiting to curate event photos...
+                    </div>
+                </div>
+                <!-- Placeholder for Curation Summary Card -->
+                <div id="curation-summary-card" class="summary-card" style="display: none; background: rgba(255, 123, 0, 0.03); border: 1px solid rgba(255, 123, 0, 0.15); border-radius: 12px; padding: 1.2rem; margin-top: 1rem;"></div>
             </div>
         </div>
 
@@ -2136,40 +2317,43 @@
             <div id="narrative-proceed-container" style="margin-top: 20px; display: flex; justify-content: center; border-top: 1px solid var(--border); padding-top: 20px;">
                 <button class="btn btn-primary" id="btnRunNarrativeOnly" onclick="runNarrativeOnly()" style="padding: 12px 36px; font-size: 14px; min-height: 44px; display: flex; align-items: center; gap: 8px;">
                     <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i>
-                    <span id="btnRunNarrativeText">Love the Curated Highlights - Proceed to create Trip Highlights</span>
+                    <span id="btnRunNarrativeText">Love the Curated Highlights - Generate StoryBook & Artifacts</span>
                 </button>
             </div>
-        </div>
 
-        <div class="console-container" id="console-area" style="display: none; margin-top: 28px;">
-            <!-- Pipeline Progress Bar -->
-            <div id="pipeline-progress-container" class="progress-container" style="display: none; margin-bottom: 20px;">
-                <div class="progress-header">
-                    <span id="pipeline-progress-phase" style="color: var(--accent);">Running agent processing steps...</span>
-                    <span id="pipeline-progress-text" style="color: var(--text-muted);">0% (0/0)</span>
+            <!-- Narrative Console Area -->
+            <div id="narrative-console-area" style="display: none; margin-top: 18px; border-top: 1px solid var(--border); padding-top: 18px;">
+                <!-- Narrative Progress Bar -->
+                <div id="narrative-progress-container" class="progress-container" style="display: none; margin-bottom: 12px;">
+                    <div class="progress-header">
+                        <span id="narrative-progress-phase" style="color: var(--accent);">Compiling storybook and artifacts...</span>
+                        <span id="narrative-progress-text" style="color: var(--text-muted);">0% (0/0)</span>
+                    </div>
+                    <div class="progress-track">
+                        <div id="narrative-progress-fill" class="progress-fill"></div>
+                    </div>
                 </div>
-                <div class="progress-track">
-                    <div id="pipeline-progress-fill" class="progress-fill"></div>
-                </div>
-            </div>
 
-            <div class="console-header" style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                <span class="console-title">Live Curation Logs</span>
-                <button class="btn" style="padding: 6px 14px; font-size: 11px; border-radius: 15px;" onclick="document.getElementById('log-box').innerHTML = ''">Clear Logs</button>
-            </div>
-            <div class="terminal-wrapper" style="border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: #05070a; box-shadow: 0 8px 30px rgba(0,0,0,0.5);">
-                <div class="terminal-header" style="background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
-                    <span style="display:inline-block; width: 12px; height: 12px; border-radius: 50%; background: #ff5f56;"></span>
-                    <span style="display:inline-block; width: 12px; height: 12px; border-radius: 50%; background: #ffbd2e;"></span>
-                    <span style="display:inline-block; width: 12px; height: 12px; border-radius: 50%; background: #27c93f;"></span>
-                    <span style="margin-left: 12px; font-size: 11px; font-weight: 700; color: var(--text-muted); font-family: monospace; letter-spacing: 0.5px;">bash - memoryweaver_curator_node.sh</span>
+                <div class="console-header" style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <span class="console-title" style="font-size: 13px;">Live Narrative / StoryBook Logs</span>
+                    <button class="btn" style="padding: 4px 10px; font-size: 10px; border-radius: 12px; min-height: 24px;" onclick="document.getElementById('narrative-log-box').innerHTML = ''">Clear Logs</button>
                 </div>
-                <div class="console-window" id="log-box" style="border: none; border-radius: 0; background: transparent; height: 240px; box-shadow: none; white-space: pre-wrap;">
-                    Welcome to the MemoryWeaver Curation terminal...
+                <div class="terminal-wrapper" style="border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: #05070a; box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
+                    <div class="terminal-header" style="background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border); padding: 6px 12px; display: flex; align-items: center; gap: 6px;">
+                        <span style="display:inline-block; width: 10px; height: 10px; border-radius: 50%; background: #ff5f56;"></span>
+                        <span style="display:inline-block; width: 10px; height: 10px; border-radius: 50%; background: #ffbd2e;"></span>
+                        <span style="display:inline-block; width: 10px; height: 10px; border-radius: 50%; background: #27c93f;"></span>
+                        <span style="margin-left: 8px; font-size: 10px; font-weight: 700; color: var(--text-muted); font-family: monospace; letter-spacing: 0.5px;">bash - narrator_agent.sh</span>
+                    </div>
+                    <div class="console-window" id="narrative-log-box" style="border: none; border-radius: 0; background: transparent; height: 180px; box-shadow: none; white-space: pre-wrap; color: #e2e8f0; text-align: left; padding: 12px; font-family: monospace; font-size: 12px; line-height: 1.4; overflow-y: auto;">
+                        Waiting to generate storybook...
+                    </div>
                 </div>
-            </div>
-            <div style="margin-top: 18px; text-align: center;">
-                <a href="/viewer" class="btn btn-primary" id="btnViewerLink" style="display: none; padding: 12px 30px; font-size: 1.1rem; box-shadow: 0 0 15px rgba(255, 123, 0, 0.4); text-decoration: none; border-radius: 8px;">📖 Open Curation Viewer</a>
+                <!-- Placeholder for StoryBook Summary Card -->
+                <div id="narrative-summary-card" class="summary-card" style="display: none; background: rgba(255, 123, 0, 0.03); border: 1px solid rgba(255, 123, 0, 0.15); border-radius: 12px; padding: 1.2rem; margin-top: 1rem;"></div>
+                <div style="margin-top: 12px; text-align: center;" id="narrative-viewer-btn-container">
+                    <a href="/viewer" class="btn btn-primary" id="btnViewerLink" style="display: none; padding: 10px 24px; font-size: 13px; text-decoration: none; border-radius: 8px;">📖 Open Trip Highlights</a>
+                </div>
             </div>
         </div>
     </div>
@@ -3566,21 +3750,21 @@
         }
 
         async function runPipelineOnly() {
-            const logBox = document.getElementById('log-box');
-            document.getElementById('console-area').style.display = 'block';
-            document.getElementById('pipeline-progress-container').style.display = 'block';
-            logBox.innerHTML = 'Starting agent pipeline on the photos already in this event...\n';
+            const logBox = document.getElementById('curation-log-box');
+            document.getElementById('curation-console-area').style.display = 'block';
+            document.getElementById('curation-progress-container').style.display = 'block';
+            if (logBox) logBox.innerHTML = 'Starting curation agent pipeline...\n';
 
             const limitVal = document.getElementById('pipeline-only-limit').value;
             try {
                 const res = await fetch(withSession(`/generate?limit=${limitVal}&stage=curate`), { method: 'POST', headers: authHeaders() });
                 if (handleAuthFailure(res)) return;
                 const data = await res.json();
-                if (data.status !== 'success') throw new Error(data.message || 'Failed to start pipeline');
-                startProgressPolling('pipeline');
-                startLogPolling();
+                if (data.status !== 'success') throw new Error(data.message || 'Failed to start curation');
+                startProgressPolling('pipeline', 'curate');
+                startLogPolling('curate');
             } catch (err) {
-                logBox.innerHTML += `ERROR: ${err.message}\n`;
+                if (logBox) logBox.innerHTML += `ERROR: ${err.message}\n`;
             }
         }
 
@@ -3590,8 +3774,10 @@
             btn.disabled = true;
             btnText.textContent = 'Generating Trip Highlights Storybook...';
             
-            document.getElementById('console-area').style.display = 'block';
-            document.getElementById('pipeline-progress-container').style.display = 'block';
+            const logBox = document.getElementById('narrative-log-box');
+            document.getElementById('narrative-console-area').style.display = 'block';
+            document.getElementById('narrative-progress-container').style.display = 'block';
+            if (logBox) logBox.innerHTML = 'Starting narrative agent pipeline...\n';
             
             try {
                 const limitVal = document.getElementById('pipeline-only-limit').value;
@@ -3599,13 +3785,12 @@
                 if (handleAuthFailure(res)) return;
                 const data = await res.json();
                 if (data.status !== 'success') throw new Error(data.message || 'Failed to start narrative pipeline');
-                startProgressPolling('pipeline');
-                startLogPolling();
+                startProgressPolling('pipeline', 'narrate');
+                startLogPolling('narrate');
             } catch (err) {
-                const logBox = document.getElementById('log-box');
                 if (logBox) logBox.innerHTML += `ERROR: ${err.message}\n`;
                 btn.disabled = false;
-                btnText.textContent = 'Love the Curated Highlights - Proceed to create Trip Highlights';
+                btnText.textContent = 'Love the Curated Highlights - Generate StoryBook & Artifacts';
             }
         }
 
@@ -3634,11 +3819,38 @@
 
                 const active = getSessionId();
 
+                let activeSession = (data.sessions || []).find(s => s.session_id === active);
+                if (!activeSession && data.sessions && data.sessions.length > 0) {
+                    localStorage.setItem('mw_session_id', data.sessions[0].session_id);
+                    activeSession = data.sessions[0];
+                }
+
                 // Update uploader header title with active session name
-                const activeSession = (data.sessions || []).find(s => s.session_id === active);
                 const uploadHeader = document.getElementById('upload-header-title');
-                if (uploadHeader && activeSession) {
-                    uploadHeader.innerHTML = `<i data-lucide="image" style="width: 20px; height: 20px; color: var(--text-muted); vertical-align: middle; margin-right: 8px;"></i>Add Photos to <span style="font-weight: 800; color: var(--accent);">"${activeSession.name}"</span>`;
+                if (uploadHeader) {
+                    if (activeSession) {
+                        uploadHeader.innerHTML = `<i data-lucide="image" style="width: 20px; height: 20px; color: var(--text-muted); vertical-align: middle; margin-right: 8px;"></i>Add Photos to <span style="font-weight: 800; color: var(--accent);">"${activeSession.name}"</span>`;
+                    } else {
+                        uploadHeader.innerHTML = `<i data-lucide="image" style="width: 20px; height: 20px; color: var(--text-muted); vertical-align: middle; margin-right: 8px;"></i>Add Photos to Your Memory Album`;
+                    }
+                }
+
+                // Enable/disable card-step-2 and card-step-3 depending on active session presence
+                const cardStep2 = document.getElementById('card-step-2');
+                const cardStep3 = document.getElementById('card-step-3');
+                const warnStep2 = document.getElementById('no-active-session-warning-step-2');
+                const warnStep3 = document.getElementById('no-active-session-warning-step-3');
+
+                if (!activeSession) {
+                    if (cardStep2) cardStep2.classList.add('disabled-step-card');
+                    if (cardStep3) cardStep3.classList.add('disabled-step-card');
+                    if (warnStep2) warnStep2.style.display = 'flex';
+                    if (warnStep3) warnStep3.style.display = 'flex';
+                } else {
+                    if (cardStep2) cardStep2.classList.remove('disabled-step-card');
+                    if (cardStep3) cardStep3.classList.remove('disabled-step-card');
+                    if (warnStep2) warnStep2.style.display = 'none';
+                    if (warnStep3) warnStep3.style.display = 'none';
                 }
 
                 // 1. Populate Event Type/Category radio pills
@@ -3672,127 +3884,124 @@
                 const listDiv = document.getElementById('event-list');
                 if (listDiv) {
                     listDiv.innerHTML = '';
-                    data.sessions.forEach(s => {
-                        const isActive = s.session_id === active;
-                        const row = document.createElement('div');
-                        row.className = `event-row${isActive ? ' active' : ''}`;
+                    if (!data.sessions || data.sessions.length === 0) {
+                        listDiv.innerHTML = `
+                            <div class="empty-sessions-notice" style="padding: 24px; text-align: center; border: 2.5px dashed var(--border); border-radius: 16px; background: rgba(255, 255, 255, 0.02); margin-top: 8px;">
+                                <i data-lucide="compass" style="width: 32px; height: 32px; color: var(--text-muted); margin-bottom: 8px;"></i>
+                                <p style="font-weight: 700; margin-bottom: 4px; color: var(--text); font-size: 14px;">No events created yet</p>
+                                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 0;">To get started, choose an event category above, enter an event name, and click "Create Event" to build your memory album.</p>
+                            </div>
+                        `;
+                        lucide.createIcons();
+                    } else {
+                        data.sessions.forEach(s => {
+                            const isActive = s.session_id === active;
+                            const row = document.createElement('div');
+                            row.className = `event-row${isActive ? ' active' : ''}`;
 
-                        if (s.session_id === editingSessionId) {
-                            // Render inline edit fields
-                            const editContainer = document.createElement('div');
-                            editContainer.className = 'edit-event-input-container';
+                            if (s.session_id === editingSessionId) {
+                                // Render inline edit fields
+                                const editContainer = document.createElement('div');
+                                editContainer.className = 'edit-event-input-container';
 
-                            const input = document.createElement('input');
-                            input.type = 'text';
-                            input.id = `edit-name-${s.session_id}`;
-                            input.className = 'input-text';
-                            input.value = s.name;
-                            input.style.flex = '1';
-                            input.style.padding = '6px 10px';
-                            input.style.fontSize = '13px';
+                                const input = document.createElement('input');
+                                input.type = 'text';
+                                input.id = `edit-name-${s.session_id}`;
+                                input.className = 'input-text';
+                                input.value = s.name;
+                                input.style.flex = '1';
+                                input.style.padding = '6px 10px';
+                                input.style.fontSize = '13px';
 
-                            const select = document.createElement('select');
-                            select.id = `edit-type-${s.session_id}`;
-                            select.className = 'input-text';
-                            select.style.padding = '6px 10px';
-                            select.style.fontSize = '13px';
-                            select.style.marginLeft = '8px';
-                            (data.event_types || []).forEach(t => {
-                                const opt = document.createElement('option');
-                                opt.value = t;
-                                opt.textContent = `${t.replace('_', ' ')}`;
-                                if (t === s.event_type) opt.selected = true;
-                                select.appendChild(opt);
-                            });
+                                const select = document.createElement('select');
+                                select.id = `edit-type-${s.session_id}`;
+                                select.className = 'input-text';
+                                select.style.padding = '6px 10px';
+                                select.style.fontSize = '13px';
+                                select.style.marginLeft = '8px';
+                                (data.event_types || []).forEach(t => {
+                                    const opt = document.createElement('option');
+                                    opt.value = t;
+                                    opt.textContent = `${t.replace('_', ' ')}`;
+                                    if (t === s.event_type) opt.selected = true;
+                                    select.appendChild(opt);
+                                });
 
-                            editContainer.appendChild(input);
-                            editContainer.appendChild(select);
-                            row.appendChild(editContainer);
+                                editContainer.appendChild(input);
+                                editContainer.appendChild(select);
+                                row.appendChild(editContainer);
 
-                            // Edit Actions
-                            const actions = document.createElement('div');
-                            actions.className = 'event-actions';
+                                // Edit Actions
+                                const actions = document.createElement('div');
+                                actions.className = 'event-actions';
 
-                            const btnSave = document.createElement('button');
-                            btnSave.className = 'event-action-btn active-indicator';
-                            btnSave.innerHTML = '<i data-lucide="save" style="width: 12px; height: 12px; margin-right: 4px;"></i> Save';
-                            btnSave.onclick = () => saveEditEvent(s.session_id);
+                                const btnSave = document.createElement('button');
+                                btnSave.className = 'event-action-btn active-indicator';
+                                btnSave.innerHTML = '<i data-lucide="save" style="width: 12px; height: 12px; margin-right: 4px;"></i> Save';
+                                btnSave.onclick = () => saveEditEvent(s.session_id);
 
-                            const btnCancel = document.createElement('button');
-                            btnCancel.className = 'event-action-btn';
-                            btnCancel.innerHTML = '<i data-lucide="x" style="width: 12px; height: 12px; margin-right: 4px;"></i> Cancel';
-                            btnCancel.onclick = () => { editingSessionId = null; loadSessions(); };
+                                const btnCancel = document.createElement('button');
+                                btnCancel.className = 'event-action-btn';
+                                btnCancel.innerHTML = '<i data-lucide="x" style="width: 12px; height: 12px; margin-right: 4px;"></i> Cancel';
+                                btnCancel.onclick = () => { editingSessionId = null; loadSessions(); };
 
-                            actions.appendChild(btnSave);
-                            actions.appendChild(btnCancel);
-                            row.appendChild(actions);
+                                actions.appendChild(btnSave);
+                                actions.appendChild(btnCancel);
+                                row.appendChild(actions);
 
-                        } else {
-                            // Render normal event row
-                            const info = document.createElement('div');
-                            info.className = 'event-info';
-                            info.onclick = () => onSessionSwitched(s.session_id);
-
-                            info.innerHTML = `
-                                <i data-lucide="${EVENT_ICONS[s.event_type] || 'camera'}" style="width: 18px; height: 18px; margin-right: 6px; color: var(--accent);"></i>
-                                <span class="event-name-text">${s.name}</span>
-                                <span class="event-category-badge">${s.event_type.replace('_', ' ')}</span>
-                            `;
-                            row.appendChild(info);
-
-                            // Normal Actions
-                            const actions = document.createElement('div');
-                            actions.className = 'event-actions';
-
-                            // Active indicator or Switch button
-                            if (isActive) {
-                                const activeBadge = document.createElement('span');
-                                activeBadge.className = 'event-action-btn active-indicator';
-                                activeBadge.innerHTML = '<i data-lucide="check" style="width: 12px; height: 12px; margin-right: 4px;"></i> Active';
-                                actions.appendChild(activeBadge);
                             } else {
-                                const btnActivate = document.createElement('button');
-                                btnActivate.className = 'event-action-btn';
-                                btnActivate.innerHTML = '<i data-lucide="play" style="width: 12px; height: 12px; margin-right: 4px;"></i> Set Active';
-                                btnActivate.onclick = () => onSessionSwitched(s.session_id);
-                                actions.appendChild(btnActivate);
-                            }
+                                // Render normal event row
+                                const info = document.createElement('div');
+                                info.className = 'event-info';
+                                info.onclick = () => onSessionSwitched(s.session_id);
 
-                            // Edit
-                            const btnEdit = document.createElement('button');
-                            btnEdit.className = 'event-action-btn btn-edit';
-                            btnEdit.innerHTML = '<i data-lucide="edit-2" style="width: 12px; height: 12px; margin-right: 4px;"></i> Edit';
-                            btnEdit.onclick = (e) => {
-                                e.stopPropagation();
-                                editingSessionId = s.session_id;
-                                loadSessions();
-                            };
-                            actions.appendChild(btnEdit);
+                                info.innerHTML = `
+                                    <i data-lucide="${EVENT_ICONS[s.event_type] || 'camera'}" style="width: 18px; height: 18px; margin-right: 6px; color: var(--accent);"></i>
+                                    <span class="event-name-text">${s.name}</span>
+                                    <span class="event-category-badge">${s.event_type.replace('_', ' ')}</span>
+                                `;
+                                row.appendChild(info);
 
-                            // Copy Link
-                            const btnCopyLink = document.createElement('button');
-                            btnCopyLink.className = 'event-action-btn';
-                            btnCopyLink.id = `btn-link-${s.session_id}`;
-                            btnCopyLink.innerHTML = '<i data-lucide="link" style="width: 12px; height: 12px; margin-right: 4px;"></i> Copy Link';
-                            btnCopyLink.onclick = (e) => {
-                                e.stopPropagation();
-                                handleCopyLink(s.session_id);
-                            };
-                            actions.appendChild(btnCopyLink);
+                                // Normal Actions
+                                const actions = document.createElement('div');
+                                actions.className = 'event-actions';
 
-                            // Copy QR
-                            const btnCopyQR = document.createElement('button');
-                            btnCopyQR.className = 'event-action-btn';
-                            btnCopyQR.id = `btn-qr-${s.session_id}`;
-                            btnCopyQR.innerHTML = '<i data-lucide="qr-code" style="width: 12px; height: 12px; margin-right: 4px;"></i> Copy QR';
-                            btnCopyQR.onclick = (e) => {
-                                e.stopPropagation();
-                                handleCopyQR(s.session_id);
-                            };
-                            actions.appendChild(btnCopyQR);
+                                // Active indicator or Switch button
+                                if (isActive) {
+                                    const activeBadge = document.createElement('span');
+                                    activeBadge.className = 'event-action-btn active-indicator';
+                                    activeBadge.innerHTML = '<i data-lucide="check" style="width: 12px; height: 12px; margin-right: 4px;"></i> Active';
+                                    actions.appendChild(activeBadge);
+                                } else {
+                                    const btnActivate = document.createElement('button');
+                                    btnActivate.className = 'event-action-btn';
+                                    btnActivate.innerHTML = '<i data-lucide="play" style="width: 12px; height: 12px; margin-right: 4px;"></i> Set Active';
+                                    btnActivate.onclick = () => onSessionSwitched(s.session_id);
+                                    actions.appendChild(btnActivate);
+                                }
 
-                            // Delete (except default)
-                            if (s.session_id !== 'default') {
+                                // Edit
+                                const btnEdit = document.createElement('button');
+                                btnEdit.className = 'event-action-btn btn-edit';
+                                btnEdit.innerHTML = '<i data-lucide="edit-2" style="width: 12px; height: 12px; margin-right: 4px;"></i> Edit';
+                                btnEdit.onclick = (e) => {
+                                    e.stopPropagation();
+                                    editingSessionId = s.session_id;
+                                    loadSessions();
+                                };
+                                actions.appendChild(btnEdit);
+
+                                // Share Event (Modal popup)
+                                const btnShare = document.createElement('button');
+                                btnShare.className = 'event-action-btn';
+                                btnShare.innerHTML = '<i data-lucide="share-2" style="width: 12px; height: 12px; margin-right: 4px;"></i> Share';
+                                btnShare.onclick = (e) => {
+                                    e.stopPropagation();
+                                    openShareModal(s.session_id, s.name);
+                                };
+                                actions.appendChild(btnShare);
+
+                                // Delete (all sessions allowed)
                                 const btnDelete = document.createElement('button');
                                 btnDelete.className = 'event-action-btn btn-delete';
                                 btnDelete.innerHTML = '<i data-lucide="trash-2" style="width: 12px; height: 12px; margin-right: 4px;"></i> Delete';
@@ -3801,14 +4010,14 @@
                                     deleteEvent(s.session_id, s.name);
                                 };
                                 actions.appendChild(btnDelete);
+
+                                row.appendChild(actions);
                             }
 
-                            row.appendChild(actions);
-                        }
-
-                        listDiv.appendChild(row);
-                    });
-                    lucide.createIcons();
+                            listDiv.appendChild(row);
+                        });
+                        lucide.createIcons();
+                    }
                 }
             } catch (e) {
                 console.error('Failed to load sessions:', e);
@@ -3843,56 +4052,177 @@
             }
         }
 
-        async function handleCopyLink(sessionId) {
-            const btn = document.getElementById(`btn-link-${sessionId}`);
+        // ---- Unified Adaptive Share Modal Logic ----
+        let currentShareSessionId = null;
+        let currentShareEventName = "";
+        let currentShareUrl = "";
+        let currentShareQrDataUri = "";
+
+        async function openShareModal(sessionId, name) {
+            currentShareSessionId = sessionId;
+            currentShareEventName = name;
+            
+            const modal = document.getElementById('share-modal');
+            const nameSpan = document.getElementById('share-event-name');
+            const linkText = document.getElementById('share-link-text');
+            const qrImg = document.getElementById('share-qr-img');
+            const btnSms = document.getElementById('btn-share-sms');
+            const nativeContainer = document.getElementById('native-share-container');
+
+            if (!modal) return;
+
+            // Open modal and show loading state
+            modal.style.display = 'flex';
+            if (nameSpan) nameSpan.textContent = `"${name}"`;
+            if (linkText) linkText.textContent = "Loading link...";
+            if (qrImg) {
+                qrImg.src = "";
+                qrImg.style.opacity = '0.3';
+            }
+
             try {
                 const res = await fetch(`/api/share-info?session_id=${sessionId}`, { headers: authHeaders() });
                 const data = await res.json();
                 if (data.status === 'success') {
-                    const abs = data.share_url.startsWith('http') ? data.share_url : window.location.origin + data.share_url;
-                    await navigator.clipboard.writeText(abs);
-                    if (btn) {
-                        const origText = btn.textContent;
-                        btn.textContent = '✅ Copied!';
-                        setTimeout(() => { btn.textContent = origText; }, 2000);
+                    // Normalize share URL
+                    currentShareUrl = data.share_url.startsWith('http') ? data.share_url : window.location.origin + data.share_url;
+                    currentShareQrDataUri = data.qr_data_uri;
+
+                    if (linkText) linkText.textContent = currentShareUrl;
+                    if (qrImg) {
+                        qrImg.src = currentShareQrDataUri || "";
+                        qrImg.style.opacity = '1';
                     }
+
+                    // Adaptive Check: Show SMS button on mobile devices
+                    const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+                    if (btnSms) {
+                        btnSms.style.display = isMobile ? 'inline-flex' : 'none';
+                    }
+
+                    // Adaptive Check: Native Share Sheet support (web share API)
+                    if (navigator.share && typeof navigator.canShare === 'function') {
+                        if (nativeContainer) nativeContainer.style.display = 'block';
+                    } else {
+                        if (nativeContainer) nativeContainer.style.display = 'none';
+                    }
+                } else {
+                    throw new Error(data.message || "Failed to load share metadata");
+                }
+            } catch (err) {
+                console.error("Failed to populate share modal:", err);
+                if (linkText) linkText.textContent = "Error: " + err.message;
+            }
+            
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function closeShareModal() {
+            const modal = document.getElementById('share-modal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        async function copyInviteLink() {
+            const btn = document.getElementById('btn-copy-invite-link');
+            try {
+                if (!currentShareUrl) return;
+                await navigator.clipboard.writeText(currentShareUrl);
+                if (btn) {
+                    const origHtml = btn.innerHTML;
+                    btn.innerHTML = '✅ Copied!';
+                    setTimeout(() => { btn.innerHTML = origHtml; }, 2000);
                 }
             } catch (err) {
                 alert("Failed to copy link: " + err.message);
             }
         }
 
-        async function handleCopyQR(sessionId) {
-            const btn = document.getElementById(`btn-qr-${sessionId}`);
+        function shareViaEmail() {
+            if (!currentShareUrl) return;
+            const subject = encodeURIComponent(`Add your photos to "${currentShareEventName}"!`);
+            const body = encodeURIComponent(`Hey!\n\nPlease add your photos to our event album "${currentShareEventName}" by clicking this link directly from your phone:\n\n${currentShareUrl}\n\nCan't wait to see your pictures!`);
+            window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+        }
+
+        function shareViaWhatsApp() {
+            if (!currentShareUrl) return;
+            const text = encodeURIComponent(`Hey! Please add your photos to our event album "${currentShareEventName}" here: ${currentShareUrl}`);
+            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+        }
+
+        function shareViaSMS() {
+            if (!currentShareUrl) return;
+            const body = encodeURIComponent(`Hey! Please add your photos to our event album "${currentShareEventName}" here: ${currentShareUrl}`);
+            window.open(`sms:?&body=${body}`, '_blank');
+        }
+
+        async function downloadQrCode() {
+            if (!currentShareQrDataUri) return;
             try {
-                const res = await fetch(`/api/share-info?session_id=${sessionId}`, { headers: authHeaders() });
-                const data = await res.json();
-                if (data.status === 'success' && data.qr_data_uri) {
-                    const response = await fetch(data.qr_data_uri);
-                    const blob = await response.blob();
-                    await navigator.clipboard.write([
-                        new ClipboardItem({
-                            [blob.type]: blob
-                        })
-                    ]);
-                    if (btn) {
-                        const origText = btn.textContent;
-                        btn.textContent = '✅ QR Copied!';
-                        setTimeout(() => { btn.textContent = origText; }, 2000);
-                    }
-                } else {
-                    throw new Error("QR data not available");
-                }
+                const link = document.createElement('a');
+                link.href = currentShareQrDataUri;
+                link.download = `${_slugify(currentShareEventName)}_qr_code.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             } catch (err) {
-                alert("Failed to copy QR code image. Fallback: " + err.message);
+                alert("Failed to download QR code: " + err.message);
+            }
+        }
+
+        async function copyQrImageToClipboard() {
+            if (!currentShareQrDataUri) return;
+            try {
+                const response = await fetch(currentShareQrDataUri);
+                const blob = await response.blob();
+                await navigator.clipboard.write([
+                    new ClipboardItem({
+                        [blob.type]: blob
+                    })
+                ]);
+                await uiAlert("QR Code image copied to clipboard! You can now paste (Cmd+V / Ctrl+V) directly into Slack, email, or chats.");
+            } catch (err) {
+                alert("Failed to copy QR code image: " + err.message);
+            }
+        }
+
+        async function shareNative() {
+            if (!currentShareUrl) return;
+            const inviteText = `Hey! Please add your photos to our event album "${currentShareEventName}" here:`;
+            
+            try {
+                // Prepare file sharing if supported
+                const shareData = {
+                    title: `Join ${currentShareEventName}`,
+                    text: inviteText,
+                    url: currentShareUrl
+                };
+
+                // Try to attach the QR image file as well if the browser can share files
+                if (currentShareQrDataUri) {
+                    try {
+                        const response = await fetch(currentShareQrDataUri);
+                        const blob = await response.blob();
+                        const file = new File([blob], `${_slugify(currentShareEventName)}_qr.png`, { type: 'image/png' });
+                        
+                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                            shareData.files = [file];
+                        }
+                    } catch (e) {
+                        console.warn("Could not attach QR image to native share:", e);
+                    }
+                }
+
+                await navigator.share(shareData);
+            } catch (err) {
+                // If they cancelled, do nothing. If error is not a cancellation, alert it.
+                if (err.name !== 'AbortError') {
+                    console.error("Native share failed:", err);
+                }
             }
         }
 
         async function deleteEvent(sessionId, sessionName) {
-            if (sessionId === 'default') {
-                await uiAlert("The default event cannot be deleted.");
-                return;
-            }
             if (!await uiConfirm(`Are you sure you want to delete the event "${sessionName}"? This will permanently delete all metadata, uploaded photos, and generated stories for this session. This action cannot be undone!`)) return;
 
             try {
@@ -3907,7 +4237,7 @@
                 if (data.status === 'success') {
                     await uiAlert("Event deleted successfully!");
                     if (sessionId === getSessionId()) {
-                        localStorage.setItem('mw_session_id', 'default');
+                        localStorage.removeItem('mw_session_id');
                         window.location.href = '/';
                     } else {
                         loadSessions();
@@ -4093,46 +4423,45 @@
         let workspaceView = "accepted"; // 'accepted' or 'rejected'
         let currentPage = 1;
         const itemsPerPage = 24;
-        
         let pollingInterval = null;
         let progressInterval = null;
 
-        function showPipelineSummary(summ) {
+        function showPipelineSummary(summ, mode = 'curate') {
             if (!summ) return;
-            let summaryDiv = document.getElementById('pipeline-summary');
-            if (!summaryDiv) {
-                summaryDiv = document.createElement('div');
-                summaryDiv.id = 'pipeline-summary';
-                summaryDiv.className = 'summary-card';
-                summaryDiv.style.background = 'rgba(255, 123, 0, 0.05)';
-                summaryDiv.style.border = '1px solid rgba(255, 123, 0, 0.2)';
-                summaryDiv.style.borderRadius = '12px';
-                summaryDiv.style.padding = '1.5rem';
-                summaryDiv.style.marginTop = '1.5rem';
-                summaryDiv.style.marginBottom = '1.5rem';
-                
-                const consoleArea = document.getElementById('console-area');
-                if (consoleArea) {
-                    consoleArea.parentNode.insertBefore(summaryDiv, consoleArea);
-                }
-            }
+            const targetId = mode === 'curate' ? 'curation-summary-card' : 'narrative-summary-card';
+            const summaryDiv = document.getElementById(targetId);
+            if (!summaryDiv) return;
             
             const modCalls = Math.ceil((summ.uncached_moderated || 0) / 50);
             const scoreCalls = Math.ceil((summ.uncached_scored || 0) / 15);
-            const totalCalls = modCalls + scoreCalls + 1; // +1 for batched narrator journaling call
+            const totalCalls = modCalls + scoreCalls + 1;
 
-            summaryDiv.innerHTML = `
-                <div style="font-weight: 600; color: var(--accent); margin-bottom: 1rem; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
-                    <span>✨ Curation Complete!</span>
-                </div>
-                <div id="pipeline-summary-details" style="font-size: 0.95rem; color: #d1d5db; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
-                    <div>⏱️ <strong>Duration:</strong> ${summ.elapsed_seconds}s</div>
-                    <div>📸 <strong>Uncached Photos:</strong> ${summ.uncached_moderated} moderated / ${summ.uncached_scored} scored</div>
-                    <div>📡 <strong>API Calls:</strong> ${totalCalls} total (${modCalls} mod / ${scoreCalls} score / 1 synthesis)</div>
-                    <div>📖 <strong>Journal size:</strong> ${summ.moments_count} Daily Moments</div>
-                    <div>💰 <strong>Estimated cost:</strong> $${summ.estimated_cost.toFixed(4)}</div>
-                </div>
-            `;
+            if (mode === 'curate') {
+                summaryDiv.innerHTML = `
+                    <div style="font-weight: 600; color: var(--accent); margin-bottom: 1rem; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                        <span>✨ Curation Complete!</span>
+                    </div>
+                    <div id="pipeline-summary-details" style="font-size: 0.95rem; color: #d1d5db; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+                        <div>⏱️ <strong>Duration:</strong> ${summ.elapsed_seconds}s</div>
+                        <div>📸 <strong>Uncached Photos:</strong> ${summ.uncached_moderated} moderated / ${summ.uncached_scored} scored</div>
+                        <div>📡 <strong>API Calls:</strong> ${totalCalls} total (${modCalls} mod / ${scoreCalls} score / 1 synthesis)</div>
+                        <div>📖 <strong>Journal size:</strong> ${summ.moments_count} Daily Moments</div>
+                        <div>💰 <strong>Estimated cost:</strong> $${summ.estimated_cost.toFixed(4)}</div>
+                    </div>
+                `;
+            } else {
+                summaryDiv.innerHTML = `
+                    <div style="font-weight: 600; color: var(--accent); margin-bottom: 1rem; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                        <span>✨ StoryBook Generation Complete!</span>
+                    </div>
+                    <div id="pipeline-summary-details" style="font-size: 0.95rem; color: #d1d5db; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+                        <div>⏱️ <strong>Duration:</strong> ${summ.elapsed_seconds}s</div>
+                        <div>📖 <strong>Journal size:</strong> ${summ.moments_count} Daily Moments</div>
+                        <div>🚀 <strong>Status:</strong> StoryBook & Highlights generated successfully!</div>
+                        <div>💰 <strong>Estimated cost:</strong> $${summ.estimated_cost.toFixed(4)}</div>
+                    </div>
+                `;
+            }
             summaryDiv.style.display = 'block';
         }
 
@@ -4203,7 +4532,7 @@
                 if (progress.pre_clean && progress.pre_clean.status === 'running') {
                     unlockWizardStep(2);
                     document.getElementById('pre-clean-progress-container').style.display = 'block';
-                    document.getElementById('console-area').style.display = 'block';
+                    document.getElementById('curation-console-area').style.display = 'block';
                     
                     const btn = document.getElementById('btnPreClean');
                     const spinner = document.getElementById('cleanSpinner');
@@ -4213,8 +4542,8 @@
                     spinner.style.display = 'inline-block';
                     btnText.textContent = 'Analyzing Sharpness & Duplicates...';
                     
-                    startProgressPolling('pre_clean');
-                    startLogPolling();
+                    startProgressPolling('pre_clean', 'curate');
+                    startLogPolling('curate');
                     
                     const checkCompletion = setInterval(async () => {
                         const progRes = await fetch(withSession('/api/progress'));
@@ -4279,22 +4608,22 @@
                 // If pipeline curation is running or complete on the server
                 if (progress.pipeline) {
                     if (progress.pipeline.status === 'running') {
-                        document.getElementById('pipeline-progress-container').style.display = 'block';
-                        document.getElementById('console-area').style.display = 'block';
+                        document.getElementById('curation-progress-container').style.display = 'block';
+                        document.getElementById('curation-console-area').style.display = 'block';
                         
                         const btn = document.getElementById('btnRunPipelineOnly');
                         if (btn) btn.disabled = true;
                         
-                        startProgressPolling('pipeline');
-                        startLogPolling();
+                        startProgressPolling('pipeline', 'curate');
+                        startLogPolling('curate');
                     } else if (progress.pipeline.status === 'complete') {
-                        document.getElementById('pipeline-progress-container').style.display = 'none';
-                        document.getElementById('console-area').style.display = 'block'; 
+                        document.getElementById('curation-progress-container').style.display = 'none';
+                        document.getElementById('curation-console-area').style.display = 'block'; 
                         
                         const btn = document.getElementById('btnRunPipelineOnly');
                         if (btn) btn.disabled = false;
                         
-                        showPipelineSummary(progress.pipeline.summary);
+                        showPipelineSummary(progress.pipeline.summary, 'curate');
                     }
                 }
                 lucide.createIcons();
@@ -4331,9 +4660,9 @@
             btnText.textContent = 'Analyzing Sharpness & Duplicates...';
             
             document.getElementById('pre-clean-progress-container').style.display = 'block';
-            document.getElementById('console-area').style.display = 'block';
-            startProgressPolling('pre_clean');
-            startLogPolling();
+            document.getElementById('curation-console-area').style.display = 'block';
+            startProgressPolling('pre_clean', 'curate');
+            startLogPolling('curate');
 
             try {
                 // Starts background task
@@ -4800,13 +5129,13 @@
             // No-op - local folder pickers deprecated in favor of browser uploader
         }
 
-        function startProgressPolling(type) {
+        function startProgressPolling(type, mode = 'curate') {
             if (progressInterval) clearInterval(progressInterval);
             
-            const htmlId = type.replace('_', '-');
+            const htmlId = mode;
             const fill = document.getElementById(`${htmlId}-progress-fill`);
             const text = document.getElementById(`${htmlId}-progress-text`);
-            const phaseLabel = document.getElementById('pipeline-progress-phase');
+            const phaseLabel = document.getElementById(`${htmlId}-progress-phase`);
 
             progressInterval = setInterval(async () => {
                 try {
@@ -4816,23 +5145,30 @@
 
                     if (state && state.total > 0) {
                         const pct = Math.round((state.current / state.total) * 100);
-                        fill.style.width = `${pct}%`;
+                        if (fill) fill.style.width = `${pct}%`;
                         
                         let elapsedStr = "";
                         if (state.elapsed > 0) {
                             elapsedStr = ` • ${state.elapsed.toFixed(1)}s elapsed`;
                         }
-                        text.textContent = `${pct}% (${state.current}/${state.total})${elapsedStr}`;
+                        if (text) text.textContent = `${pct}% (${state.current}/${state.total})${elapsedStr}`;
                         
                         if (type === 'pipeline' && phaseLabel) {
-                            const phases = {
-                                "moderation": "Phase 1/5: Moderator Safety Verification",
-                                "embedding": "Phase 2/5: Curator Photo Deduplication",
-                                "scoring": "Phase 3/5: Curator Quality Evaluation",
-                                "journaling": "Phase 5/5: Narrator Journal Synthesis",
-                                "initiating": "Initiating agent coordinators..."
-                            };
-                            phaseLabel.textContent = phases[state.phase] || "Processing...";
+                            if (mode === 'curate') {
+                                const phases = {
+                                    "initiating": "Phase 1/3: Initiating Curation Agents...",
+                                    "moderation": "Phase 1/3: Moderator Safety Verification",
+                                    "embedding": "Phase 2/3: Curator Photo Deduplication (CLIP)",
+                                    "scoring": "Phase 3/3: Curator Quality Evaluation (LLM-as-Judge)"
+                                };
+                                phaseLabel.textContent = phases[state.phase] || "Phase 1/3: Initiating Curation...";
+                            } else {
+                                const phases = {
+                                    "initiating": "Phase 1/2: Memory Profile Indexing",
+                                    "journaling": "Phase 2/2: Narrator Journal & StoryBook Synthesis"
+                                };
+                                phaseLabel.textContent = phases[state.phase] || "Phase 2/2: Narrator Journal & StoryBook Synthesis";
+                            }
                         }
                     }
                 } catch (err) {
@@ -4841,15 +5177,15 @@
             }, 300);
         }
 
-        function stopProgressPolling(type) {
+        function stopProgressPolling(type, mode = 'curate') {
             if (progressInterval) clearInterval(progressInterval);
-            const htmlId = type.replace('_', '-');
-            const fill = document.getElementById(`${htmlId}-progress-fill`);
+            const fill = document.getElementById(`${mode}-progress-fill`);
             if (fill) fill.style.width = '100%';
         }
 
-        function renderLogs(logs) {
-            const logBox = document.getElementById('log-box');
+        function renderLogs(logs, mode = 'curate') {
+            const logBoxId = mode === 'curate' ? 'curation-log-box' : 'narrative-log-box';
+            const logBox = document.getElementById(logBoxId);
             if (!logBox) return;
             
             // Backup text content fallback
@@ -4898,21 +5234,20 @@
                     
                     const step = document.createElement('div');
                     step.className = 'trajectory-step';
+                    step.style.padding = '4px 12px'; // Reduced padding to remove extra gaps
                     step.innerHTML = `
                         <span class="step-time">${timeStr}</span>
-                        <span class="step-agent-badge ${agentClass}">
-                            <i data-lucide="${icon}" style="width: 10px; height: 10px;"></i>
-                            ${agentName}
-                        </span>
+                        <span class="step-agent-badge ${agentClass}">[${agentName}]</span>
                         <span style="flex: 1; word-break: break-word;">${content}</span>
                     `;
                     logBox.appendChild(step);
                 } else {
                     const step = document.createElement('div');
                     step.className = 'trajectory-step';
+                    step.style.padding = '4px 12px'; // Reduced padding to remove extra gaps
                     step.innerHTML = `
                         <span class="step-time">--:--:--</span>
-                        <span class="step-agent-badge agent-orchestrator">Orchestrator</span>
+                        <span class="step-agent-badge agent-orchestrator">[Orchestrator]</span>
                         <span style="flex: 1; word-break: break-word;">${line}</span>
                     `;
                     logBox.appendChild(step);
@@ -4922,7 +5257,7 @@
             logBox.scrollTop = logBox.scrollHeight;
         }
 
-        function startLogPolling() {
+        function startLogPolling(mode = 'curate') {
             if (pollingInterval) clearInterval(pollingInterval);
             
             pollingInterval = setInterval(async () => {
@@ -4930,27 +5265,49 @@
                     const res = await fetch(withSession('/logs'));
                     const data = await res.json();
                     const logs = data.logs || [];
-                    renderLogs(logs);
+                    renderLogs(logs, mode);
                     
                     const progRes = await fetch(withSession('/api/progress'));
                     const progress = await progRes.json();
                     
                     if (progress.pipeline && (progress.pipeline.status === 'complete' || progress.pipeline.status === 'error')) {
                         clearInterval(pollingInterval);
-                        stopProgressPolling('pipeline');
+                        stopProgressPolling('pipeline', mode);
                         
-                        const btn = document.getElementById('btnRunPipelineOnly');
-                        if (btn) btn.disabled = false;
+                        if (mode === 'curate') {
+                            const btn = document.getElementById('btnRunPipelineOnly');
+                            if (btn) btn.disabled = false;
+                        } else {
+                            const btn = document.getElementById('btnRunNarrativeOnly');
+                            const btnText = document.getElementById('btnRunNarrativeText');
+                            if (btn) btn.disabled = false;
+                            if (btnText) btnText.textContent = 'Love the Curated Highlights - Generate StoryBook & Artifacts';
+                        }
                         
                         if (progress.pipeline.status === 'complete') {
-                            document.getElementById('pipeline-progress-container').style.display = 'none';
-                            // Keep console-area visible so the final log trace remains on screen!
-                            document.getElementById('console-area').style.display = 'block';
+                            const progContainerId = mode === 'curate' ? 'curation-progress-container' : 'narrative-progress-container';
+                            const consoleAreaId = mode === 'curate' ? 'curation-console-area' : 'narrative-console-area';
                             
-                            showPipelineSummary(progress.pipeline.summary);
-                            refreshCurationReviewTray();
+                            const progContainer = document.getElementById(progContainerId);
+                            if (progContainer) progContainer.style.display = 'none';
+                            
+                            const consoleArea = document.getElementById(consoleAreaId);
+                            if (consoleArea) consoleArea.style.display = 'block';
+                            
+                            showPipelineSummary(progress.pipeline.summary, mode);
+                            
+                            if (mode === 'curate') {
+                                refreshCurationReviewTray();
+                            } else {
+                                // For Narrative Complete, enable the Open Curation Viewer link
+                                const viewerBtn = document.querySelector(`#narrative-viewer-btn-container #btnViewerLink`);
+                                if (viewerBtn) {
+                                    viewerBtn.textContent = `📖 Open ${getEventTypeName()} Highlights`;
+                                    viewerBtn.style.display = 'inline-block';
+                                }
+                            }
                         } else {
-                            alert("Curation pipeline encountered an error.");
+                            alert(mode === 'curate' ? "Curation pipeline encountered an error." : "Storybook generation pipeline encountered an error.");
                         }
                     }
                 } catch (err) {
@@ -5290,75 +5647,98 @@
                     // The Proceed button should always be visible and ready for the user to generate/update the narrative highlights!
                     document.getElementById('btnRunNarrativeOnly').style.display = 'flex';
                     document.getElementById('btnRunNarrativeOnly').disabled = false;
-                    document.getElementById('btnRunNarrativeText').textContent = 'Love the Curated Highlights - Proceed to create Trip Highlights';
+                    document.getElementById('btnRunNarrativeText').textContent = 'Love the Curated Highlights - Generate StoryBook & Artifacts';
                     
+                    // Always show curation console and logs since curation is complete
+                    document.getElementById('curation-console-area').style.display = 'block';
+                    const curationLogBox = document.getElementById('curation-log-box');
+                    if (curationLogBox && (curationLogBox.innerHTML.trim() === 'Waiting to curate event photos...' || curationLogBox.innerHTML.trim() === '')) {
+                        try {
+                            const logRes = await fetch(withSession('/logs'));
+                            const logData = await logRes.json();
+                            if (logData.logs && logData.logs.length > 0) {
+                                renderLogs(logData.logs, 'curate');
+                            } else {
+                                curationLogBox.innerHTML = '<div style="color: var(--success); padding: 12px; font-weight: 500;">[SUCCESS] MemoryWeaver curation complete. Photos analyzed and scored successfully.</div>';
+                            }
+                        } catch (e) {
+                            curationLogBox.innerHTML = '<div style="color: var(--success); padding: 12px; font-weight: 500;">[SUCCESS] MemoryWeaver curation complete. Photos analyzed and scored successfully.</div>';
+                        }
+                    }
+
+                    // Show curation pipeline summary
+                    let detailedSumm = null;
+                    try {
+                        const progRes = await fetch(withSession('/api/progress'));
+                        const progData = await progRes.json();
+                        if (progData.pipeline && progData.pipeline.summary) {
+                            detailedSumm = progData.pipeline.summary;
+                        }
+                    } catch (e) {}
+                    
+                    if (detailedSumm) {
+                        showPipelineSummary(detailedSumm, 'curate');
+                    } else {
+                        const curationSummaryCard = document.getElementById('curation-summary-card');
+                        if (curationSummaryCard) {
+                            curationSummaryCard.innerHTML = `
+                                <div style="font-weight: 600; color: var(--accent); margin-bottom: 1rem; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                                    <span>✨ Curation Complete!</span>
+                                </div>
+                                <div id="pipeline-summary-details" style="font-size: 0.95rem; color: #d1d5db; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+                                    <div>🚀 <strong>Status:</strong> Ready for review</div>
+                                    <div>📸 <strong>Highlights:</strong> Selected from active photo pool</div>
+                                </div>
+                            `;
+                            curationSummaryCard.style.display = 'block';
+                        }
+                    }
+
                     if (isNarrativeComplete) {
-                        // Curation is fully finished including narrative!
-                        // Show console area and summary card
-                        document.getElementById('console-area').style.display = 'block';
+                        // Narrative / StoryBook is also complete!
+                        document.getElementById('narrative-console-area').style.display = 'block';
                         
-                        // Load log traces from backend if any, otherwise default completion trace
-                        const logBox = document.getElementById('log-box');
-                        if (logBox && (logBox.innerHTML.trim() === 'Welcome to the MemoryWeaver Curation terminal...' || logBox.innerHTML.trim() === '')) {
+                        const narrativeLogBox = document.getElementById('narrative-log-box');
+                        if (narrativeLogBox && (narrativeLogBox.innerHTML.trim() === 'Waiting to generate storybook...' || narrativeLogBox.innerHTML.trim() === '')) {
                             try {
                                 const logRes = await fetch(withSession('/logs'));
                                 const logData = await logRes.json();
                                 if (logData.logs && logData.logs.length > 0) {
-                                    renderLogs(logData.logs);
+                                    renderLogs(logData.logs, 'narrate');
                                 } else {
-                                    logBox.innerHTML = '<div style="color: var(--success); padding: 12px; font-weight: 500;">[SUCCESS] MemoryWeaver curation pipeline complete. All highlights and chronological journal moments compiled successfully.</div>';
+                                    narrativeLogBox.innerHTML = '<div style="color: var(--success); padding: 12px; font-weight: 500;">[SUCCESS] MemoryWeaver StoryBook narrative synthesis complete.</div>';
                                 }
                             } catch (e) {
-                                logBox.innerHTML = '<div style="color: var(--success); padding: 12px; font-weight: 500;">[SUCCESS] MemoryWeaver curation pipeline complete. All highlights and chronological journal moments compiled successfully.</div>';
+                                narrativeLogBox.innerHTML = '<div style="color: var(--success); padding: 12px; font-weight: 500;">[SUCCESS] MemoryWeaver StoryBook narrative synthesis complete.</div>';
                             }
                         }
                         
-                        // Show pipeline summary if not already shown
-                        if (!document.getElementById('pipeline-summary')) {
-                            let detailedSumm = null;
-                            try {
-                                const progRes = await fetch(withSession('/api/progress'));
-                                const progData = await progRes.json();
-                                if (progData.pipeline && progData.pipeline.summary) {
-                                    detailedSumm = progData.pipeline.summary;
-                                }
-                            } catch (e) {}
-                            
-                            if (detailedSumm) {
-                                showPipelineSummary(detailedSumm);
-                            } else {
-                                const momentsCount = data.journal ? data.journal.length : 0;
-                                const summaryDiv = document.createElement('div');
-                                summaryDiv.id = 'pipeline-summary';
-                                summaryDiv.className = 'summary-card';
-                                summaryDiv.style.background = 'rgba(255, 123, 0, 0.05)';
-                                summaryDiv.style.border = '1px solid rgba(255, 123, 0, 0.2)';
-                                summaryDiv.style.borderRadius = '12px';
-                                summaryDiv.style.padding = '1.5rem';
-                                summaryDiv.style.marginTop = '1.5rem';
-                                summaryDiv.style.marginBottom = '1.5rem';
-                                
-                                summaryDiv.innerHTML = `
-                                    <div style="font-weight: 600; color: var(--accent); margin-bottom: 1rem; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
-                                        <span><span>✨</span> Curation Complete!</span>
-                                    </div>
-                                    <div id="pipeline-summary-details" style="font-size: 0.95rem; color: #d1d5db; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
-                                        <div>📖 <strong>Journal size:</strong> ${momentsCount} Daily Moments</div>
-                                        <div>🚀 <strong>Status:</strong> Ready for review</div>
-                                    </div>
-                                `;
-                                const consoleArea = document.getElementById('console-area');
-                                if (consoleArea) {
-                                    consoleArea.parentNode.insertBefore(summaryDiv, consoleArea);
-                                }
-                            }
+                        const narrativeSummaryCard = document.getElementById('narrative-summary-card');
+                        if (narrativeSummaryCard) {
+                            const momentsCount = data.journal ? data.journal.length : 0;
+                            narrativeSummaryCard.innerHTML = `
+                                <div style="font-weight: 600; color: var(--accent); margin-bottom: 1rem; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                                    <span>✨ StoryBook Generation Complete!</span>
+                                </div>
+                                <div id="pipeline-summary-details" style="font-size: 0.95rem; color: #d1d5db; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+                                    <div>📖 <strong>Journal size:</strong> ${momentsCount} Daily Moments</div>
+                                    <div>🚀 <strong>Status:</strong> StoryBook & Highlights generated successfully!</div>
+                                </div>
+                            `;
+                            narrativeSummaryCard.style.display = 'block';
+                        }
+                        
+                        const viewerBtn = document.querySelector(`#narrative-viewer-btn-container #btnViewerLink`);
+                        if (viewerBtn) {
+                            viewerBtn.textContent = `📖 Open ${getEventTypeName()} Highlights`;
+                            viewerBtn.style.display = 'inline-block';
                         }
                     } else {
-                        // Curation is done (moderation/embeds/scores available) but narrative not run yet
-                        // Hide console-area and summary card by default
-                        document.getElementById('console-area').style.display = 'none';
-                        const summary = document.getElementById('pipeline-summary');
-                        if (summary) summary.remove();
+                        document.getElementById('narrative-console-area').style.display = 'none';
+                        const narrativeSummaryCard = document.getElementById('narrative-summary-card');
+                        if (narrativeSummaryCard) narrativeSummaryCard.style.display = 'none';
+                        const viewerBtn = document.querySelector(`#narrative-viewer-btn-container #btnViewerLink`);
+                        if (viewerBtn) viewerBtn.style.display = 'none';
                     }
                     
                     renderCurationReviewTray();
@@ -5612,6 +5992,70 @@
                 <div style="display: flex; gap: 8px;">
                     <button class="event-action-btn" onclick="closeFsBrowser()">Cancel</button>
                     <button class="event-action-btn active-indicator" id="fs-action-btn" onclick="executeFsAction()" style="min-width: 120px;">✨ Add to Album</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Event Modal -->
+    <div id="share-modal" class="share-modal-overlay" onclick="if(event.target === this) closeShareModal();">
+        <div class="share-modal-card">
+            <button class="share-modal-close" onclick="closeShareModal()" title="Close">
+                <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+            </button>
+            <div style="font-weight: 700; font-size: 1.25rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="share-2" style="width: 22px; height: 22px; color: var(--accent);"></i>
+                <span>Share <span id="share-event-name" style="color: var(--accent);">Event</span></span>
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 16px 0;">
+                Let family and friends contribute their memories directly from their phones!
+            </p>
+
+            <div class="share-section-title">1. Scan QR Code</div>
+            <div class="share-qr-container" onclick="downloadQrCode()" title="Click to download QR code image">
+                <img id="share-qr-img" width="180" height="180" alt="QR Code" style="display: block;" />
+            </div>
+            <div style="font-size: 11px; text-align: center; color: var(--text-muted); margin-top: -8px; margin-bottom: 16px;">
+                💡 Tap or click the QR code to download the image file.
+            </div>
+
+            <div class="share-section-title">2. Copy Invite Link</div>
+            <div class="share-link-input-group">
+                <div class="share-link-input" id="share-link-text">Loading link...</div>
+                <button class="event-action-btn active-indicator" id="btn-copy-invite-link" onclick="copyInviteLink()" style="min-height: 38px; padding: 0 16px;">
+                    <i data-lucide="copy" style="width: 14px; height: 14px;"></i> Copy
+                </button>
+            </div>
+
+            <div class="share-section-title">3. Send Directly to App</div>
+            <div class="share-apps-row">
+                <button class="share-app-btn btn-email" onclick="shareViaEmail()">
+                    <i data-lucide="mail" style="width: 14px; height: 14px;"></i> Email
+                </button>
+                <button class="share-app-btn btn-whatsapp" onclick="shareViaWhatsApp()">
+                    <i data-lucide="message-square" style="width: 14px; height: 14px;"></i> WhatsApp
+                </button>
+                <button class="share-app-btn btn-sms" id="btn-share-sms" onclick="shareViaSMS()" style="display: none;">
+                    <i data-lucide="smartphone" style="width: 14px; height: 14px;"></i> Text (SMS)
+                </button>
+            </div>
+
+            <div id="desktop-share-utilities" style="margin-top: 16px;">
+                <div class="share-section-title">4. More Tools</div>
+                <div class="share-utilities-grid">
+                    <button class="event-action-btn" onclick="copyQrImageToClipboard()" style="padding: 10px 12px; width: 100%; font-size: 12px;">
+                        <i data-lucide="clipboard" style="width: 14px; height: 14px; margin-right: 4px;"></i> Copy QR Image
+                    </button>
+                    <button class="event-action-btn" onclick="downloadQrCode()" style="padding: 10px 12px; width: 100%; font-size: 12px;">
+                        <i data-lucide="download" style="width: 14px; height: 14px; margin-right: 4px;"></i> Download QR
+                    </button>
+                </div>
+            </div>
+
+            <div id="native-share-container" style="display: none; margin-top: 18px; border-top: 1px solid var(--border); padding-top: 18px;">
+                <button class="btn btn-primary" onclick="shareNative()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i data-lucide="external-link" style="width: 16px; height: 16px;"></i> Send via Native Share...
+                </button>
             </div>
         </div>
     </div>

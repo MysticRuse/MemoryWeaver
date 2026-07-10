@@ -428,8 +428,6 @@ def clear_session(session_id: str = "default"):
 @app.post("/api/delete-session", dependencies=[Depends(require_admin_token)])
 def delete_session(session_id: str = Form(...)):
     """Admin-only: Deletes the entire session metadata and all of its uploaded files."""
-    if session_id == "default":
-        return {"status": "error", "message": "The default session cannot be deleted."}
     try:
         store = SessionStore()
         store.delete_session(session_id)
@@ -639,10 +637,18 @@ def get_photo_date(file_path: str) -> str:
         return "Unknown Date"
 
 
+_active_analysis_sessions = set()
+_active_generation_sessions = set()
+
+
 def analyze_all_photos_background(session_id: str):
     """Iterates through all uploaded photos in a session, running the photographer critique in the background
     to pre-cache analysis results for when the user clicks them in the UI.
     """
+    global _active_analysis_sessions
+    if session_id in _active_analysis_sessions:
+        return
+    _active_analysis_sessions.add(session_id)
     try:
         session_storage = StorageHelper(session_id=session_id)
         upload_dir = os.path.join(session_storage.local_base, "uploads")
@@ -718,7 +724,7 @@ def analyze_all_photos_background(session_id: str):
                         text = text.split("```json")[1].split("```")[0].strip()
                     elif "```" in text:
                         text = text.split("```")[1].split("```")[0].strip()
-                    gemini_analysis = json.loads(text.strip())
+                    gemini_analysis = json.loads(text.strip(), strict=False)
                     
                     # Refresh metadata from disk to avoid overwrite races
                     if os.path.exists(metadata_file):
@@ -746,6 +752,8 @@ def analyze_all_photos_background(session_id: str):
                 
     except Exception as e:
         print(f"Failed background photos analysis task: {e}")
+    finally:
+        _active_analysis_sessions.discard(session_id)
 
 
 @app.get("/api/list-uploads", dependencies=[Depends(require_admin_token)])
@@ -1610,6 +1618,10 @@ def get_pipeline_logs(session_id: str = "default"):
 
 def run_generation_background(session_id: str, limit: int, stage: str = "curate"):
     """Asynchronous background worker for the 5-agent pipeline, scoped to one session."""
+    global _active_generation_sessions
+    if session_id in _active_generation_sessions:
+        return
+    _active_generation_sessions.add(session_id)
     import time
     start_time = time.time()
     state = _get_progress_state(session_id)
@@ -1654,21 +1666,21 @@ def run_generation_background(session_id: str, limit: int, stage: str = "curate"
 
         state["pipeline"]["status"] = "complete"
 
-        log_pipeline_step(session_id, f"PERFORMANCE REPORT (UNCACHED RUNS ONLY):")
-        log_pipeline_step(session_id, f"  - Total Elapsed Time: {elapsed} seconds")
-        log_pipeline_step(session_id, f"  - Actual API Calls Made (Mod/Score): {uncached_mod}/{uncached_score}")
-        log_pipeline_step(session_id, f"  - Estimated Input Tokens: {est_input_tokens}")
-        log_pipeline_step(session_id, f"  - Estimated Output Tokens: {est_output_tokens}")
-        log_pipeline_step(session_id, f"  - Estimated API Cost: ${est_cost:.6f} USD")
+        log_pipeline_step(session_id, f"Performance: Curation complete in {elapsed}s (Est. Cost: ${est_cost:.4f} USD)")
         # ==========================================
 
     except Exception as e:
         state["pipeline"]["status"] = "error"
         log_pipeline_step(session_id, f"CRITICAL ERROR: {str(e)}")
+    finally:
+        _active_generation_sessions.discard(session_id)
 
 @app.post("/generate", dependencies=[Depends(require_admin_token)])
 def run_generation_pipeline(background_tasks: BackgroundTasks, session_id: str = "default", limit: int = 50, stage: str = "curate"):
     """Triggers the curation stages (moderation, deduplication, scoring) for one session."""
+    global _active_generation_sessions
+    if session_id in _active_generation_sessions:
+        return {"status": "error", "message": "Pipeline run already in progress for this session."}
     import time
     state = _get_progress_state(session_id)
     state["pipeline"] = {
@@ -1685,6 +1697,9 @@ def run_generation_pipeline(background_tasks: BackgroundTasks, session_id: str =
 @app.post("/generate-narrative", dependencies=[Depends(require_admin_token)])
 def run_narrative_pipeline(background_tasks: BackgroundTasks, session_id: str = "default", limit: int = 50):
     """Triggers Phase 4 and Phase 5 narrative compilation after user approves curated highlights."""
+    global _active_generation_sessions
+    if session_id in _active_generation_sessions:
+        return {"status": "error", "message": "Pipeline run already in progress for this session."}
     import time
     state = _get_progress_state(session_id)
     state["pipeline"] = {
