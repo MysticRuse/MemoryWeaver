@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalUriHandler
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -60,6 +61,8 @@ fun MinimalistJournalScreen() {
     var selectedPhotos by remember { mutableStateOf(listOf<AndroidPhotoItem>()) }
     var publishedLink by remember { mutableStateOf<String?>(null) }
     
+    val sessionId = "family-trip-california-road-trip-3f3eaf"
+    val uriHandler = LocalUriHandler.current
     val coroutineScope = rememberCoroutineScope()
     
     Scaffold(
@@ -245,7 +248,7 @@ fun MinimalistJournalScreen() {
                                 delay(800)
                                 curationProgress = 1.0f
                                 isCurationRunning = false
-                                publishedLink = "http://localhost:8000/viewer?session=family-trip-california-road-trip-3f3eaf"
+                                publishedLink = "http://localhost:8000/viewer?session=$sessionId"
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -269,6 +272,12 @@ fun MinimalistJournalScreen() {
                     ) {
                         Text("🎉 Your Keepsake is Ready!", fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
                         Text("Link: $link", fontSize = 11.sp, color = Color.DarkGray)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Button(onClick = { uriHandler.openUri(link) }) {
+                            Icon(Icons.Default.PlayArrow, contentDescription = null)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Open Curation Viewer")
+                        }
                     }
                 }
             }

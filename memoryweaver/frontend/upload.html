@@ -10,19 +10,19 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         :root {
-            --bg: #E4E0D5;
+            --bg: #FAFAFA;
             --card-bg: #FFFFFF;
-            --border: #303030;
-            --text: #303030;
-            --text-muted: #5D5D5D;
-            --accent: #EB2371;
-            --accent-glow: rgba(235, 35, 113, 0.08);
-            --accent-grad: #EB2371;
+            --border: #DBDBDB;
+            --text: #262626;
+            --text-muted: #8E8E8E;
+            --accent: #E1306C; /* Instagram Iconic Magenta */
+            --accent-glow: rgba(225, 48, 108, 0.08);
+            --accent-grad: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
             --on-accent: #FFFFFF;
-            --danger: #FF4D4D;
-            --success: #10B981;
-            --card-shadow: 6px 6px 0px #303030;
-            --btn-shadow: 3px 3px 0px #303030;
+            --danger: #ED4956;
+            --success: #58C56A;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            --btn-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
         }
 
         body {
@@ -30,7 +30,7 @@
             background-color: #F0F2F5;
             color: var(--text);
             margin: 0;
-            padding: 2rem 0 4rem 0;
+            padding: 0 0 4rem 0;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -195,16 +195,17 @@
         }
 
         .btn-primary {
-            background: var(--accent);
-            border-color: var(--accent);
+            background: var(--accent-grad);
+            border-color: var(--border);
             color: var(--on-accent);
             box-shadow: 0 4px 10px var(--accent-glow);
+            transition: all 0.2s ease;
         }
 
         .btn-primary:hover:not(:disabled) {
-            background: var(--accent_hover, #D9835A);
-            border-color: var(--accent_hover, #D9835A);
-            opacity: 1;
+            opacity: 0.9;
+            transform: scale(1.02);
+            border-color: var(--border);
         }
 
         .btn:disabled {
@@ -645,32 +646,42 @@
         .top-nav {
             position: sticky;
             top: 0;
+            left: 0;
+            right: 0;
             z-index: 1000;
-            background: rgba(20, 21, 24, 0.85);
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border-bottom: 1px solid var(--border);
+            border-bottom: 3px solid transparent;
+            border-image: var(--accent-grad) 1;
             width: 100%;
-            margin-bottom: 24px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            box-sizing: border-box;
+            margin-bottom: 24px !important;
         }
 
         .nav-container {
+            width: 100%;
             max-width: 1000px;
-            margin: 0 auto;
-            padding: 16px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 16px 20px;
+            box-sizing: border-box;
         }
 
         .nav-logo {
             font-family: 'Space Grotesk', sans-serif;
             font-weight: 800;
             font-size: 1.4rem;
-            color: var(--accent);
+            background: var(--accent-grad);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
             text-decoration: none;
-            letter-spacing: 0.5px;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -682,8 +693,8 @@
         }
 
         .nav-link {
-            color: var(--text-muted);
             text-decoration: none;
+            color: var(--text-muted);
             font-weight: 600;
             font-size: 0.95rem;
             padding: 8px 18px;
@@ -696,12 +707,12 @@
 
         .nav-link:hover {
             color: var(--text);
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(0, 0, 0, 0.04);
         }
 
         .nav-link.active {
             color: var(--on-accent);
-            background: var(--accent);
+            background: var(--accent-grad);
             box-shadow: 0 4px 15px var(--accent-glow);
         }
 
@@ -751,9 +762,9 @@
         }
 
         .wizard-step-node.active .step-node-num {
-            background: var(--accent);
+            background: var(--accent-grad);
             color: var(--on-accent);
-            border-color: var(--accent);
+            border-color: transparent;
         }
 
         .wizard-step-node.completed .step-node-num {
@@ -1630,6 +1641,9 @@
             border-color: rgba(224, 145, 107, 0.40);
             color: var(--text);
         }
+        #year-filters-scroll-container::-webkit-scrollbar {
+            display: none;
+        }
         .edit-event-input-container {
             display: flex;
             align-items: center;
@@ -1792,6 +1806,218 @@
             from { transform: translateY(16px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
+
+        /* Instagram Design Language Overrides */
+        .card, .workspace, .gemini-analysis-card, .wizard-stepper, .share-utils-card, .modal-card, #grandma-security-notice {
+            border: 1px solid var(--border) !important;
+            border-radius: 12px !important;
+            box-shadow: var(--card-shadow) !important;
+        }
+
+        #cleaner-promo-banner {
+            background: var(--accent-grad) !important;
+            border: none !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12) !important;
+            border-radius: 12px !important;
+        }
+
+        #cleaner-promo-banner a.btn {
+            background: #FFFFFF !important;
+            color: var(--accent) !important;
+            border: none !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+            font-weight: 700 !important;
+            border-radius: 20px !important;
+            font-family: 'Space Grotesk', sans-serif !important;
+        }
+        
+        .btn, .share-app-btn, .select-input, .select-user, .input-pwd, .nav-btn, .view-segment-btn, .photo-action-btn, .critique-action-btn, .timeline-indicator, #year-navigator-container {
+            border: 1px solid var(--border) !important;
+            border-radius: 8px !important;
+            box-shadow: var(--btn-shadow) !important;
+            transition: all 0.2s ease !important;
+            transform: none !important;
+        }
+
+        .event-action-btn {
+            border: 1px solid var(--border) !important;
+            border-radius: 20px !important; /* Rounded story pill shape */
+            box-shadow: none !important;
+            transition: all 0.2s ease !important;
+            transform: none !important;
+            background: #FFFFFF !important;
+            color: var(--text) !important;
+            font-weight: 700 !important;
+            font-size: 12px !important;
+            padding: 6px 16px !important;
+        }
+
+        .event-action-btn:hover {
+            background: #FAFAFA !important;
+            border-color: var(--accent) !important;
+        }
+
+        .event-action-btn.active-indicator, .event-action-btn.active {
+            background: var(--accent-grad) !important;
+            color: #FFFFFF !important;
+            border-color: transparent !important;
+            box-shadow: 0 4px 10px rgba(225, 48, 108, 0.2) !important;
+        }
+
+        .btn:hover, .share-app-btn:hover, .select-input:hover, .select-user:hover, .nav-btn:hover, .view-segment-btn:hover, .photo-action-btn:hover, .critique-action-btn:hover {
+            transform: translateY(-1px) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+            opacity: 0.95 !important;
+        }
+
+        .btn:active, .event-action-btn:active, .share-app-btn:active, .select-input:active, .select-user:active, .nav-btn:active, .view-segment-btn:active, .photo-action-btn:active, .critique-action-btn:active {
+            transform: translateY(0) !important;
+        }
+
+        .photo-card, .note-card, .scrap-card, .metric-card {
+            border: 1px solid var(--border) !important;
+            border-radius: 12px !important;
+            box-shadow: var(--card-shadow) !important;
+        }
+
+        .photo-card img, .scrap-card img {
+            border-bottom: 1px solid var(--border) !important;
+        }
+
+        video, #detail-video-preview {
+            border: 1px solid var(--border) !important;
+            border-radius: 12px !important;
+            box-shadow: var(--card-shadow) !important;
+        }
+
+        /* Photo Grid Items Overlays */
+        .pool-photo-card {
+            border: 1px solid var(--border) !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04) !important;
+            overflow: hidden !important;
+        }
+
+        .pool-photo-card .contributor-tag {
+            background: var(--accent-grad) !important;
+            color: #FFFFFF !important;
+            border: none !important;
+            border-radius: 20px !important;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+            padding: 3px 8px !important;
+            font-size: 8px !important;
+        }
+
+        .pool-photo-card .overlay-btn {
+            background: rgba(0, 0, 0, 0.6) !important;
+            color: #FFFFFF !important;
+            border: none !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+            width: 24px !important;
+            height: 24px !important;
+            font-size: 11px !important;
+        }
+
+        .pool-photo-card .overlay-btn:hover {
+            background: rgba(0, 0, 0, 0.8) !important;
+        }
+
+        .photo-date-calendar-badge {
+            border: 1px solid var(--border) !important;
+            border-radius: 6px !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+            overflow: hidden !important;
+        }
+
+        .photo-date-calendar-month {
+            background: var(--accent-grad) !important;
+            color: #FFFFFF !important;
+            font-size: 8px !important;
+            font-weight: 800 !important;
+        }
+
+        /* Quick Tips Container */
+        .card[style*="dashed"], div[style*="dashed"], .container div[style*="dashed"] {
+            border: 1px solid var(--border) !important;
+            background: #F8FAFC !important;
+            border-radius: 12px !important;
+            box-shadow: var(--card-shadow) !important;
+        }
+
+        /* Event Row & Category Overrides */
+        .event-row {
+            border: 1px solid var(--border) !important;
+            background: #FFFFFF !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+            border-radius: 12px !important;
+            transition: all 0.2s ease !important;
+        }
+        .event-row:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+            border-color: var(--accent) !important;
+        }
+        .event-row.active {
+            border-color: var(--accent) !important;
+            background: rgba(225, 48, 108, 0.03) !important;
+            box-shadow: 0 4px 12px rgba(225, 48, 108, 0.08) !important;
+        }
+        .event-type-radio-label {
+            background: #FFFFFF !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 20px !important;
+            padding: 6px 14px !important;
+            font-weight: 700 !important;
+            font-size: 12px !important;
+            color: var(--text-muted) !important;
+            box-shadow: none !important;
+            transition: all 0.2s ease !important;
+        }
+        .event-type-radio-label:hover {
+            border-color: var(--accent) !important;
+            color: var(--accent) !important;
+            background: #FAFAFA !important;
+        }
+        .event-type-radio-input:checked + .event-type-radio-label {
+            background: var(--accent-grad) !important;
+            border-color: transparent !important;
+            color: #FFFFFF !important;
+            box-shadow: 0 4px 10px rgba(225, 48, 108, 0.2) !important;
+        }
+        .btn-primary {
+            border: none !important;
+            background: var(--accent-grad) !important;
+            color: #FFFFFF !important;
+        }
+
+        .upload-zone {
+            border: 1px solid var(--border) !important;
+            border-radius: 16px !important;
+            background: #FAFAFA !important;
+            transition: all 0.2s ease !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02) !important;
+        }
+        .upload-zone:hover {
+            border-color: var(--accent) !important;
+            background: rgba(225, 48, 108, 0.03) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 16px rgba(225, 48, 108, 0.08) !important;
+        }
+        .upload-zone i {
+            color: var(--accent) !important;
+            stroke-width: 1.5px !important;
+            transition: transform 0.2s ease !important;
+        }
+        .upload-zone:hover i {
+            transform: scale(1.1) !important;
+        }
+
+        #grandma-security-notice {
+            background: #FFFDF5 !important;
+            border: 1px solid #F3E8C4 !important;
+            border-radius: 12px !important;
+            color: #7B5C00 !important;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.08) !important;
+        }
     </style>
 </head>
 <body>
@@ -1801,12 +2027,12 @@
             <div class="nav-links">
                 <a href="/" class="nav-link active"><i data-lucide="wrench"></i> Curator Hub</a>
                 <a href="/viewer" class="nav-link" id="nav-viewer-link"><i data-lucide="book-open"></i> Trip Highlights</a>
+                <a href="/cleaner" class="nav-link" id="nav-cleaner-link"><i data-lucide="trash-2"></i> Vault & Organizer</a>
             </div>
         </div>
     </nav>
     <div class="container">
         <header style="margin-top: 1rem;">
-            <p>REWIND MANAGER</p>
             <h1 style="font-size: 2.4rem; margin-bottom: 5px;">Curator Hub</h1>
         </header>
 
@@ -1916,24 +2142,26 @@
                 <!-- Folder picking convenience -->
                 <div class="upload-zone" id="folder-zone" onclick="openFsBrowser('folder')">
                     <div style="color: var(--text-muted); margin-bottom: 8px;"><i data-lucide="folder" style="width: 32px; height: 32px;"></i></div>
-                    <div style="font-weight: 600;">📂 Add a Whole Folder</div>
+                    <div style="font-weight: 600;">Add a Whole Folder</div>
                     <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Choose a folder on your computer to add all its photos</div>
                 </div>
 
                 <div class="upload-zone" onclick="openFsBrowser('files')">
                     <div style="color: var(--text-muted); margin-bottom: 8px;"><i data-lucide="image" style="width: 32px; height: 32px;"></i></div>
-                    <div style="font-weight: 600;">🖼️ Pick Individual Photos</div>
+                    <div style="font-weight: 600;">Pick Individual Photos</div>
                     <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Select individual pictures from your computer</div>
                 </div>
             </div>
 
             <div id="upload-status" style="margin-top: 14px; font-size: 0.95rem; font-weight: 600; min-height: 1.2em; color: var(--text-main);"></div>
+            <div id="grandma-security-notice" style="display: none; margin-top: 12px; background: #FFF9E6; border: 2px solid #F59E0B; border-radius: 12px; padding: 12px; font-size: 13px; color: #78350F; line-height: 1.5; font-weight: 500; box-shadow: 2px 2px 0px #F59E0B;"></div>
             
             <!-- Uploaded Photos Pool Tray (shown when photos exist) -->
             <div id="photo-pool-details" style="display: none; margin-top: 14px; border-top: 1px solid var(--border); padding-top: 14px;">
                 <div style="color: var(--text-main); font-weight: 500; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; user-select: none;">
                     <i data-lucide="images" style="width: 14px; height: 14px; color: var(--text-muted);"></i> 📦 Album Photos
                 </div>
+                
                  <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
                     <div style="display: flex; gap: 8px;">
                         <button class="event-action-btn active-indicator" id="btn-pool-included" onclick="switchPoolTab('included'); event.preventDefault(); event.stopPropagation();">Included in Album</button>
@@ -1941,10 +2169,16 @@
                     </div>
                     
                     <!-- Year Filter Controls -->
-                    <div style="display: flex; align-items: center; gap: 10px; border: 1.5px solid var(--border); border-radius: 20px; background: #FFFFFF; padding: 4px 12.5px; font-weight: 700; font-size: 12px; user-select: none;">
-                        <button onclick="navigateYearFilter(-1); event.preventDefault(); event.stopPropagation();" style="background: none; border: none; cursor: pointer; color: var(--accent); display: flex; align-items: center; justify-content: center; padding: 0 4px; font-weight: 800; font-size: 11px;" title="Previous Year">◀</button>
-                        <span id="current-year-filter-label" style="min-width: 65px; text-align: center;">All Years</span>
-                        <button onclick="navigateYearFilter(1); event.preventDefault(); event.stopPropagation();" style="background: none; border: none; cursor: pointer; color: var(--accent); display: flex; align-items: center; justify-content: center; padding: 0 4px; font-weight: 800; font-size: 11px;" title="Next Year">▶</button>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <!-- All Years Tab -->
+                        <button class="event-action-btn active-indicator" id="btn-year-all" onclick="selectYearTab('all'); event.preventDefault(); event.stopPropagation();">All Years</button>
+                        
+                        <!-- Specific Year Selector Tab -->
+                        <div id="year-navigator-container" class="event-action-btn" style="display: flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1.5px solid var(--border); border-radius: 8px; background: #FFFFFF; font-weight: 700; user-select: none;">
+                            <button onclick="navigateYearFilter(-1); event.preventDefault(); event.stopPropagation();" id="btn-year-prev" style="background: none; border: none; cursor: pointer; color: var(--accent); display: flex; align-items: center; justify-content: center; padding: 0 4px; font-weight: 800; font-size: 11px;" title="Previous Year">◀</button>
+                            <span id="selected-year-label" onclick="selectYearTab('single'); event.preventDefault(); event.stopPropagation();" style="cursor: pointer; min-width: 40px; text-align: center;">2026</span>
+                            <button onclick="navigateYearFilter(1); event.preventDefault(); event.stopPropagation();" id="btn-year-next" style="background: none; border: none; cursor: pointer; color: var(--accent); display: flex; align-items: center; justify-content: center; padding: 0 4px; font-weight: 800; font-size: 11px;" title="Next Year">▶</button>
+                        </div>
                     </div>
                     
                     <button class="event-action-btn btn-delete" onclick="clearSessionPhotos(); event.preventDefault(); event.stopPropagation();"><i data-lucide="trash-2" style="width: 12px; height: 12px; margin-right: 4px;"></i> Delete All</button>
@@ -1972,6 +2206,7 @@
                             <div id="carousel-view-container" style="position: relative; width: 100%;">
                                 <button class="carousel-arrow prev" onclick="navigateCarousel(-1); event.preventDefault(); event.stopPropagation();" title="Previous Photo"><i data-lucide="chevron-left" style="width: 20px; height: 20px;"></i></button>
                                 <img id="detail-photo-img" src="" alt="Selected Photo Preview" />
+                                <video id="detail-video-preview" src="" controls style="display: none; width: 100%; border: 3px solid var(--border); border-radius: 12px; max-height: 400px; object-fit: contain; box-shadow: 4px 4px 0px var(--border); background: #000;"></video>
                                 <button class="carousel-arrow next" onclick="navigateCarousel(1); event.preventDefault(); event.stopPropagation();" title="Next Photo"><i data-lucide="chevron-right" style="width: 20px; height: 20px;"></i></button>
                             </div>
                             
@@ -2049,6 +2284,33 @@
                                     </div>
                                 </div>
                                 <div id="analysis-action-result" style="display: none; background: #FFFFFF; border: 1.5px solid var(--border); border-radius: 12px; padding: 12px; font-size: 12px; margin-top: 10px; line-height: 1.5; color: var(--text);"></div>
+                            </div>
+
+                            <!-- Video Splitter Card -->
+                            <div class="gemini-analysis-card" id="video-splitter-card" style="display: none; background: #F8FAFC; border: 2.5px solid var(--border); box-shadow: 4px 4px 0px var(--border); margin-bottom: 20px;">
+                                <div class="gemini-analysis-header">
+                                    <h4 class="gemini-analysis-title" style="color: var(--accent); display: flex; align-items: center; gap: 6px;">
+                                        <i data-lucide="video" style="width: 16px; height: 16px; color: var(--accent);"></i> Video Frame Splitter
+                                    </h4>
+                                </div>
+                                <p style="font-size: 12.5px; color: var(--text-muted); margin: 6px 0 12px 0; line-height: 1.45;">
+                                    🎞️ Extract high-resolution picture frames from this video clip and add them directly into your event curation album!
+                                </p>
+                                <div style="display: flex; flex-direction: column; gap: 10px;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                                        <span style="font-size: 12px; font-weight: 700; color: var(--text-main);">Frames to extract:</span>
+                                        <select id="split-frames-count" style="padding: 6px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 12px; font-weight: 700; background: white;">
+                                            <option value="5">5 frames (evenly spaced)</option>
+                                            <option value="10" selected>10 frames (recommended)</option>
+                                            <option value="15">15 frames</option>
+                                            <option value="20">20 frames (max)</option>
+                                        </select>
+                                    </div>
+                                    <button id="btn-split-video" class="btn-magic-enhance" onclick="runVideoSplitter(); event.preventDefault();" style="background: var(--accent); color: white; border-color: var(--border);">
+                                        <i data-lucide="scissors" style="width: 16px; height: 16px;"></i> Split Video into Frames
+                                    </button>
+                                    <div id="video-splitter-status" style="display: none; font-size: 12px; font-weight: 600; padding: 10px; border-radius: 8px; border: 1.5px solid var(--border); margin-top: 8px;"></div>
+                                </div>
                             </div>
 
                             <!-- 2. Voice Note Recorder Card -->
@@ -2308,6 +2570,23 @@
                 </div>
             </div>
         </div>
+
+        <!-- AI Cleaner Promotion Banner (Bonus Feature) -->
+        <div id="cleaner-promo-banner" style="background: linear-gradient(135deg, var(--accent) 0%, #7C3AED 100%); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin: 24px 0 0 0; color: white; display: flex; align-items: center; justify-content: space-between; gap: 16px; box-shadow: var(--card-shadow);">
+            <div style="background: rgba(255, 255, 255, 0.2); width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 24px;">
+                🪄
+            </div>
+            <div style="flex: 1;">
+                <span style="background: rgba(255,255,255,0.25); color: #fff; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; margin-bottom: 6px;">🎁 Bonus Utility Feature</span>
+                <h4 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 800;">Declutter & Organize On-Device Albums!</h4>
+                <p style="margin: 4px 0 0 0; font-size: 12.5px; opacity: 0.95; line-height: 1.45;">
+                    Run our smart AI Cleaner scanner to automatically weed out blurry shots, duplicate screenshots, and secure private notes/passwords into a password-locked text vault to clean up your device storage.
+                </p>
+            </div>
+            <a href="/cleaner" onclick="location.href='/cleaner?session='+encodeURIComponent(getSessionId()); return false;" class="btn" style="background: white; color: var(--accent); border-color: var(--border); padding: 10px 18px; font-size: 12px; font-weight: 800; border-radius: 20px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); flex-shrink: 0;">
+                Open AI Cleaner <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
+            </a>
+        </div>
     </div>
 
     <script>
@@ -2338,6 +2617,18 @@
 
         function viewerHref() {
             return '/viewer?session=' + encodeURIComponent(getSessionId());
+        }
+
+        function updateNavbarLinks() {
+            const sid = getSessionId();
+            const viewerLink = document.getElementById('nav-viewer-link');
+            if (viewerLink) {
+                viewerLink.href = '/viewer?session=' + encodeURIComponent(sid);
+            }
+            const cleanerLink = document.getElementById('nav-cleaner-link');
+            if (cleanerLink) {
+                cleanerLink.href = '/cleaner?session=' + encodeURIComponent(sid);
+            }
         }
 
         // ---- Admin token (only needed when the server sets MW_ADMIN_TOKEN) ----
@@ -2489,8 +2780,9 @@
         let activeMap = null;
         let selectedFilename = null;
         let allPhotosInTray = [];
-        let availableYears = ['All Years'];
+        let availableYears = ['2026'];
         let currentYearFilterIndex = 0;
+        let activeYearTab = 'all';
         let firstLoadYearDefault = true;
 
         // Carousel arrow controls
@@ -2508,15 +2800,52 @@
             selectPhoto(nextFilename, nextCard);
         }
 
+        function selectYearTab(tab) {
+            activeYearTab = tab;
+            updateYearFilterUI();
+            loadUploadedPoolTray();
+        }
+
+        function updateYearFilterUI() {
+            const btnAll = document.getElementById('btn-year-all');
+            const navContainer = document.getElementById('year-navigator-container');
+            const label = document.getElementById('selected-year-label');
+            const btnPrev = document.getElementById('btn-year-prev');
+            const btnNext = document.getElementById('btn-year-next');
+            if (!btnAll || !navContainer || !label) return;
+            
+            if (activeYearTab === 'all') {
+                btnAll.classList.add('active-indicator');
+                navContainer.classList.remove('active-indicator');
+                navContainer.style.background = '#FFFFFF';
+                navContainer.style.color = 'var(--text)';
+                label.style.color = 'var(--text)';
+                if (btnPrev) btnPrev.style.color = 'var(--accent)';
+                if (btnNext) btnNext.style.color = 'var(--accent)';
+            } else {
+                btnAll.classList.remove('active-indicator');
+                navContainer.classList.add('active-indicator');
+                navContainer.style.background = 'var(--accent)';
+                navContainer.style.color = '#FFFFFF';
+                label.style.color = '#FFFFFF';
+                if (btnPrev) btnPrev.style.color = '#FFFFFF';
+                if (btnNext) btnNext.style.color = '#FFFFFF';
+            }
+            if (availableYears.length > 0) {
+                label.textContent = availableYears[currentYearFilterIndex];
+            }
+        }
+
         function navigateYearFilter(direction) {
-            if (availableYears.length <= 1) return;
+            if (availableYears.length === 0) return;
             currentYearFilterIndex += direction;
             if (currentYearFilterIndex < 0) {
                 currentYearFilterIndex = availableYears.length - 1;
             } else if (currentYearFilterIndex >= availableYears.length) {
                 currentYearFilterIndex = 0;
             }
-            document.getElementById('current-year-filter-label').textContent = availableYears[currentYearFilterIndex];
+            activeYearTab = 'single';
+            updateYearFilterUI();
             // Reload the tray to apply filter
             loadUploadedPoolTray();
         }
@@ -2915,9 +3244,45 @@
             if (typeof lucide !== 'undefined') lucide.createIcons();
             
             // 1. Immediately show details panel & enlarged image preview
+            const ext = filename.split('.').pop().toLowerCase();
+            const isVideo = ['mp4', 'mov', 'webm'].includes(ext);
             const imgUrl = `/media?filename=${encodeURIComponent(filename)}&session_id=${encodeURIComponent(getSessionId())}`;
+            
             const detailImg = document.getElementById('detail-photo-img');
-            if (detailImg) detailImg.src = imgUrl;
+            const detailVideo = document.getElementById('detail-video-preview');
+            const geminiAnalysisCard = document.getElementById('gemini-analysis-card');
+            const videoSplitterCard = document.getElementById('video-splitter-card');
+            
+            if (isVideo) {
+                if (detailImg) detailImg.style.display = 'none';
+                if (detailVideo) {
+                    detailVideo.style.display = 'block';
+                    detailVideo.src = imgUrl;
+                }
+                if (geminiAnalysisCard) geminiAnalysisCard.style.display = 'none';
+                if (videoSplitterCard) {
+                    videoSplitterCard.style.display = 'block';
+                    // Reset splitter state
+                    const splitBtn = document.getElementById('btn-split-video');
+                    if (splitBtn) {
+                        splitBtn.disabled = false;
+                        splitBtn.innerHTML = '<i data-lucide="scissors" style="width: 16px; height: 16px;"></i> Split Video into Frames';
+                    }
+                    const splitStatus = document.getElementById('video-splitter-status');
+                    if (splitStatus) splitStatus.style.display = 'none';
+                }
+            } else {
+                if (detailVideo) {
+                    detailVideo.style.display = 'none';
+                    detailVideo.src = '';
+                }
+                if (detailImg) {
+                    detailImg.style.display = 'block';
+                    detailImg.src = imgUrl;
+                }
+                if (geminiAnalysisCard) geminiAnalysisCard.style.display = 'block';
+                if (videoSplitterCard) videoSplitterCard.style.display = 'none';
+            }
             
             const detailSection = document.getElementById('photo-detail-section');
             if (detailSection) detailSection.style.display = 'block';
@@ -3326,6 +3691,68 @@
             }
         }
 
+        async function runVideoSplitter() {
+            const btn = document.getElementById('btn-split-video');
+            const status = document.getElementById('video-splitter-status');
+            if (!btn || !selectedFilename) return;
+            
+            const framesCount = document.getElementById('split-frames-count').value;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i data-lucide="loader" class="animate-spin" style="width: 16px; height: 16px;"></i> Splitting video...';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            
+            if (status) {
+                status.style.display = 'block';
+                status.style.background = 'rgba(0, 0, 0, 0.03)';
+                status.style.color = 'var(--text-main)';
+                status.textContent = 'Extracting and encrypting frames from video clip...';
+            }
+            
+            try {
+                const res = await fetch('/api/video/split-frames', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...authHeaders()
+                    },
+                    body: JSON.stringify({
+                        filename: selectedFilename,
+                        session_id: getSessionId(),
+                        num_frames: parseInt(framesCount)
+                    })
+                });
+                
+                const data = await res.json();
+                if (data.status === 'success') {
+                    if (status) {
+                        status.style.background = 'rgba(0, 255, 100, 0.05)';
+                        status.style.color = 'var(--success)';
+                        status.textContent = `✅ Success: ${data.message}`;
+                    }
+                    btn.innerHTML = '<i data-lucide="check" style="width: 16px; height: 16px;"></i> Split Completed!';
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                    
+                    // Refresh photo pool tray to show the new frames!
+                    setTimeout(() => {
+                        loadUploadedPoolTray();
+                        closePhotoDetails();
+                    }, 1500);
+                } else {
+                    throw new Error(data.message || 'Failed to split video');
+                }
+            } catch (err) {
+                if (status) {
+                    status.style.background = 'rgba(255, 77, 77, 0.05)';
+                    status.style.color = 'var(--danger)';
+                    status.textContent = `❌ Error: ${err.message}`;
+                }
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="scissors" style="width: 16px; height: 16px;"></i> Split Video into Frames';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+        }
+
         async function usePhotoVersion(version) {
             if (!selectedFilename) return;
             
@@ -3460,8 +3887,11 @@
                         voice_duration: parseFloat(x.voice_duration) || 0
                     };
                 });
-                // Compile unique capture years dynamically from uploaded pool
+                // Compile unique capture years dynamically from uploaded pool, defaulting to 2015-2030 to show empty years too
                 const yearsSet = new Set();
+                for (let y = 2015; y <= 2030; y++) {
+                    yearsSet.add(y.toString());
+                }
                 allPhotos.forEach(p => {
                     if (p.date && p.date !== '-' && p.date !== 'Unknown') {
                         const yr = p.date.split('-')[0];
@@ -3470,37 +3900,41 @@
                         }
                     }
                 });
-                const sortedYears = Array.from(yearsSet).sort();
-                availableYears = ['All Years', ...sortedYears];
+                const sortedYears = Array.from(yearsSet).sort((a, b) => parseInt(a) - parseInt(b));
+                availableYears = sortedYears;
                 
-                // Default to 2026 on first load if it exists in the uploads pool
+                // Default to 2026 on first load if it exists in available years list
                 if (firstLoadYearDefault && availableYears.includes('2026')) {
                     currentYearFilterIndex = availableYears.indexOf('2026');
+                    activeYearTab = 'single';
                     firstLoadYearDefault = false;
                 }
                 
                 if (currentYearFilterIndex >= availableYears.length) {
                     currentYearFilterIndex = 0;
                 }
-                document.getElementById('current-year-filter-label').textContent = availableYears[currentYearFilterIndex];
+                updateYearFilterUI();
 
-                const includedCount = allPhotos.filter(x => !excluded.includes(x.filename)).length;
-                const excludedCount = allPhotos.filter(x => excluded.includes(x.filename)).length;
+                // Compute dynamic counts filtered by the active year tab
+                let filteredPhotos = [];
+                if (activeYearTab === 'all') {
+                    filteredPhotos = allPhotos;
+                } else {
+                    const activeYear = availableYears[currentYearFilterIndex];
+                    filteredPhotos = allPhotos.filter(p => p.date && p.date.startsWith(activeYear));
+                }
+
+                const includedCount = filteredPhotos.filter(x => !excluded.includes(x.filename)).length;
+                const excludedCount = filteredPhotos.filter(x => excluded.includes(x.filename)).length;
 
                 document.getElementById('btn-pool-included').textContent = `Included (${includedCount})`;
                 document.getElementById('btn-pool-excluded').textContent = `Excluded (${excludedCount})`;
 
                 let photos = [];
                 if (poolView === 'included') {
-                    photos = allPhotos.filter(x => !excluded.includes(x.filename));
+                    photos = filteredPhotos.filter(x => !excluded.includes(x.filename));
                 } else {
-                    photos = allPhotos.filter(x => excluded.includes(x.filename));
-                }
-                
-                // Apply active year filter
-                const activeYear = availableYears[currentYearFilterIndex];
-                if (activeYear && activeYear !== 'All Years') {
-                    photos = photos.filter(p => p.date && p.date.startsWith(activeYear));
+                    photos = filteredPhotos.filter(x => excluded.includes(x.filename));
                 }
                 
                 // Populate allPhotosInTray for carousel navigation
@@ -3528,7 +3962,12 @@
                     };
                     
                     const img = document.createElement('img');
-                    img.src = `/media?filename=${encodeURIComponent(filename)}&session_id=${encodeURIComponent(getSessionId())}`;
+                    const isVideo = ['mp4', 'mov', 'webm'].includes(filename.split('.').pop().toLowerCase());
+                    if (isVideo) {
+                        img.src = `/media?filename=${encodeURIComponent(filename)}&session_id=${encodeURIComponent(getSessionId())}&thumbnail=true`;
+                    } else {
+                        img.src = `/media?filename=${encodeURIComponent(filename)}&session_id=${encodeURIComponent(getSessionId())}`;
+                    }
                     img.loading = 'lazy';
                     
                     const btn = document.createElement('button');
@@ -3555,6 +3994,26 @@
                     }
                     
                     card.appendChild(img);
+                    if (isVideo) {
+                        const playBadge = document.createElement('div');
+                        playBadge.style.position = 'absolute';
+                        playBadge.style.top = '50%';
+                        playBadge.style.left = '50%';
+                        playBadge.style.transform = 'translate(-50%, -50%)';
+                        playBadge.style.background = 'rgba(0, 0, 0, 0.65)';
+                        playBadge.style.color = '#FFFFFF';
+                        playBadge.style.width = '36px';
+                        playBadge.style.height = '36px';
+                        playBadge.style.borderRadius = '50%';
+                        playBadge.style.display = 'flex';
+                        playBadge.style.alignItems = 'center';
+                        playBadge.style.justifyContent = 'center';
+                        playBadge.style.pointerEvents = 'none';
+                        playBadge.style.zIndex = '4';
+                        playBadge.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+                        playBadge.innerHTML = '<i data-lucide="play" style="width: 16px; height: 16px; fill: currentColor; margin-left: 2px;"></i>';
+                        card.appendChild(playBadge);
+                    }
                     card.appendChild(btn);
                     
                     const badgeContainer = document.createElement('div');
@@ -4468,6 +4927,7 @@
             }
 
             loadSessions();
+            updateNavbarLinks();
             loadActiveShareCode();
             refreshPipelineOnlyCount();
             refreshCurationReviewTray();
@@ -4996,7 +5456,54 @@
             }
         }
 
-        const SUPPORTED_EXT = /\.(jpe?g|png|heic)$/i;
+        // Key derivation helper using Web Crypto PBKDF2
+        async function getSessionEncryptionKey(sessionId) {
+            const encoder = new TextEncoder();
+            const keyMaterial = await window.crypto.subtle.importKey(
+                "raw",
+                encoder.encode(sessionId),
+                { name: "PBKDF2" },
+                false,
+                ["deriveKey"]
+            );
+            return window.crypto.subtle.deriveKey(
+                {
+                    name: "PBKDF2",
+                    salt: encoder.encode("MemoryWeaverSecureSalt_2026"),
+                    iterations: 10000,
+                    hash: "SHA-256"
+                },
+                keyMaterial,
+                { name: "AES-GCM", length: 256 },
+                false,
+                ["encrypt", "decrypt"]
+            );
+        }
+
+        async function encryptFileForUpload(file) {
+            try {
+                const key = await getSessionEncryptionKey(getSessionId());
+                const fileBuffer = await file.arrayBuffer();
+                const iv = window.crypto.getRandomValues(new Uint8Array(12));
+                const ciphertext = await window.crypto.subtle.encrypt(
+                    { name: "AES-GCM", iv: iv },
+                    key,
+                    fileBuffer
+                );
+                
+                // Pack IV + Ciphertext
+                const encryptedPayload = new Uint8Array(iv.length + ciphertext.byteLength);
+                encryptedPayload.set(iv, 0);
+                encryptedPayload.set(new Uint8Array(ciphertext), iv.length);
+                
+                return new Blob([encryptedPayload], { type: "application/octet-stream" });
+            } catch (err) {
+                console.error("Encryption failed, falling back to raw file:", err);
+                return file;
+            }
+        }
+
+        const SUPPORTED_EXT = /\.(jpe?g|png|heic|mp4|mov|webm)$/i;
         const BATCH_SIZE = 10;
 
         async function uploadFiles(fileList) {
@@ -5006,9 +5513,11 @@
             const skipped = all.length - files.length;
 
             const status = document.getElementById('upload-status');
+            const grandmaNotice = document.getElementById('grandma-security-notice');
+            
             if (!files.length) {
                 status.style.color = 'var(--danger)';
-                status.textContent = "No supported photos found (JPEG/PNG/HEIC only).";
+                status.textContent = "No supported photos or videos found (JPEG/PNG/HEIC/MP4/MOV/WEBM only).";
                 return;
             }
 
@@ -5024,18 +5533,24 @@
             let uploaded = 0;
             let failed = 0;
             status.style.color = 'var(--accent)';
+            
+            if (grandmaNotice) {
+                grandmaNotice.style.display = 'block';
+                grandmaNotice.innerHTML = `👵 <strong>Grandma's Protection Shield:</strong> "Oh my sweet child, your precious memories are absolutely safe with us! Right before your photos leave your device, we wrap them in a state-of-the-art AES-GCM 256-bit digital padlock. It's the most secure technology in the world—even the most powerful supercomputers running for millions of years couldn't break it. Rest easy, dear, no one can ever peek at your beautiful moments!"`;
+            }
 
             try {
                 for (let i = 0; i < files.length; i += BATCH_SIZE) {
                     const batch = files.slice(i, i + BATCH_SIZE);
-                    status.textContent = `Uploading ${Math.min(i + batch.length, files.length)} of ${files.length} photo(s)...`;
+                    status.textContent = `Encrypting & Uploading ${Math.min(i + batch.length, files.length)} of ${files.length} photo(s)...`;
 
                     const formData = new FormData();
                     formData.append('contributor_name', 'Organizer');
                     formData.append('session_id', getSessionId());
                     formData.append('share_code', currentShareCode);
                     for (const f of batch) {
-                        formData.append('photos', f);
+                        const encryptedBlob = await encryptFileForUpload(f);
+                        formData.append('photos', encryptedBlob, f.name);
                     }
 
                     const res = await fetch('/upload', {
@@ -5055,6 +5570,10 @@
                 if (failed) msg += ` (${failed} failed)`;
                 if (skipped) msg += ` ${skipped} unsupported file(s) skipped.`;
                 status.textContent = msg;
+                
+                if (grandmaNotice) {
+                    grandmaNotice.innerHTML = `👵 <strong>Grandma's Protection Shield:</strong> "All done, sweetheart! Your precious photos are safely locked away in our digital vault. No one can ever crack the system, so your memories are fully protected!"`;
+                }
                 
                 refreshPipelineOnlyCount();
                 

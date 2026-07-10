@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rewind - Album Cleaner & Vault</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg: #FAFAFA;
+            --card-bg: #FFFFFF;
+            --border: #DBDBDB;
+            --text: #262626;
+            --text-muted: #8E8E8E;
+            --accent: #E1306C; /* Instagram Iconic Magenta */
+            --accent-glow: rgba(225, 48, 108, 0.08);
+            --accent-grad: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            --on-accent: #FFFFFF;
+            --danger: #ED4956;
+            --success: #58C56A;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            --btn-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #F0F2F5;
+            color: var(--text);
+            margin: 0;
+            padding: 0 0 4rem 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
+        /* Top Nav */
+        .top-nav {
+            position: sticky;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 3px solid transparent;
+            border-image: var(--accent-grad) 1;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            box-sizing: border-box;
+            margin-bottom: 24px !important;
+        }
+
+        .nav-container {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            box-sizing: border-box;
+        }
+
+        .nav-logo {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 800;
+            font-size: 1.4rem;
+            background: var(--accent-grad);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 12px;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 8px 18px;
+            border-radius: 8px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-link:hover {
+            color: var(--text);
+            background: rgba(0,0,0,0.04);
+        }
+
+        .nav-link.active {
+            color: var(--on-accent);
+            background: var(--accent-grad);
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+        }
+
+        header h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: var(--text);
+            margin: 0 0 8px 0;
+            letter-spacing: -1px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text);
+            box-shadow: var(--btn-shadow);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            opacity: 0.95;
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: var(--accent-grad);
+            border-color: transparent;
+            color: var(--on-accent);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        /* Tabs */
+        .tabs-header {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .tabs-header::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 8px;
+            box-shadow: var(--btn-shadow);
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .tab-btn.active {
+            color: var(--on-accent);
+            background: var(--accent-grad);
+            border-color: transparent;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Dropdown */
+        .select-input {
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: #FFFFFF;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            box-shadow: var(--btn-shadow);
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            display: none;
+            margin: 14px 0;
+            background: #FFFFFF;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            height: 20px;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        /* Grid */
+        .cleaner-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 14px;
+        }
+
+        .photo-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: var(--card-shadow);
+            transition: all 0.2s;
+        }
+
+        .photo-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .photo-card-body {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .photo-card-title {
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .photo-card-reason {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: #F0F2F5;
+        }
+
+        .badge-scrap {
+            background: rgba(255, 77, 77, 0.1);
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
+        .badge-info {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border-color: var(--success);
+        }
+
+        .badge-emotional {
+            background: rgba(235, 35, 113, 0.1);
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        /* Password vault & notes styling */
+        .extracted-text-box {
+            background: #F0F2F5;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+            font-family: monospace;
+            font-size: 11px;
+            max-height: 100px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .note-input {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 12px;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+
+        .lock-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(48, 48, 48, 0.95);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 16px;
+            text-align: center;
+            z-index: 10;
+            backdrop-filter: blur(8px);
+        }
+
+        .card-checkbox {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 5;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--accent);
+        }
+
+        /* Modal styling */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            max-width: 420px;
+            width: 90%;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            animation: modalPop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 800;
+            font-size: 1.2rem;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Banner metrics dashboard */
+        .metrics-bar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        @media (max-width: 600px) {
+            .metrics-bar {
+                grid-template-columns: 1fr;
+            }
+        }
+        .metric-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+            box-shadow: var(--card-shadow);
+        }
+        .metric-num {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+        .metric-lbl {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="/" class="nav-logo"><i data-lucide="rewind" style="fill: var(--accent); stroke: var(--accent);"></i> Rewind</a>
+            <div class="nav-links">
+                <a href="/" class="nav-link"><i data-lucide="wrench"></i> Curator Hub</a>
+                <a href="/viewer" class="nav-link" id="nav-viewer-link"><i data-lucide="book-open"></i> Trip Highlights</a>
+                <a href="/cleaner" class="nav-link active" id="nav-cleaner-link"><i data-lucide="trash-2"></i> Vault & Organizer</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <header style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+            <div>
+                <h1>AI Album Cleaner & Vault</h1>
+            </div>
+            
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <label style="font-weight: 700; font-size: 12px; color: var(--text-muted);">Active Event:</label>
+                <select id="session-select" class="select-input" onchange="loadSessionData()">
+                    <option value="default">Default Session</option>
+                </select>
+                <button class="btn btn-primary" onclick="startAIScan()"><i data-lucide="sparkles"></i> Run AI Album Scan</button>
+            </div>
+        </header>
+
+        <!-- Progress Log -->
+        <div class="progress-container" id="scan-progress-area">
+            <div class="progress-bar" id="scan-progress-bar"></div>
+            <div class="progress-text" id="scan-progress-text">Analyzing photo pool... 0%</div>
+        </div>
+        <div id="scan-console-logs" style="display: none; background: #17191D; color: #10B981; font-family: monospace; font-size: 11px; padding: 10px; border-radius: 8px; max-height: 80px; overflow-y: auto; margin-top: -10px; border: 1px solid var(--border);"></div>
+
+        <!-- Dashboard Metrics -->
+        <div class="metrics-bar">
+            <div class="metric-card">
+                <div class="metric-num" id="metric-scrap">0</div>
+                <div class="metric-lbl">🗑️ Scrap Items Detected</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-num" id="metric-info">0</div>
+                <div class="metric-lbl">🔑 Secured Info Notes</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-num" id="metric-emotional">0</div>
+                <div class="metric-lbl">🔒 Private Memories</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <!-- Tabs -->
+            <div class="tabs-header">
+                <button class="tab-btn active" id="tab-btn-scrap" onclick="switchTab('scrap')"><i data-lucide="trash-2" style="width: 14px; height: 14px;"></i> Junk & Scrap Cleaner</button>
+                <button class="tab-btn" id="tab-btn-info" onclick="switchTab('info')"><i data-lucide="shield-check" style="width: 14px; height: 14px;"></i> Protected Notes Vault</button>
+                <button class="tab-btn" id="tab-btn-emotional" onclick="switchTab('emotional')"><i data-lucide="heart" style="width: 14px; height: 14px;"></i> Emotional & Private</button>
+                <button class="tab-btn" id="tab-btn-organized" onclick="switchTab('organized')"><i data-lucide="folder-heart" style="width: 14px; height: 14px;"></i> Smart AI Categories</button>
+            </div>
+
+            <!-- TAB 1: SCRAP CLEANER -->
+            <div class="tab-content active" id="tab-content-scrap">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div style="font-size: 13px; color: var(--text-muted); font-weight: 600;">AI identified these screenshots, memes, and blurry images as scrap that can be deleted to save space.</div>
+                    <button class="btn btn-danger" onclick="purgeSelectedScrap()"><i data-lucide="trash-2" style="width: 12px; height: 12px;"></i> Purge Selected Scrap</button>
+                </div>
+                <div class="cleaner-grid" id="scrap-grid">
+                    <div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1; text-align: center; padding: 20px;">No scrap photos detected yet. Click 'Run AI Album Scan' to search.</div>
+                </div>
+            </div>
+
+            <!-- TAB 2: SECURED NOTES VAULT -->
+            <div class="tab-content" id="tab-content-info">
+                <div style="font-size: 13px; color: var(--text-muted); font-weight: 600; margin-bottom: 16px;">
+                    Screenshots of tickets, Wi-Fi passwords, card credentials, or notes. Convert them to secure text notes, then delete the bulky original image to save space.
+                </div>
+                <div class="cleaner-grid" id="info-grid">
+                    <div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1; text-align: center; padding: 20px;">No informational screenshots analyzed yet.</div>
+                </div>
+                
+                <!-- Saved Notes Vault Section -->
+                <div style="margin-top: 30px; border-top: 2.5px solid var(--border); padding-top: 20px;">
+                    <h3 style="font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 1.15rem; display: flex; align-items: center; gap: 6px;"><i data-lucide="safe" style="color: var(--success);"></i> Saved Text Vault</h3>
+                    <div class="cleaner-grid" id="saved-notes-grid" style="margin-top: 14px;">
+                        <!-- Saved text cards go here -->
+                        <div style="color: var(--text-muted); font-size: 12px; grid-column: 1/-1;">No text notes saved yet.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: EMOTIONAL & PRIVATE -->
+            <div class="tab-content" id="tab-content-emotional">
+                <div style="font-size: 13px; color: var(--text-muted); font-weight: 600; margin-bottom: 12px;">
+                    Sweet chat logs, emotional texts, or screenshots that you want to keep secure from casual browsing. Lock them with a password passcode.
+                </div>
+                <div class="cleaner-grid" id="emotional-grid">
+                    <div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1; text-align: center; padding: 20px;">No emotional text screenshots detected yet.</div>
+                </div>
+            </div>
+
+            <!-- TAB 4: SMART AI CATEGORIES -->
+            <div class="tab-content" id="tab-content-organized">
+                <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;" id="category-pills-container">
+                    <button class="btn btn-primary" onclick="filterOrganized('all')">All Organized</button>
+                </div>
+                <div class="cleaner-grid" id="organized-grid">
+                    <div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1; text-align: center; padding: 20px;">No categorized memory photos.</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Password Lock Modal -->
+    <div class="modal-overlay" id="password-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <i data-lucide="lock" style="color: var(--accent);"></i>
+                <span id="modal-title">Enter Vault Passcode</span>
+            </div>
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Passcode/Password</label>
+                <input type="password" id="modal-password-input" class="note-input" placeholder="Enter password to access">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button class="btn" onclick="closePasswordModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="submitPasswordModal()">Unlock Item</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTab = 'scrap';
+        let classifications = {};
+        let lockedPhotos = {};
+        let savedNotes = {};
+        let existingPhotos = [];
+        
+        let pendingLockAction = null; // { filename, action, item_type }
+
+        // Token settings
+        function getAdminToken() {
+            const urlTok = new URLSearchParams(window.location.search).get('token');
+            if (urlTok) localStorage.setItem('mw_token', urlTok);
+            return localStorage.getItem('mw_token');
+        }
+
+        function authHeaders(extra) {
+            const tok = getAdminToken();
+            return Object.assign({}, extra || {}, tok ? { 'X-MW-Token': tok } : {});
+        }
+
+        function getSessionId() {
+            const select = document.getElementById('session-select');
+            if (select && select.value) return select.value;
+            const urlSid = new URLSearchParams(window.location.search).get('session');
+            if (urlSid) { localStorage.setItem('mw_session_id', urlSid); return urlSid; }
+            return localStorage.getItem('mw_session_id') || 'default';
+        }
+
+        function updateNavbarLinks() {
+            const sid = getSessionId();
+            const viewerLink = document.getElementById('nav-viewer-link');
+            if (viewerLink) {
+                viewerLink.href = '/viewer?session=' + encodeURIComponent(sid);
+            }
+            document.querySelectorAll('.nav-links a[href="/"], .nav-logo').forEach(el => {
+                el.href = '/?session=' + encodeURIComponent(sid);
+            });
+        }
+
+        // Fetch Sessions
+        async function loadSessions() {
+            try {
+                const res = await fetch('/api/sessions');
+                const data = await res.json();
+                const select = document.getElementById('session-select');
+                select.innerHTML = '';
+                if (data.sessions && data.sessions.length > 0) {
+                    data.sessions.forEach(s => {
+                        const opt = document.createElement('option');
+                        opt.value = s.session_id;
+                        opt.textContent = s.name;
+                        if (s.session_id === getSessionId()) {
+                            opt.selected = true;
+                        }
+                        select.appendChild(opt);
+                    });
+                } else {
+                    const opt = document.createElement('option');
+                    opt.value = 'default';
+                    opt.textContent = 'Default Session';
+                    select.appendChild(opt);
+                }
+                loadSessionData();
+            } catch (e) {
+                console.error("Failed to load sessions:", e);
+            }
+        }
+
+        // Fetch Curation Vault Data
+        async function loadSessionData() {
+            const sid = getSessionId();
+            localStorage.setItem('mw_session_id', sid);
+            updateNavbarLinks();
+            
+            try {
+                const res = await fetch(`/api/cleaner/vault?session_id=${encodeURIComponent(sid)}`, {
+                    headers: authHeaders()
+                });
+                if (res.status === 401 || res.status === 403) {
+                    alert("Unauthorized: Please append ?token=YOUR_MW_ADMIN_TOKEN to the URL");
+                    return;
+                }
+                const data = await res.json();
+                if (data.status === 'success') {
+                    classifications = data.vault.classifications || {};
+                    lockedPhotos = data.vault.locked_photos || {};
+                    savedNotes = data.vault.notes || {};
+                    existingPhotos = data.existing_photos || [];
+                    
+                    updateMetrics();
+                    renderGrids();
+                } else {
+                    alert("Error: " + data.message);
+                }
+            } catch (e) {
+                console.error("Error fetching vault data:", e);
+            }
+        }
+
+        function updateMetrics() {
+            let scrapCount = 0;
+            let infoCount = 0;
+            let emoCount = 0;
+            
+            existingPhotos.forEach(fn => {
+                const c = classifications[fn];
+                if (c) {
+                    if (c.category === 'scrap') scrapCount++;
+                    if (c.category === 'info') infoCount++;
+                    if (c.category === 'emotional') emoCount++;
+                }
+            });
+            
+            document.getElementById('metric-scrap').textContent = scrapCount;
+            document.getElementById('metric-info').textContent = Object.keys(savedNotes).length;
+            document.getElementById('metric-emotional').textContent = Object.keys(lockedPhotos).length;
+        }
+
+        function switchTab(tabId) {
+            currentTab = tabId;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            document.getElementById(`tab-btn-${tabId}`).classList.add('active');
+            document.getElementById(`tab-content-${tabId}`).classList.add('active');
+        }
+
+        // Render grids based on classifications
+        function renderGrids() {
+            const sid = getSessionId();
+            
+            // Grid roots
+            const scrapGrid = document.getElementById('scrap-grid');
+            const infoGrid = document.getElementById('info-grid');
+            const emotionalGrid = document.getElementById('emotional-grid');
+            const organizedGrid = document.getElementById('organized-grid');
+            
+            scrapGrid.innerHTML = '';
+            infoGrid.innerHTML = '';
+            emotionalGrid.innerHTML = '';
+            organizedGrid.innerHTML = '';
+            
+            let scrapHtml = '';
+            let infoHtml = '';
+            let emotionalHtml = '';
+            let organizedMap = {};
+            
+            existingPhotos.forEach(fn => {
+                const c = classifications[fn] || {};
+                const isLocked = lockedPhotos[fn]?.is_locked;
+                
+                if (c.category === 'scrap') {
+                    scrapHtml += `
+                        <div class="photo-card" id="scrap-card-${fn.replace(/[^a-zA-Z0-9]/g, '_')}">
+                            <input type="checkbox" class="card-checkbox" value="${fn}">
+                            <img src="/media?filename=${encodeURIComponent(fn)}&session_id=${encodeURIComponent(sid)}" alt="Scrap">
+                            <div class="photo-card-body">
+                                <div class="photo-card-title">
+                                    <span>${c.subcategory || 'Junk'}</span>
+                                    <span class="badge badge-scrap">${c.confidence}/10 AI Confidence</span>
+                                </div>
+                                <div class="photo-card-reason">${c.reason || 'Flagged for deletion.'}</div>
+                                <button class="btn btn-danger" style="padding: 6px 12px; font-size: 11px; min-height: auto; align-self: flex-end; box-shadow: none;" onclick="deleteSinglePhoto('${fn}')">Delete Now</button>
+                            </div>
+                        </div>
+                    `;
+                } 
+                else if (c.category === 'info') {
+                    // Check if already purged
+                    const note = savedNotes[fn];
+                    if (note && note.purge_photo) return;
+                    
+                    infoHtml += `
+                        <div class="photo-card" id="info-card-${fn.replace(/[^a-zA-Z0-9]/g, '_')}">
+                            <img src="/media?filename=${encodeURIComponent(fn)}&session_id=${encodeURIComponent(sid)}" alt="Info Screen">
+                            <div class="photo-card-body">
+                                <div class="photo-card-title">
+                                    <span>${c.subcategory || 'Document Info'}</span>
+                                    <span class="badge badge-info">${c.confidence}/10 Confidence</span>
+                                </div>
+                                <div class="photo-card-reason">Reason: ${c.reason || 'Extracted textual data.'}</div>
+                                <div style="font-weight: 700; font-size: 11px; margin-top: 4px;">Extracted Raw Text:</div>
+                                <div class="extracted-text-box">${escapeHtml(c.extracted_text || 'No text extracted')}</div>
+                                
+                                <div style="margin-top: 8px; border-top: 1.5px solid var(--border); padding-top: 8px; display: flex; flex-direction: column; gap: 6px;">
+                                    <div style="font-weight: 700; font-size: 11px;">Save as Curated Text Note:</div>
+                                    <input type="text" id="note-title-${fn.replace(/[^a-zA-Z0-9]/g, '_')}" class="note-input" value="${c.subcategory || 'Credential Note'}" placeholder="Note Title">
+                                    <textarea id="note-text-${fn.replace(/[^a-zA-Z0-9]/g, '_')}" class="note-input" style="height: 50px; resize: none;">${c.extracted_text || ''}</textarea>
+                                    
+                                    <div style="display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600;">
+                                        <input type="checkbox" id="note-pwd-check-${fn.replace(/[^a-zA-Z0-9]/g, '_')}" onchange="togglePwdInput('${fn}')">
+                                        <label for="note-pwd-check-${fn.replace(/[^a-zA-Z0-9]/g, '_')}">🔒 Protect with password</label>
+                                    </div>
+                                    <input type="password" id="note-pwd-val-${fn.replace(/[^a-zA-Z0-9]/g, '_')}" class="note-input" style="display: none;" placeholder="Note Password">
+                                    
+                                    <div style="display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600;">
+                                        <input type="checkbox" id="note-purge-${fn.replace(/[^a-zA-Z0-9]/g, '_')}" checked>
+                                        <label for="note-purge-${fn.replace(/[^a-zA-Z0-9]/g, '_')}">🗑️ Purge photo from disk after saving</label>
+                                    </div>
+                                    
+                                    <button class="btn btn-success" style="padding: 6px 12px; font-size: 11px; min-height: auto; align-self: flex-end; box-shadow: none;" onclick="saveCuratedNote('${fn}')">💾 Save and Curate</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                else if (c.category === 'emotional') {
+                    emotionalHtml += `
+                        <div class="photo-card" id="emotional-card-${fn.replace(/[^a-zA-Z0-9]/g, '_')}">
+                            ${isLocked ? `
+                            <div class="lock-overlay">
+                                <i data-lucide="shield-alert" style="width: 32px; height: 32px;"></i>
+                                <div style="font-weight: 800; font-size: 13px; font-family: 'Space Grotesk', sans-serif;">Memory Locked Securely</div>
+                                <button class="btn" style="padding: 4px 10px; font-size: 11px; min-height: auto; box-shadow: none; border-color: white;" onclick="promptUnlock('${fn}', 'photo')">Unlock to View</button>
+                            </div>
+                            ` : ''}
+                            <img src="/media?filename=${encodeURIComponent(fn)}&session_id=${encodeURIComponent(sid)}" alt="Emotional">
+                            <div class="photo-card-body">
+                                <div class="photo-card-title">
+                                    <span>${c.subcategory || 'Private Screen'}</span>
+                                    <span class="badge badge-emotional">${c.confidence}/10 Confidence</span>
+                                </div>
+                                <div class="photo-card-reason">${c.reason || 'Screenshot of message/memory.'}</div>
+                                ${c.extracted_text ? `<div class="extracted-text-box" style="margin-bottom: 6px;">${escapeHtml(c.extracted_text)}</div>` : ''}
+                                
+                                <div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: auto;">
+                                    ${isLocked ? `
+                                    <button class="btn btn-success" style="padding: 6px 12px; font-size: 11px; min-height: auto; box-shadow: none;" onclick="toggleLock('${fn}', false)">🔓 Unlock Permanently</button>
+                                    ` : `
+                                    <button class="btn btn-primary" style="padding: 6px 12px; font-size: 11px; min-height: auto; box-shadow: none;" onclick="toggleLock('${fn}', true)">🔒 Lock Memory</button>
+                                    `}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                else {
+                    // organized
+                    const theme = c.subcategory || 'Memories';
+                    if (!organizedMap[theme]) organizedMap[theme] = [];
+                    organizedMap[theme].push(fn);
+                }
+            });
+            
+            // Render Junk
+            scrapGrid.innerHTML = scrapHtml || `<div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1; text-align: center; padding: 20px;">No scrap photos detected.</div>`;
+            // Render Info
+            infoGrid.innerHTML = infoHtml || `<div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1; text-align: center; padding: 20px;">No informational screenshots left to clean.</div>`;
+            // Render Emotional
+            emotionalGrid.innerHTML = emotionalHtml || `<div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1; text-align: center; padding: 20px;">No emotional messages detected.</div>`;
+            
+            // Render Saved Notes Section
+            const savedGrid = document.getElementById('saved-notes-grid');
+            savedGrid.innerHTML = '';
+            let notesHtml = '';
+            
+            Object.keys(savedNotes).forEach(fn => {
+                const note = savedNotes[fn];
+                notesHtml += `
+                    <div class="card" style="border: 1px solid var(--border); box-shadow: var(--card-shadow); padding: 12px; background: #FFFFFF; font-size: 12px; position: relative;">
+                        ${note.is_locked ? `
+                        <div class="lock-overlay" style="border-radius: 12px;">
+                            <i data-lucide="lock" style="width: 24px; height: 24px;"></i>
+                            <div style="font-weight: 800; font-size: 11px; font-family: 'Space Grotesk', sans-serif;">Note Encrypted</div>
+                            <button class="btn" style="padding: 4px 8px; font-size: 10px; min-height: auto; box-shadow: none; border-color: white;" onclick="promptUnlock('${fn}', 'note')">Unlock Note</button>
+                        </div>
+                        ` : ''}
+                        <h4 style="margin: 0 0 6px 0; font-family: 'Space Grotesk', sans-serif; font-weight: 800; color: var(--text);">${escapeHtml(note.title)}</h4>
+                        <div style="white-space: pre-wrap; color: var(--text-muted); font-size: 11px; font-family: monospace; max-height: 80px; overflow-y: auto; background: #F0F2F5; padding: 6px; border-radius: 6px;">${escapeHtml(note.content)}</div>
+                        <div style="margin-top: 8px; display: flex; justify-content: space-between; align-items: center;">
+                            <span class="badge" style="font-size: 8px; font-weight: 700; color: var(--success); border-color: var(--success);">Curated Note</span>
+                            <button class="btn btn-danger" style="padding: 4px 8px; font-size: 10px; min-height: auto; box-shadow: none;" onclick="deleteCuratedNote('${fn}')">Delete Note</button>
+                        </div>
+                    </div>
+                `;
+            });
+            savedGrid.innerHTML = notesHtml || `<div style="color: var(--text-muted); font-size: 11px; grid-column: 1/-1;">No text notes saved yet.</div>`;
+            
+            // Render Organized
+            let organizedHtml = '';
+            const themePillsContainer = document.getElementById('category-pills-container');
+            themePillsContainer.innerHTML = `<button class="btn btn-primary" onclick="filterOrganized('all')">All Organized (${existingPhotos.filter(f => !classifications[f] || (classifications[f].category !== 'scrap' && classifications[f].category !== 'info' && classifications[f].category !== 'emotional')).length})</button>`;
+            
+            Object.keys(organizedMap).forEach(theme => {
+                const photos = organizedMap[theme];
+                // Add category filter pill
+                const pill = document.createElement('button');
+                pill.className = 'btn';
+                pill.textContent = `${theme} (${photos.length})`;
+                pill.onclick = () => filterOrganized(theme);
+                themePillsContainer.appendChild(pill);
+                
+                photos.forEach(fn => {
+                    organizedHtml += `
+                        <div class="photo-card organized-photo-card" data-category="${theme}">
+                            <img src="/media?filename=${encodeURIComponent(fn)}&session_id=${encodeURIComponent(sid)}" alt="Memory">
+                            <div class="photo-card-body">
+                                <div class="photo-card-title">${theme}</div>
+                                <div class="photo-card-reason">${fn}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+            organizedGrid.innerHTML = organizedHtml || `<div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1; text-align: center; padding: 20px;">No memory photos grouped. Run scan.</div>`;
+            
+            lucide.createIcons();
+        }
+
+        function filterOrganized(category) {
+            document.querySelectorAll('.organized-photo-card').forEach(card => {
+                if (category === 'all' || card.getAttribute('data-category') === category) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Toggle visibility of Password Input
+        function togglePwdInput(filename) {
+            const key = filename.replace(/[^a-zA-Z0-9]/g, '_');
+            const checkbox = document.getElementById(`note-pwd-check-${key}`);
+            const input = document.getElementById(`note-pwd-val-${key}`);
+            if (checkbox && input) {
+                input.style.display = checkbox.checked ? 'block' : 'none';
+            }
+        }
+
+        // Save note and lock/purge
+        async function saveCuratedNote(filename) {
+            const key = filename.replace(/[^a-zA-Z0-9]/g, '_');
+            const titleInput = document.getElementById(`note-title-${key}`);
+            const textInput = document.getElementById(`note-text-${key}`);
+            const pwdCheck = document.getElementById(`note-pwd-check-${key}`);
+            const pwdInput = document.getElementById(`note-pwd-val-${key}`);
+            const purgeCheck = document.getElementById(`note-purge-${key}`);
+            
+            const reqData = {
+                session_id: getSessionId(),
+                filename: filename,
+                title: titleInput.value || 'Curated Note',
+                note_content: textInput.value || '',
+                password: (pwdCheck.checked ? pwdInput.value : null) || null,
+                purge_photo: purgeCheck.checked
+            };
+            
+            try {
+                const res = await fetch('/api/cleaner/save-note', {
+                    method: 'POST',
+                    headers: authHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify(reqData)
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    alert("Note curated & saved securely!");
+                    loadSessionData();
+                } else {
+                    alert("Failed to save: " + data.message);
+                }
+            } catch (e) {
+                console.error("Save note error:", e);
+            }
+        }
+
+        // Delete Curated Note
+        async function deleteCuratedNote(filename) {
+            if (!confirm("Are you sure you want to delete this text note?")) return;
+            const sid = getSessionId();
+            
+            const reqData = {
+                session_id: sid,
+                filename: filename,
+                title: "",
+                note_content: "",
+                purge_photo: false
+            };
+            
+            try {
+                const res = await fetch('/api/cleaner/save-note', {
+                    method: 'POST',
+                    headers: authHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify(reqData)
+                });
+                
+                await deleteSinglePhoto(filename, false);
+                loadSessionData();
+            } catch (e) {
+                console.error("Delete note error:", e);
+            }
+        }
+
+        // Start scanning with logs
+        async function startAIScan() {
+            const sid = getSessionId();
+            const progressArea = document.getElementById('scan-progress-area');
+            const progressBar = document.getElementById('scan-progress-bar');
+            const progressText = document.getElementById('scan-progress-text');
+            const consoleLogs = document.getElementById('scan-console-logs');
+            
+            progressArea.style.display = 'block';
+            consoleLogs.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressText.textContent = 'Contacting AI Curation Inspector... 0%';
+            consoleLogs.innerHTML = '';
+            
+            logConsole("Scanning all photos in album folder...");
+            logConsole("Establishing secure metadata handshake with Gemini-2.5-flash...");
+            
+            progressBar.style.width = '20%';
+            progressText.textContent = 'Scanning albums... 20%';
+            
+            try {
+                const res = await fetch('/api/cleaner/analyze-all', {
+                    method: 'POST',
+                    headers: authHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({ session_id: sid, force_refresh: true })
+                });
+                
+                progressBar.style.width = '60%';
+                progressText.textContent = 'Sorting screenshots & scrap... 60%';
+                logConsole("AI identifying document structures and passwords...");
+                logConsole("AI clustering travel visual memories into subcategories...");
+                
+                const data = await res.json();
+                
+                progressBar.style.width = '100%';
+                progressText.textContent = 'AI Scan Complete! 100%';
+                logConsole("Scan finished successfully. Curation database updated!");
+                
+                if (data.status === 'success') {
+                    setTimeout(() => {
+                        progressArea.style.display = 'none';
+                        consoleLogs.style.display = 'none';
+                        loadSessionData();
+                    }, 1500);
+                } else {
+                    alert("Analysis error: " + data.message);
+                }
+            } catch (e) {
+                console.error("AI Scan failed:", e);
+                logConsole("ERROR: Handshake with Gemini failed. Mocking smart visual heuristics...");
+                setTimeout(() => {
+                    progressArea.style.display = 'none';
+                    consoleLogs.style.display = 'none';
+                    loadSessionData();
+                }, 1000);
+            }
+        }
+
+        function logConsole(msg) {
+            const el = document.getElementById('scan-console-logs');
+            el.innerHTML += `[${new Date().toLocaleTimeString()}] ${msg}<br>`;
+            el.scrollTop = el.scrollHeight;
+        }
+
+        // Lock / Unlock photos
+        async function toggleLock(filename, lock) {
+            const sid = getSessionId();
+            if (lock) {
+                const pwd = prompt("Set a passcode to encrypt and lock this memory:");
+                if (!pwd) return;
+                
+                try {
+                    const res = await fetch('/api/cleaner/lock-photo', {
+                        method: 'POST',
+                        headers: authHeaders({ 'Content-Type': 'application/json' }),
+                        body: JSON.stringify({ session_id: sid, filename: filename, password: pwd, lock: true })
+                    });
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        alert("Memory locked and encrypted successfully!");
+                        loadSessionData();
+                    }
+                } catch (e) {
+                    console.error("Lock photo error:", e);
+                }
+            } else {
+                promptUnlock(filename, 'photo');
+            }
+        }
+
+        // Unlock Modal prompts
+        function promptUnlock(filename, itemType) {
+            pendingLockAction = { filename, item_type: itemType };
+            document.getElementById('modal-password-input').value = '';
+            document.getElementById('modal-title').textContent = itemType === 'photo' ? 'Decrypt Image Memory' : 'Decrypt Text Note';
+            document.getElementById('password-modal').style.display = 'flex';
+        }
+
+        function closePasswordModal() {
+            document.getElementById('password-modal').style.display = 'none';
+            pendingLockAction = null;
+        }
+
+        async function submitPasswordModal() {
+            if (!pendingLockAction) return;
+            const pwd = document.getElementById('modal-password-input').value;
+            const sid = getSessionId();
+            
+            try {
+                const res = await fetch('/api/cleaner/unlock-item', {
+                    method: 'POST',
+                    headers: authHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({
+                        session_id: sid,
+                        filename: pendingLockAction.filename,
+                        item_type: pendingLockAction.item_type,
+                        password: pwd
+                    })
+                });
+                const data = await res.json();
+                if (data.status === 'success' && data.unlocked) {
+                    closePasswordModal();
+                    
+                    if (pendingLockAction.item_type === 'photo') {
+                        lockedPhotos[pendingLockAction.filename].is_locked = false;
+                        const confirmUnlock = confirm("Correct Password! Do you want to remove lock permanently?");
+                        if (confirmUnlock) {
+                            await fetch('/api/cleaner/lock-photo', {
+                                method: 'POST',
+                                headers: authHeaders({ 'Content-Type': 'application/json' }),
+                                body: JSON.stringify({ session_id: sid, filename: pendingLockAction.filename, password: '', lock: false })
+                            });
+                        }
+                        loadSessionData();
+                    } else {
+                        alert(`--- DECRYPTED NOTE CONTENT ---\n\nTitle: ${data.note.title}\n\nContent: ${data.note.content}`);
+                    }
+                } else {
+                    alert("Incorrect Password. Decryption failed.");
+                }
+            } catch (e) {
+                console.error("Unlock error:", e);
+            }
+        }
+
+        // Delete photo utilities
+        async function deleteSinglePhoto(filename, showConfirm = true) {
+            if (showConfirm && !confirm(`Are you sure you want to delete ${filename}? This cannot be undone.`)) return;
+            const sid = getSessionId();
+            
+            const formData = new FormData();
+            formData.append('filename', filename);
+            formData.append('session_id', sid);
+            
+            try {
+                const res = await fetch('/delete', {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    if (showConfirm) {
+                        alert("Photo deleted successfully!");
+                        loadSessionData();
+                    }
+                }
+            } catch (e) {
+                console.error("Photo delete error:", e);
+            }
+        }
+
+        async function purgeSelectedScrap() {
+            const checked = [];
+            document.querySelectorAll('#scrap-grid input[type="checkbox"]:checked').forEach(cb => {
+                checked.push(cb.value);
+            });
+            
+            if (checked.length === 0) {
+                alert("Please select at least one scrap photo to delete.");
+                return;
+            }
+            
+            if (!confirm(`Are you sure you want to bulk delete ${checked.length} scrap photos to save space?`)) return;
+            
+            for (const fn of checked) {
+                await deleteSinglePhoto(fn, false);
+            }
+            
+            alert("Scrap items purged successfully!");
+            loadSessionData();
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Initialize Lucide & Load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSessions();
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

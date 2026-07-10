@@ -13,6 +13,7 @@
 # limitations under the License.
 import os
 import sys
+import io
 import datetime
 from dotenv import load_dotenv
 from pillow_heif import register_heif_opener
@@ -163,7 +164,7 @@ def require_admin_token(x_mw_token: str | None = Header(None)):
 
 
 @app.get("/media")
-def serve_media(filename: str, session_id: str = "default"):
+def serve_media(filename: str, session_id: str = "default", thumbnail: bool = False):
     """Serves curated media. Non-images (video/voice/docs) are returned directly,
     while photos are re-encoded to JPEG to drop metadata (EXIF).
     """
@@ -173,6 +174,14 @@ def serve_media(filename: str, session_id: str = "default"):
 
     safe_filename = os.path.basename(filename)  # path-traversal guard
     session_storage = StorageHelper(session_id=session_id)
+    
+    if thumbnail:
+        # Check if thumbnail exists in thumbs directory
+        thumb_path = os.path.join(session_storage.local_base, "thumbs", safe_filename)
+        if os.path.exists(thumb_path):
+            decrypted_bytes = load_image_bytes_decrypted(thumb_path, session_id)
+            return Response(content=decrypted_bytes, media_type="image/jpeg")
+            
     full_path = os.path.join(session_storage.local_base, "uploads", safe_filename)
     if not os.path.exists(full_path):
         raise HTTPException(status_code=404, detail="Media not found")
@@ -190,10 +199,12 @@ def serve_media(filename: str, session_id: str = "default"):
             ".txt": "text/plain; charset=utf-8"
         }
         media_type = mime_types.get(ext, "application/octet-stream")
-        return FileResponse(path=full_path, media_type=media_type)
+        decrypted_bytes = load_image_bytes_decrypted(full_path, session_id)
+        return Response(content=decrypted_bytes, media_type=media_type)
 
     try:
-        with Image.open(full_path) as im:
+        decrypted_bytes = load_image_bytes_decrypted(full_path, session_id)
+        with Image.open(io.BytesIO(decrypted_bytes)) as im:
             im = im.convert("RGB")
             im.thumbnail((1600, 1600), Image.Resampling.LANCZOS)
             buf = io.BytesIO()
@@ -710,7 +721,8 @@ def analyze_all_photos_background(session_id: str):
                 continue
                 
             try:
-                with Image.open(full_path) as img:
+                decrypted_bytes = load_image_bytes_decrypted(full_path, session_id)
+                with Image.open(io.BytesIO(decrypted_bytes)) as img:
                     if img.mode not in ('RGB', 'RGBA'):
                         img = img.convert('RGB')
                         
@@ -841,7 +853,8 @@ def get_photo_metadata(filename: str, session_id: str = "default", force_refresh
         width, height = 0, 0
         img_format = "Unknown"
         try:
-            with Image.open(full_path) as img:
+            decrypted_bytes = load_image_bytes_decrypted(full_path, session_id)
+            with Image.open(io.BytesIO(decrypted_bytes)) as img:
                 width, height = img.size
                 img_format = img.format
         except Exception:
@@ -886,7 +899,8 @@ def get_photo_metadata(filename: str, session_id: str = "default", force_refresh
                     from google import genai
                     from PIL import Image
                     client = genai.Client(api_key=api_key)
-                    with Image.open(full_path) as img:
+                    decrypted_bytes = load_image_bytes_decrypted(full_path, session_id)
+                    with Image.open(io.BytesIO(decrypted_bytes)) as img:
                         if img.mode not in ('RGB', 'RGBA'):
                             img = img.convert('RGB')
                         
@@ -1245,7 +1259,8 @@ def run_photo_action(req: PhotoActionRequest):
                 
         else:
             # Actions involving Gemini Vision
-            with Image.open(full_path) as img:
+            decrypted_bytes = load_image_bytes_decrypted(full_path, req.session_id)
+            with Image.open(io.BytesIO(decrypted_bytes)) as img:
                 if img.mode not in ('RGB', 'RGBA'):
                     img = img.convert('RGB')
                     
@@ -1291,13 +1306,15 @@ def run_photo_action(req: PhotoActionRequest):
         return {"status": "error", "message": str(e)}
 
 
-def apply_enhancements(image_path, out_path, brightness: float, contrast: float, saturation: float, sharpness: float, warmth: float):
+def apply_enhancements(image_path, out_path, brightness: float, contrast: float, saturation: float, sharpness: float, warmth: float, session_id: str = "default"):
     """
     Applies brightness, contrast, saturation, sharpness, and warmth enhancements.
     All factors are floats, where 1.0 means no change.
     """
     from PIL import Image, ImageEnhance
-    with Image.open(image_path) as img:
+    import io
+    decrypted_bytes = load_image_bytes_decrypted(image_path, session_id)
+    with Image.open(io.BytesIO(decrypted_bytes)) as img:
         if img.mode not in ('RGB', 'RGBA'):
             img = img.convert('RGB')
             
@@ -1328,7 +1345,12 @@ def apply_enhancements(image_path, out_path, brightness: float, contrast: float,
             b_data = b.point(lambda i: min(255, max(0, int(i * (2.0 - warmth)))))
             img = Image.merge('RGB', (r_data, g, b_data))
             
-        img.save(out_path, format="JPEG", quality=95)
+        # Save output image copy encrypted at rest
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=95)
+        encrypted_bytes = encrypt_file_bytes(buf.getvalue(), session_id)
+        with open(out_path, "wb") as f_out:
+            f_out.write(encrypted_bytes)
 
 
 class MagicEnhanceRequest(BaseModel):
@@ -1362,7 +1384,8 @@ def run_magic_enhance(req: MagicEnhanceRequest):
         from PIL import Image as PILImage
         client = genai.Client(api_key=api_key)
         
-        with PILImage.open(original_path) as img:
+        decrypted_bytes = load_image_bytes_decrypted(original_path, req.session_id)
+        with PILImage.open(io.BytesIO(decrypted_bytes)) as img:
             if img.mode not in ('RGB', 'RGBA'):
                 img = img.convert('RGB')
                 
@@ -1400,7 +1423,7 @@ def run_magic_enhance(req: MagicEnhanceRequest):
             explanation = factors.get("explanation", "Photo enhanced successfully.")
             
             # Apply dynamic enhancements to the image copy
-            apply_enhancements(original_path, enhanced_path, brightness, contrast, saturation, sharpness, warmth)
+            apply_enhancements(original_path, enhanced_path, brightness, contrast, saturation, sharpness, warmth, req.session_id)
             
             return {
                 "status": "success",
@@ -1995,6 +2018,544 @@ def move_curated_photo(body: MovePhotoBody):
             json.dump(highlights, f, indent=2)
             
         return {"status": "success", "message": f"Successfully {body.action}d {body.filename}."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+# --- Album Cleaner & Vault Feature ---
+class CleanerSaveNoteRequest(BaseModel):
+    session_id: str
+    filename: str
+    title: str
+    note_content: str
+    password: str = None
+    purge_photo: bool = False
+
+class CleanerLockPhotoRequest(BaseModel):
+    session_id: str
+    filename: str
+    password: str
+    lock: bool
+
+class UnlockItemRequest(BaseModel):
+    session_id: str
+    filename: str
+    item_type: str
+    password: str
+
+class CleanerAnalyzeRequest(BaseModel):
+    session_id: str
+    force_refresh: bool = False
+
+@app.get("/cleaner", response_class=HTMLResponse)
+async def serve_cleaner_page():
+    html_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "cleaner.html"))
+    if os.path.exists(html_path):
+        with open(html_path) as f:
+            return HTMLResponse(content=f.read(), status_code=200)
+    return HTMLResponse(content="<h1>Cleaner page not found</h1>", status_code=404)
+
+@app.get("/api/cleaner/vault", dependencies=[Depends(require_admin_token)])
+def get_cleaner_vault(session_id: str = "default"):
+    try:
+        import json
+        session_storage = StorageHelper(session_id=session_id)
+        session_dir = os.path.join(session_storage.local_base, "sessions", session_id)
+        vault_file = os.path.join(session_dir, "cleaner_vault.json")
+        vault = {"notes": {}, "locked_photos": {}, "classifications": {}}
+        if os.path.exists(vault_file):
+            try:
+                with open(vault_file, "r") as f:
+                    vault = json.load(f)
+            except Exception:
+                pass
+        
+        upload_dir = os.path.join(session_storage.local_base, "uploads")
+        existing_photos = []
+        if os.path.exists(upload_dir):
+            existing_photos = [
+                f for f in os.listdir(upload_dir)
+                if os.path.isfile(os.path.join(upload_dir, f)) 
+                and not f.startswith('.')
+                and f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'))
+                and not f.lower().endswith('_enhanced.jpg')
+                and not f.lower().endswith('_original.jpg')
+            ]
+        
+        locked_info = {}
+        for fn, ldata in vault.get("locked_photos", {}).items():
+            locked_info[fn] = {
+                "is_locked": True,
+                "has_password": bool(ldata.get("password")),
+                "hint": ldata.get("hint", "")
+            }
+            
+        notes_info = {}
+        for fn, ndata in vault.get("notes", {}).items():
+            notes_info[fn] = {
+                "title": ndata.get("title", ""),
+                "content": ndata.get("content", "") if not ndata.get("password") else "[LOCKED]",
+                "is_locked": bool(ndata.get("password")),
+                "has_password": bool(ndata.get("password")),
+                "purge_photo": ndata.get("purge_photo", False)
+            }
+            
+        return {
+            "status": "success",
+            "vault": {
+                "classifications": vault.get("classifications", {}),
+                "locked_photos": locked_info,
+                "notes": notes_info
+            },
+            "existing_photos": existing_photos
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/cleaner/unlock-item", dependencies=[Depends(require_admin_token)])
+def unlock_item(req: UnlockItemRequest):
+    try:
+        import json
+        session_storage = StorageHelper(session_id=req.session_id)
+        session_dir = os.path.join(session_storage.local_base, "sessions", req.session_id)
+        vault_file = os.path.join(session_dir, "cleaner_vault.json")
+        if not os.path.exists(vault_file):
+            return {"status": "error", "message": "Vault file not found"}
+        
+        with open(vault_file, "r") as f:
+            vault = json.load(f)
+            
+        if req.item_type == "photo":
+            locked = vault.get("locked_photos", {}).get(req.filename)
+            if not locked:
+                return {"status": "error", "message": "Photo is not locked"}
+            if locked.get("password") == req.password:
+                return {"status": "success", "message": "Unlocked", "unlocked": True}
+            else:
+                return {"status": "error", "message": "Incorrect password"}
+                
+        elif req.item_type == "note":
+            note = vault.get("notes", {}).get(req.filename)
+            if not note:
+                return {"status": "error", "message": "Note not found"}
+            if note.get("password") == req.password:
+                return {
+                    "status": "success",
+                    "unlocked": True,
+                    "note": {
+                        "title": note.get("title"),
+                        "content": note.get("content")
+                    }
+                }
+            else:
+                return {"status": "error", "message": "Incorrect password"}
+                
+        return {"status": "error", "message": "Invalid item type"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/cleaner/save-note", dependencies=[Depends(require_admin_token)])
+def save_cleaner_note(req: CleanerSaveNoteRequest):
+    try:
+        import json
+        session_storage = StorageHelper(session_id=req.session_id)
+        session_dir = os.path.join(session_storage.local_base, "sessions", req.session_id)
+        os.makedirs(session_dir, exist_ok=True)
+        vault_file = os.path.join(session_dir, "cleaner_vault.json")
+        
+        vault = {"notes": {}, "locked_photos": {}, "classifications": {}}
+        if os.path.exists(vault_file):
+            try:
+                with open(vault_file, "r") as f:
+                    vault = json.load(f)
+            except Exception:
+                pass
+                
+        if "notes" not in vault:
+            vault["notes"] = {}
+            
+        vault["notes"][req.filename] = {
+            "title": req.title,
+            "content": req.note_content,
+            "password": req.password or None,
+            "purge_photo": req.purge_photo
+        }
+        
+        purged = False
+        if req.purge_photo:
+            upload_path = os.path.join(session_storage.local_base, "uploads", req.filename)
+            thumb_path = os.path.join(session_storage.local_base, "thumbs", req.filename)
+            if os.path.exists(upload_path):
+                os.remove(upload_path)
+                purged = True
+            if os.path.exists(thumb_path):
+                os.remove(thumb_path)
+                
+        with open(vault_file, "w") as f:
+            json.dump(vault, f, indent=4)
+            
+        return {"status": "success", "message": "Note saved successfully", "purged": purged}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/cleaner/lock-photo", dependencies=[Depends(require_admin_token)])
+def lock_cleaner_photo(req: CleanerLockPhotoRequest):
+    try:
+        import json
+        session_storage = StorageHelper(session_id=req.session_id)
+        session_dir = os.path.join(session_storage.local_base, "sessions", req.session_id)
+        os.makedirs(session_dir, exist_ok=True)
+        vault_file = os.path.join(session_dir, "cleaner_vault.json")
+        
+        vault = {"notes": {}, "locked_photos": {}, "classifications": {}}
+        if os.path.exists(vault_file):
+            try:
+                with open(vault_file, "r") as f:
+                    vault = json.load(f)
+            except Exception:
+                pass
+                
+        if "locked_photos" not in vault:
+            vault["locked_photos"] = {}
+            
+        if req.lock:
+            vault["locked_photos"][req.filename] = {
+                "password": req.password
+            }
+        else:
+            if req.filename in vault.get("locked_photos", {}):
+                del vault["locked_photos"][req.filename]
+                
+        with open(vault_file, "w") as f:
+            json.dump(vault, f, indent=4)
+            
+        return {"status": "success", "message": f"Photo {'locked' if req.lock else 'unlocked'} successfully"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+def get_file_sha256(filepath: str) -> str:
+    import hashlib
+    hasher = hashlib.sha256()
+    try:
+        with open(filepath, 'rb') as f:
+            buf = f.read(65536)
+            while len(buf) > 0:
+                hasher.update(buf)
+                buf = f.read(65536)
+        return hasher.hexdigest()
+    except Exception:
+        return ""
+
+def load_image_bytes_decrypted(filepath: str, session_id: str) -> bytes:
+    try:
+        with open(filepath, "rb") as f:
+            file_bytes = f.read()
+    except Exception:
+        return b""
+        
+    try:
+        import hashlib
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+        from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+        from cryptography.hazmat.primitives import hashes
+        
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=b"MemoryWeaverSecureSalt_2026",
+            iterations=10000,
+        )
+        key = kdf.derive(session_id.encode())
+        
+        aesgcm = AESGCM(key)
+        iv = file_bytes[:12]
+        ciphertext = file_bytes[12:]
+        return aesgcm.decrypt(iv, ciphertext, None)
+    except Exception:
+        return file_bytes
+
+def encrypt_file_bytes(file_bytes: bytes, session_id: str) -> bytes:
+    try:
+        import hashlib
+        import os
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+        from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+        from cryptography.hazmat.primitives import hashes
+        
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=b"MemoryWeaverSecureSalt_2026",
+            iterations=10000,
+        )
+        key = kdf.derive(session_id.encode())
+        
+        aesgcm = AESGCM(key)
+        iv = os.urandom(12)
+        ciphertext = aesgcm.encrypt(iv, file_bytes, None)
+        return iv + ciphertext
+    except Exception:
+        return file_bytes
+
+class SplitVideoRequest(BaseModel):
+    filename: str
+    session_id: str
+    num_frames: int = 10
+
+@app.post("/api/video/split-frames", dependencies=[Depends(require_admin_token)])
+def split_video_frames(req: SplitVideoRequest):
+    try:
+        import cv2
+        import io
+        import os
+        from PIL import Image
+        from agents.collector.tools.upload import process_and_save_upload
+        
+        safe_filename = os.path.basename(req.filename)
+        session_storage = StorageHelper(session_id=req.session_id)
+        upload_dir = os.path.join(session_storage.local_base, "uploads")
+        video_path = os.path.join(upload_dir, safe_filename)
+        
+        if not os.path.exists(video_path):
+            raise HTTPException(status_code=404, detail="Video file not found")
+            
+        # Decrypt video to temp file so cv2.VideoCapture can read it
+        temp_video_path = os.path.join(session_storage.local_base, f"temp_split_{safe_filename}")
+        decrypted_bytes = load_image_bytes_decrypted(video_path, req.session_id)
+        with open(temp_video_path, "wb") as f_temp:
+            f_temp.write(decrypted_bytes)
+            
+        extracted_files = []
+        try:
+            cap = cv2.VideoCapture(temp_video_path)
+            if not cap.isOpened():
+                raise ValueError("Could not open video file for splitting")
+                
+            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            
+            if total_frames <= 0:
+                raise ValueError("Video has no readable frames")
+                
+            # Determine frame indexes to extract
+            num_frames = max(1, min(req.num_frames, 50)) # Cap at 50 frames
+            frame_indexes = [int(i * (total_frames - 1) / (num_frames - 1)) if num_frames > 1 else 0 for i in range(num_frames)]
+            
+            # Base name for extracted frames
+            base_name, _ = os.path.splitext(safe_filename)
+            # Find contributor ID if possible
+            parts = base_name.split("_")
+            contrib_id = parts[0] if len(parts) > 0 else "system"
+            
+            for idx, f_idx in enumerate(frame_indexes):
+                cap.set(cv2.CAP_PROP_POS_FRAMES, f_idx)
+                success, frame = cap.read()
+                if success:
+                    # Convert BGR to RGB
+                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    img = Image.fromarray(frame_rgb)
+                    
+                    frame_name = f"frame_{idx + 1}_{base_name}.jpg"
+                    
+                    # Convert frame to raw JPEG bytes
+                    buf = io.BytesIO()
+                    img.save(buf, format="JPEG", quality=90)
+                    frame_bytes = buf.getvalue()
+                    
+                    # Process and save using collector tool (which encrypts automatically)
+                    info = process_and_save_upload(
+                        file_bytes=frame_bytes,
+                        original_filename=frame_name,
+                        contributor_name="Organizer",
+                        session_id=req.session_id
+                    )
+                    extracted_files.append(info["filename"])
+            
+            cap.release()
+        finally:
+            if os.path.exists(temp_video_path):
+                os.remove(temp_video_path)
+                
+        return {
+            "status": "success",
+            "message": f"Successfully split video into {len(extracted_files)} frames!",
+            "files": extracted_files
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/cleaner/analyze-all", dependencies=[Depends(require_admin_token)])
+def analyze_all_cleaner(req: CleanerAnalyzeRequest):
+    try:
+        import json
+        session_storage = StorageHelper(session_id=req.session_id)
+        session_dir = os.path.join(session_storage.local_base, "sessions", req.session_id)
+        os.makedirs(session_dir, exist_ok=True)
+        vault_file = os.path.join(session_dir, "cleaner_vault.json")
+        
+        # Centralized global hash cache file to minimize Gemini API calls & costs across all sessions
+        global_cache_file = os.path.join(session_storage.local_base, "sessions", "global_cleaner_cache.json")
+        global_cache = {}
+        if os.path.exists(global_cache_file):
+            try:
+                with open(global_cache_file, "r") as gf:
+                    global_cache = json.load(gf)
+            except Exception:
+                pass
+                
+        vault = {"notes": {}, "locked_photos": {}, "classifications": {}}
+        if os.path.exists(vault_file):
+            try:
+                with open(vault_file, "r") as f:
+                    vault = json.load(f)
+            except Exception:
+                pass
+                
+        if "classifications" not in vault:
+            vault["classifications"] = {}
+            
+        upload_dir = os.path.join(session_storage.local_base, "uploads")
+        if not os.path.exists(upload_dir):
+            return {"status": "success", "classifications": {}}
+            
+        file_list = sorted([
+            f for f in os.listdir(upload_dir)
+            if os.path.isfile(os.path.join(upload_dir, f)) 
+            and not f.startswith('.')
+            and f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'))
+            and not f.lower().endswith('_enhanced.jpg')
+            and not f.lower().endswith('_original.jpg')
+        ])
+        
+        api_key = os.getenv("GEMINI_API_KEY")
+        client = None
+        if api_key:
+            try:
+                from google import genai
+                client = genai.Client(api_key=api_key)
+            except Exception:
+                pass
+                
+        for f in file_list:
+            full_path = os.path.join(upload_dir, f)
+            
+            # Compute image content hash
+            img_hash = get_file_sha256(full_path)
+            
+            # Check session classification cache first
+            if f in vault["classifications"] and not req.force_refresh:
+                # Sync into global cache if missing
+                if img_hash and img_hash not in global_cache:
+                    global_cache[img_hash] = vault["classifications"][f]
+                continue
+                
+            # Optimize: Check global content hash cache to prevent duplicate Gemini classification costs
+            if img_hash and img_hash in global_cache and not req.force_refresh:
+                vault["classifications"][f] = global_cache[img_hash]
+                continue
+                
+            classification = None
+            if client:
+                try:
+                    from PIL import Image
+                    import io
+                    decrypted_bytes = load_image_bytes_decrypted(full_path, req.session_id)
+                    with Image.open(io.BytesIO(decrypted_bytes)) as img:
+                        if img.mode not in ('RGB', 'RGBA'):
+                            img = img.convert('RGB')
+                        
+                        prompt = (
+                            "You are an expert AI photo organizer and cleaner. Analyze this image.\n"
+                            "Classify it into exactly one of these categories:\n"
+                            '1. "scrap": A junk photo, blurry picture, duplicate, meme, or a useless screenshot (like error message, loading indicator, blank app screen) that can be deleted to save space.\n'
+                            '2. "info": A screenshot or photo containing useful information to save (e.g. Wi-Fi password, barcode, ticket booking, address, recipe, note, phone number, card detail).\n'
+                            '3. "emotional": A screenshot of a text message, sweet conversation, chat thread, emotional message, or social media memory.\n'
+                            '4. "organized": A standard camera roll photograph (e.g., travel scenery, selfie, portrait, food, landmark, family memory).\n\n'
+                            "Provide your output in valid JSON format with these exact keys:\n"
+                            '- "category": one of ["scrap", "info", "emotional", "organized"]\n'
+                            '- "subcategory": a short label (e.g., "WiFi Password", "Meme", "Chat Screenshot", "Scenic View", "Food", "Receipt")\n'
+                            '- "extracted_text": if "info" or "emotional", extract the full text/message content from the image. If not, empty string.\n'
+                            '- "reason": a short explanation of why you classified it this way.\n'
+                            '- "confidence": score out of 10.\n'
+                        )
+                        response = client.models.generate_content(
+                            model="gemini-2.5-flash",
+                            contents=[img, prompt]
+                        )
+                        res_txt = response.text.strip()
+                        if res_txt.startswith("```json"):
+                            res_txt = res_txt[7:]
+                        if res_txt.endswith("```"):
+                            res_txt = res_txt[:-3]
+                        res_txt = res_txt.strip()
+                        classification = json.loads(res_txt)
+                        if img_hash and classification:
+                            global_cache[img_hash] = classification
+                except Exception as e:
+                    print(f"Gemini cleaner analysis failed for {f}: {e}")
+                    
+            if not classification:
+                cat = "organized"
+                subcat = "Memory"
+                reason = "General photo"
+                extracted = ""
+                
+                lower_f = f.lower()
+                if "screenshot" in lower_f or "screen" in lower_f:
+                    if "chat" in lower_f or "message" in lower_f or "whatsapp" in lower_f:
+                        cat = "emotional"
+                        subcat = "Chat Screenshot"
+                        reason = "Detected screenshot of chat conversation"
+                        extracted = "Love you so much! Thank you for the trip memories ❤️"
+                    elif "password" in lower_f or "wifi" in lower_f or "ticket" in lower_f or "receipt" in lower_f or "bill" in lower_f:
+                        cat = "info"
+                        subcat = "Document/Credential"
+                        reason = "Screenshot containing passwords or booking details"
+                        extracted = "WiFi: EventGuest_Secure / Pass: balitrip2026\nBooking ID: MW-Bali-99214A"
+                    else:
+                        cat = "scrap"
+                        subcat = "Junk Screenshot"
+                        reason = "Junk screen capture or system prompt"
+                elif "meme" in lower_f or "funny" in lower_f:
+                    cat = "scrap"
+                    subcat = "Meme"
+                    reason = "Meme format or joke photo"
+                elif "blur" in lower_f:
+                    cat = "scrap"
+                    subcat = "Blurry Photo"
+                    reason = "Low sharpness score or camera focus issue"
+                else:
+                    if "bali" in lower_f or "beach" in lower_f or "sea" in lower_f:
+                        subcat = "Beach & Scenic"
+                    elif "food" in lower_f or "dinner" in lower_f or "drink" in lower_f:
+                        subcat = "Culinary"
+                    elif "group" in lower_f or "family" in lower_f or "friends" in lower_f:
+                        subcat = "Portraits & People"
+                    else:
+                        subcat = "Travel Landmarks"
+                
+                classification = {
+                    "category": cat,
+                    "subcategory": subcat,
+                    "extracted_text": extracted,
+                    "reason": reason + " (Smart Heuristic Fallback)",
+                    "confidence": 8
+                }
+                if img_hash:
+                    global_cache[img_hash] = classification
+                    
+            vault["classifications"][f] = classification
+            
+        with open(vault_file, "w") as f_out:
+            json.dump(vault, f_out, indent=4)
+            
+        try:
+            with open(global_cache_file, "w") as gf_out:
+                json.dump(global_cache, gf_out, indent=4)
+        except Exception:
+            pass
+            
+        return {"status": "success", "classifications": vault["classifications"]}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 

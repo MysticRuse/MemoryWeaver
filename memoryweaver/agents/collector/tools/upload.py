@@ -348,36 +348,143 @@ def process_and_save_upload(file_bytes: bytes, original_filename: str, contribut
     # Calculate anonymous contributor ID hash (no PII logging)
     contributor_id = hashlib.sha256(contributor_name.strip().lower().encode()).hexdigest()[:12]
     
-    # Save the file temporarily to extract EXIF
+    # Decrypt incoming bytes in-memory for extraction/thumbnails
+    decrypted_bytes = file_bytes
+    is_client_encrypted = False
+    try:
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+        from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+        from cryptography.hazmat.primitives import hashes
+        
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=b"MemoryWeaverSecureSalt_2026",
+            iterations=10000,
+        )
+        key = kdf.derive(session_id.encode())
+        
+        aesgcm = AESGCM(key)
+        iv = file_bytes[:12]
+        ciphertext = file_bytes[12:]
+        decrypted_bytes = aesgcm.decrypt(iv, ciphertext, None)
+        is_client_encrypted = True
+        print(f"Successfully decrypted {original_filename} in-memory using session key.")
+    except Exception as de:
+        print(f"Decryption failed or file not client-encrypted in upload: {de}. Processing raw.")
+        decrypted_bytes = file_bytes
+
+    # Save the decrypted file temporarily to extract EXIF / run cv2
     temp_filename = f"temp_{safe_filename}"
     with open(temp_filename, "wb") as f:
-        f.write(file_bytes)
+        f.write(decrypted_bytes)
         
     try:
+        # Check video duration if it is a video file
+        if ext in (".mp4", ".mov", ".webm"):
+            try:
+                import cv2
+                cap = cv2.VideoCapture(temp_filename)
+                if cap.isOpened():
+                    fps = cap.get(cv2.CAP_PROP_FPS)
+                    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+                    cap.release()
+                    if fps > 0:
+                        duration = frame_count / fps
+                        if duration > 120.0:
+                            raise ValueError(f"Video duration ({duration:.1f}s) exceeds the 2-minute limit.")
+                else:
+                    raise ValueError("Could not open video file to inspect duration.")
+            except ValueError as ve:
+                raise ve
+            except Exception as e:
+                print(f"Error checking video duration: {e}")
+                
         exif = extract_exif(temp_filename)
+        
+        # Generate unique filename to prevent namespace collisions
+        timestamp_prefix = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        unique_filename = f"{contributor_id}_{timestamp_prefix}_{safe_filename}"
+        
+        # Ensure the saved file is encrypted
+        saved_bytes = file_bytes
+        if not is_client_encrypted:
+            try:
+                from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+                from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+                from cryptography.hazmat.primitives import hashes
+                
+                kdf = PBKDF2HMAC(
+                    algorithm=hashes.SHA256(),
+                    length=32,
+                    salt=b"MemoryWeaverSecureSalt_2026",
+                    iterations=10000,
+                )
+                key = kdf.derive(session_id.encode())
+                
+                aesgcm = AESGCM(key)
+                iv = os.urandom(12)
+                ciphertext = aesgcm.encrypt(iv, decrypted_bytes, None)
+                saved_bytes = iv + ciphertext
+            except Exception as ee:
+                print(f"Failed to encrypt file on server-side: {ee}")
+                saved_bytes = file_bytes
+
+        # Save to storage (GCS/Local fallback), scoped to this event's session
+        from app.app_utils.storage import StorageHelper
+        storage = StorageHelper(session_id=session_id)
+        gcs_uri = storage.save_upload(saved_bytes, unique_filename)
+        
+        # Generate and save thumbnail
+        thumb_path = ""
+        try:
+            img = None
+            if ext in (".mp4", ".mov", ".webm"):
+                try:
+                    import cv2
+                    cap = cv2.VideoCapture(temp_filename)
+                    success, frame = cap.read()
+                    cap.release()
+                    if success:
+                        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        img = Image.fromarray(frame_rgb)
+                except Exception as ve:
+                    print(f"Failed to extract video thumbnail: {ve}")
+            else:
+                img = Image.open(io.BytesIO(decrypted_bytes)).convert("RGB")
+                
+            if img:
+                img.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
+                thumb_buf = io.BytesIO()
+                img.save(thumb_buf, format="JPEG", quality=82)
+                thumb_bytes = thumb_buf.getvalue()
+                
+                # Encrypt the thumbnail as well to match at-rest protection
+                try:
+                    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+                    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+                    from cryptography.hazmat.primitives import hashes
+                    
+                    kdf = PBKDF2HMAC(
+                        algorithm=hashes.SHA256(),
+                        length=32,
+                        salt=b"MemoryWeaverSecureSalt_2026",
+                        iterations=10000,
+                    )
+                    key = kdf.derive(session_id.encode())
+                    aesgcm = AESGCM(key)
+                    iv = os.urandom(12)
+                    encrypted_thumb = iv + aesgcm.encrypt(iv, thumb_bytes, None)
+                except Exception:
+                    encrypted_thumb = thumb_bytes
+                    
+                thumb_path = storage.save_thumbnail(encrypted_thumb, unique_filename)
+        except Exception as te:
+            print(f"Failed to generate thumbnail: {te}")
+            
     finally:
         if os.path.exists(temp_filename):
             os.remove(temp_filename)
-            
-    # Generate unique filename to prevent namespace collisions
-    timestamp_prefix = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    unique_filename = f"{contributor_id}_{timestamp_prefix}_{safe_filename}"
-    
-    # Save to storage (GCS/Local fallback), scoped to this event's session
-    from app.app_utils.storage import StorageHelper
-    storage = StorageHelper(session_id=session_id)
-    gcs_uri = storage.save_upload(file_bytes, unique_filename)
-    
-    # Generate and save thumbnail
-    thumb_path = ""
-    try:
-        img = Image.open(io.BytesIO(file_bytes)).convert("RGB")
-        img.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
-        thumb_buf = io.BytesIO()
-        img.save(thumb_buf, format="JPEG", quality=82)
-        thumb_path = storage.save_thumbnail(thumb_buf.getvalue(), unique_filename)
-    except Exception as te:
-        print(f"Failed to generate thumbnail: {te}")
     
     return {
         "filename": unique_filename,
