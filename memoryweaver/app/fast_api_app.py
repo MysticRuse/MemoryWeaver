@@ -15,6 +15,8 @@ import os
 import sys
 import datetime
 from dotenv import load_dotenv
+from pillow_heif import register_heif_opener
+register_heif_opener()
 # Resolve parent directory to locate the .env file in project root
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(project_root, ".env"))
@@ -579,7 +581,7 @@ def get_trip_stats(session_id: str = "default"):
                 f for f in os.listdir(upload_dir)
                 if os.path.isfile(os.path.join(upload_dir, f)) 
                 and not f.startswith('.')
-                and f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp'))
+                and f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'))
             ]
             count = len(files)
             
@@ -606,17 +608,23 @@ def get_photo_date(file_path: str) -> str:
     # 1. Try parsing from EXIF
     try:
         from PIL import Image
-        from PIL.ExifTags import TAGS
         with Image.open(file_path) as img:
-            exif = img._getexif()
+            exif = img.getexif()
             if exif:
-                for tag, value in exif.items():
-                    decoded = TAGS.get(tag, tag)
-                    if decoded in ("DateTimeOriginal", "DateTime"):
-                        # Format: 'YYYY:MM:DD HH:MM:SS'
-                        parts = value.split(" ")[0].split(":")
-                        if len(parts) == 3:
-                            return f"{parts[0]}-{parts[1]}-{parts[2]}"
+                val = exif.get(36867) or exif.get(306)
+                if not val and hasattr(exif, "get_ifd"):
+                    try:
+                        subifd = exif.get_ifd(0x8769)
+                        if subifd:
+                            val = subifd.get(36867) or subifd.get(306)
+                    except Exception:
+                        pass
+                
+                if val and isinstance(val, str):
+                    date_part = val.split(" ")[0].replace(":", "-")
+                    parts = date_part.split("-")
+                    if len(parts) == 3 and len(parts[0]) == 4:
+                        return f"{parts[0]}-{parts[1]}-{parts[2]}"
     except Exception:
         pass
 
@@ -782,7 +790,7 @@ def list_uploads(background_tasks: BackgroundTasks, session_id: str = "default")
                 f for f in os.listdir(upload_dir)
                 if os.path.isfile(os.path.join(upload_dir, f)) 
                 and not f.startswith('.')
-                and f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp'))
+                and f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'))
                 and not f.lower().endswith('_enhanced.jpg')
                 and not f.lower().endswith('_original.jpg')
             ])
