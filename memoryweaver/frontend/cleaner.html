@@ -1199,10 +1199,14 @@
                 }
                 
                 progressBar.style.width = '100%';
-                progressText.textContent = 'Upload complete! Starting AI classification...';
-                logConsole(`Successfully synced all ${uploaded} files. Starting AI analysis.`);
+                progressText.textContent = 'Upload complete!';
+                logConsole(`Successfully synced all ${uploaded} files.`);
                 
-                await runCurationAnalysis();
+                setTimeout(() => {
+                    progressArea.style.display = 'none';
+                    consoleLogs.style.display = 'none';
+                    loadSessionData();
+                }, 1500);
             } catch (err) {
                 console.error("Magic Scanner Upload failed:", err);
                 progressText.textContent = 'Error during sync upload.';
