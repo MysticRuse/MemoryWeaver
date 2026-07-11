@@ -1374,9 +1374,59 @@
             }
         }
 
+        // Custom Alert/Confirm Modals
+        let customModalResolve = null;
+
+        function showCustomConfirm(title, message, isAlert = false) {
+            return new Promise((resolve) => {
+                customModalResolve = resolve;
+                
+                document.getElementById('custom-modal-title').textContent = title;
+                document.getElementById('custom-modal-message').textContent = message;
+                
+                const icon = document.getElementById('custom-modal-icon');
+                const cancelBtn = document.getElementById('custom-modal-cancel');
+                const confirmBtn = document.getElementById('custom-modal-confirm');
+                
+                if (isAlert) {
+                    icon.setAttribute('data-lucide', 'check-circle-2');
+                    icon.style.color = 'var(--success)';
+                    cancelBtn.style.display = 'none';
+                    confirmBtn.textContent = 'OK';
+                    confirmBtn.className = 'btn btn-primary';
+                } else {
+                    icon.setAttribute('data-lucide', 'help-circle');
+                    icon.style.color = 'var(--accent)';
+                    cancelBtn.style.display = 'inline-block';
+                    confirmBtn.textContent = 'OK';
+                    confirmBtn.className = 'btn btn-danger';
+                }
+                
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+                document.getElementById('custom-modal').style.display = 'flex';
+            });
+        }
+
+        function closeCustomModal(result) {
+            document.getElementById('custom-modal').style.display = 'none';
+            if (customModalResolve) {
+                customModalResolve(result);
+                customModalResolve = null;
+            }
+        }
+
         // Delete photo utilities
         async function deleteSinglePhoto(filename, showConfirm = true) {
-            if (showConfirm && !confirm(`Are you sure you want to delete ${filename}? This cannot be undone.`)) return;
+            if (showConfirm) {
+                const confirmed = await showCustomConfirm(
+                    "Delete Photo",
+                    `Are you sure you want to delete ${filename}? This cannot be undone.`,
+                    false
+                );
+                if (!confirmed) return;
+            }
             const sid = getSessionId();
             
             const formData = new FormData();
@@ -1392,7 +1442,7 @@
                 const data = await res.json();
                 if (data.status === 'success') {
                     if (showConfirm) {
-                        alert("Photo deleted successfully!");
+                        await showCustomConfirm("Success", "Photo deleted successfully!", true);
                         loadSessionData();
                     }
                 }
@@ -1441,5 +1491,22 @@
     <!-- Hidden Magic Scanner Inputs -->
     <input type="file" id="magic-mobile-picker" accept="image/*,video/*" multiple style="display: none;" onchange="handleMagicScannerSelection(event)">
     <input type="file" id="magic-desktop-picker" accept="image/*,video/*" multiple style="display: none;" onchange="handleMagicScannerSelection(event)">
+
+    <!-- Custom Alert/Confirm Modal -->
+    <div class="modal-overlay" id="custom-modal" style="display: none;">
+        <div class="modal-card" style="max-width: 450px;">
+            <div class="modal-header">
+                <i data-lucide="help-circle" style="color: var(--accent);" id="custom-modal-icon"></i>
+                <span id="custom-modal-title">Confirm Action</span>
+            </div>
+            <div style="margin-bottom: 20px; font-size: 13px; color: var(--text-muted); line-height: 1.5; word-break: break-all;" id="custom-modal-message">
+                Are you sure you want to perform this action?
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button class="btn" id="custom-modal-cancel" onclick="closeCustomModal(false)">Cancel</button>
+                <button class="btn btn-primary" id="custom-modal-confirm" onclick="closeCustomModal(true)">OK</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
