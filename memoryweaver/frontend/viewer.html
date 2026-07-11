@@ -1142,6 +1142,18 @@
         let globalMemoryBank = null;
         let contributorNames = {}; // id -> name
 
+        function getEventTypeName(type) {
+            const types = {
+                trip: 'Trip',
+                birthday: 'Birthday',
+                wedding: 'Wedding',
+                sports_match: 'Sports Match',
+                reunion: 'Reunion',
+                other: 'Event'
+            };
+            return types[type] || 'Event';
+        }
+
         // Shows the active event's name and type in the header so it's obvious
         // which session's journal is on screen.
         async function loadSessionHeader() {
@@ -1149,7 +1161,26 @@
                 const res = await fetch('/api/sessions/' + encodeURIComponent(getSessionId()));
                 const data = await res.json();
                 if (data.status === 'success') {
+                    const eventName = getEventTypeName(data.session.event_type);
                     const iconName = { trip: 'compass', birthday: 'gift', wedding: 'heart', sports_match: 'award', reunion: 'users', other: 'camera' }[data.session.event_type] || 'camera';
+                    
+                    document.title = `Rewind - Your ${eventName} Journal`;
+                    
+                    const navViewerLink = document.getElementById('nav-viewer-link');
+                    if (navViewerLink) {
+                        navViewerLink.innerHTML = `<i data-lucide="book-open" style="width: 14px; height: 14px; margin-right: 6px;"></i>${eventName} Highlights`;
+                    }
+                    
+                    const emptyTitle = document.querySelector('#empty h2');
+                    if (emptyTitle) {
+                        emptyTitle.textContent = `No ${eventName} Journal Found`;
+                    }
+                    
+                    const emptyText = document.querySelector('#empty p');
+                    if (emptyText) {
+                        emptyText.innerHTML = `You haven't run the curation pipeline yet. Head back to the upload page and click '⚡ Curate Photo Pool' to trigger the agents!`;
+                    }
+
                     document.querySelector('header h1').innerHTML = `<i data-lucide="${iconName}" style="width: 32px; height: 32px; margin-right: 12px; vertical-align: middle; color: var(--accent);"></i>${data.session.name}`;
                     lucide.createIcons();
                 }

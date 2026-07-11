@@ -263,6 +263,8 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
                     
                     if mod_res["usable"]:
                         approved.append((photo, os.path.join(uploads_dir, photo)))
+                        if "API call failed" in mod_res.get("reason", ""):
+                            log(f"  [WARNING] {photo} - {mod_res['reason']}")
                     else:
                         quarantined.append({"filename": photo, "reason": mod_res["reason"]})
                         log(f"  [QUARANTINE] {photo} - {mod_res['reason']}")

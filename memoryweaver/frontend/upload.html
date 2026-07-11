@@ -2619,11 +2619,25 @@
             return '/viewer?session=' + encodeURIComponent(getSessionId());
         }
 
+        function getEventTypeName() {
+            const names = {
+                trip: 'Trip',
+                birthday: 'Birthday',
+                wedding: 'Wedding',
+                sports_match: 'Sports Match',
+                reunion: 'Reunion',
+                other: 'Event'
+            };
+            return names[currentEventType] || 'Event';
+        }
+
         function updateNavbarLinks() {
             const sid = getSessionId();
             const viewerLink = document.getElementById('nav-viewer-link');
             if (viewerLink) {
                 viewerLink.href = '/viewer?session=' + encodeURIComponent(sid);
+                viewerLink.innerHTML = `<i data-lucide="book-open"></i> ${getEventTypeName()} Highlights`;
+                if (typeof lucide !== 'undefined') lucide.createIcons();
             }
             const cleanerLink = document.getElementById('nav-cleaner-link');
             if (cleanerLink) {
@@ -4249,6 +4263,8 @@
                     localStorage.setItem('mw_session_id', data.sessions[0].session_id);
                     activeSession = data.sessions[0];
                 }
+                currentEventType = activeSession ? activeSession.event_type : 'trip';
+                updateNavbarLinks();
 
                 // Update uploader header title with active session name
                 const uploadHeader = document.getElementById('upload-header-title');
@@ -4542,6 +4558,33 @@
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
+        function copyTextToClipboard(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                return navigator.clipboard.writeText(text);
+            }
+            return new Promise((resolve, reject) => {
+                try {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = text;
+                    textArea.style.top = "0";
+                    textArea.style.left = "0";
+                    textArea.style.position = "fixed";
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    const successful = document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    if (successful) {
+                        resolve();
+                    } else {
+                        reject(new Error("Unable to copy"));
+                    }
+                } catch (err) {
+                    reject(err);
+                }
+            });
+        }
+
         function closeShareModal() {
             const modal = document.getElementById('share-modal');
             if (modal) modal.style.display = 'none';
@@ -4551,7 +4594,7 @@
             const btn = document.getElementById('btn-copy-invite-link');
             try {
                 if (!currentShareUrl) return;
-                await navigator.clipboard.writeText(currentShareUrl);
+                await copyTextToClipboard(currentShareUrl);
                 if (btn) {
                     const origHtml = btn.innerHTML;
                     btn.innerHTML = '✅ Copied!';
@@ -5595,10 +5638,12 @@
 
         function copyShareLink() {
             const input = document.getElementById('share-url');
-            navigator.clipboard.writeText(input.value).then(() => {
+            copyTextToClipboard(input.value).then(() => {
                 const s = document.getElementById('share-copy-status');
                 s.textContent = 'Copied!';
                 setTimeout(() => { s.textContent = ''; }, 2000);
+            }).catch(err => {
+                alert("Failed to copy link: " + err.message);
             });
         }
 
@@ -5791,18 +5836,6 @@
                     console.error("Log/Progress polling error:", err);
                 }
             }, 1000);
-        }
-
-        function getEventTypeName() {
-            const names = {
-                trip: 'Trip',
-                birthday: 'Birthday',
-                wedding: 'Wedding',
-                sports_match: 'Sports Match',
-                reunion: 'Reunion',
-                other: 'Event'
-            };
-            return names[currentEventType] || 'Event';
         }
 
         async function showStoryModal() {

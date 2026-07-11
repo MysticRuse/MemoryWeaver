@@ -662,7 +662,7 @@
             return localStorage.getItem('mw_session_id') || 'default';
         }
 
-        function updateNavbarLinks() {
+        async function updateNavbarLinks() {
             const sid = getSessionId();
             const viewerLink = document.getElementById('nav-viewer-link');
             if (viewerLink) {
@@ -671,6 +671,26 @@
             document.querySelectorAll('.nav-links a[href="/"], .nav-logo').forEach(el => {
                 el.href = '/?session=' + encodeURIComponent(sid);
             });
+
+            try {
+                const res = await fetch('/api/sessions/' + encodeURIComponent(sid));
+                const data = await res.json();
+                if (data.status === 'success' && viewerLink) {
+                    const eventTypes = {
+                        trip: 'Trip',
+                        birthday: 'Birthday',
+                        wedding: 'Wedding',
+                        sports_match: 'Sports Match',
+                        reunion: 'Reunion',
+                        other: 'Event'
+                    };
+                    const eventName = eventTypes[data.session.event_type] || 'Event';
+                    viewerLink.innerHTML = `<i data-lucide="book-open" style="width: 14px; height: 14px; margin-right: 6px;"></i>${eventName} Highlights`;
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                }
+            } catch (e) {
+                console.error("Failed to update navbar link label:", e);
+            }
         }
 
         // Fetch Sessions
