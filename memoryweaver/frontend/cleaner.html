@@ -1089,12 +1089,12 @@
                 false,
                 ["deriveBits", "deriveKey"]
             );
-            const salt = encoder.encode("memory_weaver_salt_2026");
+            const salt = encoder.encode("MemoryWeaverSecureSalt_2026");
             return await window.crypto.subtle.deriveKey(
                 {
                     name: "PBKDF2",
                     salt: salt,
-                    iterations: 100000,
+                    iterations: 10000,
                     hash: "SHA-256"
                 },
                 keyMaterial,
