@@ -894,9 +894,12 @@
                 }
                 else {
                     // organized
-                    const theme = c.subcategory || 'Memories';
-                    if (!organizedMap[theme]) organizedMap[theme] = [];
-                    organizedMap[theme].push(fn);
+                    // Only pull photos uploaded via the Magic Scanner workflow (filename starts with efb184b6d5cf_)
+                    if (fn.startsWith('efb184b6d5cf_')) {
+                        const theme = c.subcategory || 'Memories';
+                        if (!organizedMap[theme]) organizedMap[theme] = [];
+                        organizedMap[theme].push(fn);
+                    }
                 }
             });
             
@@ -937,7 +940,7 @@
             // Render Organized
             let organizedHtml = '';
             const themePillsContainer = document.getElementById('category-pills-container');
-            themePillsContainer.innerHTML = `<button class="btn btn-primary" onclick="filterOrganized('all')">All Organized (${existingPhotos.filter(f => !classifications[f] || (classifications[f].category !== 'scrap' && classifications[f].category !== 'info' && classifications[f].category !== 'emotional')).length})</button>`;
+            themePillsContainer.innerHTML = `<button class="btn btn-primary" onclick="filterOrganized('all')">All Organized (${existingPhotos.filter(f => f.startsWith('efb184b6d5cf_') && (!classifications[f] || (classifications[f].category !== 'scrap' && classifications[f].category !== 'info' && classifications[f].category !== 'emotional'))).length})</button>`;
             
             Object.keys(organizedMap).forEach(theme => {
                 const photos = organizedMap[theme];
