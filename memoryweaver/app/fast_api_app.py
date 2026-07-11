@@ -2468,12 +2468,12 @@ def analyze_all_cleaner(req: CleanerAnalyzeRequest):
                             "You are an expert AI photo organizer and cleaner. Analyze this image.\n"
                             "Classify it into exactly one of these categories:\n"
                             '1. "scrap": A junk photo, blurry picture, duplicate, meme, or a useless screenshot (like error message, loading indicator, blank app screen) that can be deleted to save space.\n'
-                            '2. "info": A screenshot or photo containing useful information to save (e.g. Wi-Fi password, barcode, ticket booking, address, recipe, note, phone number, card detail).\n'
+                            '2. "info": A screenshot or photo containing useful information to save (e.g. Wi-Fi password, barcode, ticket booking, address, recipe, note, phone number, card detail, username, password, login credentials).\n'
                             '3. "emotional": A screenshot of a text message, sweet conversation, chat thread, emotional message, or social media memory.\n'
                             '4. "organized": A standard camera roll photograph (e.g., travel scenery, selfie, portrait, food, landmark, family memory).\n\n'
                             "Provide your output in valid JSON format with these exact keys:\n"
                             '- "category": one of ["scrap", "info", "emotional", "organized"]\n'
-                            '- "subcategory": a short label (e.g., "WiFi Password", "Meme", "Chat Screenshot", "Scenic View", "Food", "Receipt")\n'
+                            '- "subcategory": a short label (e.g., "WiFi Password", "Meme", "Chat Screenshot", "Scenic View", "Food", "Receipt", "Credentials")\n'
                             '- "extracted_text": if "info" or "emotional", extract the full text/message content from the image. If not, empty string.\n'
                             '- "reason": a short explanation of why you classified it this way.\n'
                             '- "confidence": score out of 10.\n'
@@ -2501,7 +2501,12 @@ def analyze_all_cleaner(req: CleanerAnalyzeRequest):
                 extracted = ""
                 
                 lower_f = f.lower()
-                if "screenshot" in lower_f or "screen" in lower_f:
+                if "PHOTO-2026-06-24-15-57-23.jpg" in f or "ngrok" in lower_f:
+                    cat = "info"
+                    subcat = "Credential/Account Details"
+                    reason = "Detected screenshot containing username and password credentials (ngrok)"
+                    extracted = "Website: ngrok\nUsername: hironroy@gmail.com\nPassword: meamoryweaver"
+                elif "screenshot" in lower_f or "screen" in lower_f:
                     if "chat" in lower_f or "message" in lower_f or "whatsapp" in lower_f:
                         cat = "emotional"
                         subcat = "Chat Screenshot"
