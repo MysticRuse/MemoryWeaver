@@ -2308,7 +2308,8 @@ def load_image_bytes_decrypted(filepath: str, session_id: str) -> bytes:
         iv = file_bytes[:12]
         ciphertext = file_bytes[12:]
         return aesgcm.decrypt(iv, ciphertext, None)
-    except Exception:
+    except Exception as e:
+        print(f"DEBUG: load_image_bytes_decrypted failed for {filepath}: {e}")
         return file_bytes
 
 def encrypt_file_bytes(file_bytes: bytes, session_id: str) -> bytes:
@@ -2510,12 +2511,22 @@ def analyze_all_cleaner(req: CleanerAnalyzeRequest):
                             if res.returncode == 0:
                                 extracted_text = res.stdout.strip()
                                 lower_text = extracted_text.lower()
-                                if "password" in lower_text or ("email" in lower_text and ("log in" in lower_text or "signin" in lower_text or "username" in lower_text or "sso" in lower_text)):
+                                is_credential = False
+                                
+                                # Comprehensive credential indicators
+                                if "password" in lower_text or "passcode" in lower_text or "credentials" in lower_text:
+                                    is_credential = True
+                                elif "ngrok" in lower_text or "meamoryweaver" in lower_text:
+                                    is_credential = True
+                                elif "email" in lower_text and ("log in" in lower_text or "signin" in lower_text or "sign in" in lower_text or "username" in lower_text or "sso" in lower_text or "auth" in lower_text):
+                                    is_credential = True
+                                    
+                                if is_credential:
                                     classification = {
                                         "category": "info",
                                         "subcategory": "Credential/Account Details",
                                         "extracted_text": extracted_text,
-                                        "reason": "Offline macOS Vision OCR detected username/password inputs in screenshot",
+                                        "reason": "Offline macOS Vision OCR detected login credentials or account details",
                                         "confidence": 10
                                     }
                         finally:
@@ -2536,7 +2547,7 @@ def analyze_all_cleaner(req: CleanerAnalyzeRequest):
                 if img_hash and img_hash in global_cache and not req.force_refresh:
                     vault["classifications"][f] = global_cache[img_hash]
                     continue
-            if client:
+            if client and classification is None:
                 try:
                     from PIL import Image
                     import io
