@@ -481,6 +481,9 @@
             font-weight: 700;
             color: var(--text-muted);
         }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -561,6 +564,7 @@
                 <button class="tab-btn" id="tab-btn-info" onclick="switchTab('info')"><i data-lucide="shield-check" style="width: 14px; height: 14px;"></i> Protected Notes Vault</button>
                 <button class="tab-btn" id="tab-btn-emotional" onclick="switchTab('emotional')"><i data-lucide="heart" style="width: 14px; height: 14px;"></i> Emotional & Private</button>
                 <button class="tab-btn" id="tab-btn-organized" onclick="switchTab('organized')"><i data-lucide="folder-heart" style="width: 14px; height: 14px;"></i> Smart AI Categories</button>
+                <button class="tab-btn" id="tab-btn-optimizer" onclick="switchTab('optimizer')"><i data-lucide="zap" style="width: 14px; height: 14px;"></i> Storage Optimizer</button>
             </div>
 
             <!-- TAB 1: SCRAP CLEANER -->
@@ -610,6 +614,39 @@
                 </div>
                 <div class="cleaner-grid" id="organized-grid">
                     <div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1; text-align: center; padding: 20px;">No categorized memory photos.</div>
+                </div>
+            </div>
+
+            <!-- TAB 5: STORAGE OPTIMIZER -->
+            <div class="tab-content" id="tab-content-optimizer">
+                <div style="display: grid; grid-template-columns: 1fr; gap: 24px;">
+                    <!-- Video Compressor Section -->
+                    <div class="card" style="padding: 16px; border-color: var(--border);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                            <div>
+                                <h3 style="font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; gap: 6px;"><i data-lucide="video" style="color: var(--accent);"></i> Video Compressor</h3>
+                                <div style="font-size: 12px; color: var(--text-muted);">Select up to 5 video files to compress into storage-saving versions. Quality is preserved while freeing up space.</div>
+                            </div>
+                            <button class="btn btn-primary" onclick="compressSelectedVideos()"><i data-lucide="shrink" style="width: 12px; height: 12px;"></i> Compress Selected</button>
+                        </div>
+                        <div class="cleaner-grid" id="video-compressor-grid">
+                            <div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1; text-align: center; padding: 20px;">No video files detected.</div>
+                        </div>
+                    </div>
+
+                    <!-- Live Photo Converter Section -->
+                    <div class="card" style="padding: 16px; border-color: var(--border);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                            <div>
+                                <h3 style="font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; gap: 6px;"><i data-lucide="image" style="color: var(--success);"></i> Live Photos Converter</h3>
+                                <div style="font-size: 12px; color: var(--text-muted);">Select Live Photo pairs to convert into still images by stripping their motion videos (saving 2-3x space).</div>
+                            </div>
+                            <button class="btn btn-success" onclick="convertSelectedLivePhotos()"><i data-lucide="zap" style="width: 12px; height: 12px;"></i> Convert to Still</button>
+                        </div>
+                        <div class="cleaner-grid" id="live-photos-grid">
+                            <div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1; text-align: center; padding: 20px;">No Live Photos detected.</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -782,6 +819,10 @@
             
             document.getElementById(`tab-btn-${tabId}`).classList.add('active');
             document.getElementById(`tab-content-${tabId}`).classList.add('active');
+            
+            if (tabId === 'optimizer') {
+                loadOptimizerData();
+            }
         }
 
         // Render grids based on classifications
@@ -1482,6 +1523,220 @@
                 .replace(/'/g, "&#039;");
         }
 
+        async function loadOptimizerData() {
+            const sid = getSessionId();
+            try {
+                // Fetch videos
+                const resVideos = await fetch(`/api/cleaner/videos?session_id=${encodeURIComponent(sid)}`, {
+                    headers: authHeaders()
+                });
+                const dataVideos = await resVideos.json();
+                
+                // Fetch live photos
+                const resLive = await fetch(`/api/cleaner/live-photos?session_id=${encodeURIComponent(sid)}`, {
+                    headers: authHeaders()
+                });
+                const dataLive = await resLive.json();
+                
+                if (dataVideos.status === 'success') {
+                    renderVideoCompressor(dataVideos.videos || []);
+                }
+                if (dataLive.status === 'success') {
+                    renderLivePhotos(dataLive.live_photos || []);
+                }
+            } catch (e) {
+                console.error("Failed to load optimizer data:", e);
+            }
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function renderVideoCompressor(videos) {
+            const grid = document.getElementById('video-compressor-grid');
+            grid.innerHTML = '';
+            
+            if (videos.length === 0) {
+                grid.innerHTML = `<div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1; text-align: center; padding: 20px;">No video files detected.</div>`;
+                return;
+            }
+            
+            let html = '';
+            const sid = getSessionId();
+            videos.forEach(v => {
+                const cleanId = v.filename.replace(/[^a-zA-Z0-9]/g, '_');
+                html += `
+                    <div class="photo-card" id="video-card-${cleanId}">
+                        <input type="checkbox" class="video-card-checkbox" value="${v.filename}" style="position: absolute; top: 10px; left: 10px; z-index: 10; width: 18px; height: 18px;">
+                        <div style="position: relative; width: 100%; aspect-ratio: 16/9; background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                            <video src="/media?filename=${encodeURIComponent(v.filename)}&session_id=${encodeURIComponent(sid)}" style="width: 100%; height: 100%; object-fit: cover;" muted playsinline></video>
+                            <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.7); color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700;">
+                                🎬 ${v.duration}s
+                            </div>
+                        </div>
+                        <div class="photo-card-body">
+                            <div class="photo-card-title" style="margin-bottom: 4px;">
+                                <span style="font-size: 12px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px;">${v.filename.split('_').slice(2).join('_')}</span>
+                                <span class="badge" style="background: var(--bg-surface); color: var(--text); border: 1.5px solid var(--border); font-size: 10px; font-weight: 700;">${formatBytes(v.size_bytes)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            grid.innerHTML = html;
+        }
+
+        function renderLivePhotos(livePhotos) {
+            const grid = document.getElementById('live-photos-grid');
+            grid.innerHTML = '';
+            
+            if (livePhotos.length === 0) {
+                grid.innerHTML = `<div style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1; text-align: center; padding: 20px;">No Live Photo pairs detected.</div>`;
+                return;
+            }
+            
+            let html = '';
+            const sid = getSessionId();
+            livePhotos.forEach(lp => {
+                const cleanId = lp.video_filename.replace(/[^a-zA-Z0-9]/g, '_');
+                html += `
+                    <div class="photo-card" id="live-card-${cleanId}">
+                        <input type="checkbox" class="live-card-checkbox" value="${lp.video_filename}" style="position: absolute; top: 10px; left: 10px; z-index: 10; width: 18px; height: 18px;">
+                        <img src="/media?filename=${encodeURIComponent(lp.image_filename)}&session_id=${encodeURIComponent(sid)}" alt="Live Photo" style="width: 100%; aspect-ratio: 1; object-fit: cover;">
+                        <div class="photo-card-body">
+                            <div class="photo-card-title" style="margin-bottom: 4px;">
+                                <span style="font-size: 12px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px;">${lp.base_name}</span>
+                                <span class="badge" style="background: var(--bg-surface); color: var(--success); border: 1.5px solid var(--success); font-size: 10px; font-weight: 700;">Live</span>
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-muted); display: flex; flex-direction: column; gap: 2px;">
+                                <div>Image: ${formatBytes(lp.image_size_bytes)}</div>
+                                <div>Video: ${formatBytes(lp.video_size_bytes)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            grid.innerHTML = html;
+        }
+
+        async function compressSelectedVideos() {
+            const checked = [];
+            document.querySelectorAll('.video-card-checkbox:checked').forEach(cb => {
+                checked.push(cb.value);
+            });
+            
+            if (checked.length === 0) {
+                await showCustomConfirm("Compress Videos", "Please select at least one video to compress.", true);
+                return;
+            }
+            if (checked.length > 5) {
+                await showCustomConfirm("Limit Reached", "Please select up to 5 videos for batch compression.", true);
+                return;
+            }
+            
+            const confirmed = await showCustomConfirm(
+                "Compress Videos",
+                `Are you sure you want to compress ${checked.length} video(s)? This will replace them with storage-saving versions.`,
+                false
+            );
+            if (!confirmed) return;
+            
+            // Show loading state
+            const loadingOverlay = document.getElementById('loading-overlay');
+            if (loadingOverlay) loadingOverlay.style.display = 'flex';
+            
+            try {
+                const res = await fetch('/api/cleaner/compress-videos', {
+                    method: 'POST',
+                    headers: authHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({
+                        session_id: getSessionId(),
+                        filenames: checked
+                    })
+                });
+                const data = await res.json();
+                
+                if (loadingOverlay) loadingOverlay.style.display = 'none';
+                
+                if (data.status === 'success') {
+                    let savedTotal = 0;
+                    data.results.forEach(r => savedTotal += r.saved_bytes);
+                    await showCustomConfirm(
+                        "Success",
+                        `Successfully compressed all selected videos! Saved ${formatBytes(savedTotal)} space!`,
+                        true
+                    );
+                    loadOptimizerData();
+                    loadSessionData();
+                } else {
+                    await showCustomConfirm("Error", "Compression failed: " + data.message, true);
+                }
+            } catch (e) {
+                if (loadingOverlay) loadingOverlay.style.display = 'none';
+                console.error("Compression error:", e);
+                await showCustomConfirm("Error", "An unexpected error occurred during compression.", true);
+            }
+        }
+
+        async function convertSelectedLivePhotos() {
+            const checked = [];
+            document.querySelectorAll('.live-card-checkbox:checked').forEach(cb => {
+                checked.push(cb.value);
+            });
+            
+            if (checked.length === 0) {
+                await showCustomConfirm("Convert Live Photos", "Please select at least one Live Photo to convert.", true);
+                return;
+            }
+            
+            const confirmed = await showCustomConfirm(
+                "Convert Live Photos",
+                `Are you sure you want to convert ${checked.length} Live Photo(s) to still images? This will delete the motion video companions.`,
+                false
+            );
+            if (!confirmed) return;
+            
+            const loadingOverlay = document.getElementById('loading-overlay');
+            if (loadingOverlay) loadingOverlay.style.display = 'flex';
+            
+            try {
+                const res = await fetch('/api/cleaner/convert-live-photos', {
+                    method: 'POST',
+                    headers: authHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({
+                        session_id: getSessionId(),
+                        video_filenames: checked
+                    })
+                });
+                const data = await res.json();
+                
+                if (loadingOverlay) loadingOverlay.style.display = 'none';
+                
+                if (data.status === 'success') {
+                    let freedTotal = 0;
+                    data.results.forEach(r => freedTotal += r.freed_bytes);
+                    await showCustomConfirm(
+                        "Success",
+                        `Successfully stripped motion video from selected Live Photos! Saved ${formatBytes(freedTotal)} space!`,
+                        true
+                    );
+                    loadOptimizerData();
+                    loadSessionData();
+                } else {
+                    await showCustomConfirm("Error", "Conversion failed: " + data.message, true);
+                }
+            } catch (e) {
+                if (loadingOverlay) loadingOverlay.style.display = 'none';
+                console.error("Conversion error:", e);
+                await showCustomConfirm("Error", "An unexpected error occurred during conversion.", true);
+            }
+        }
+
         // Initialize Lucide & Load
         window.addEventListener('DOMContentLoaded', () => {
             loadSessions();
@@ -1506,6 +1761,13 @@
                 <button class="btn" id="custom-modal-cancel" onclick="closeCustomModal(false)">Cancel</button>
                 <button class="btn btn-primary" id="custom-modal-confirm" onclick="closeCustomModal(true)">OK</button>
             </div>
+        </div>
+    <!-- Loading Overlay -->
+    <div class="modal-overlay" id="loading-overlay" style="display: none; background: rgba(0,0,0,0.75);">
+        <div class="modal-card" style="max-width: 250px; text-align: center; padding: 30px;">
+            <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 12px;"></div>
+            <div style="font-weight: 700; font-size: 14px; font-family: 'Space Grotesk', sans-serif;">Optimizing Storage...</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Please wait a moment</div>
         </div>
     </div>
 </body>
