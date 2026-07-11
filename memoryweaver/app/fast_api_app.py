@@ -2489,6 +2489,41 @@ def analyze_all_cleaner(req: CleanerAnalyzeRequest):
                     "confidence": 10
                 }
                 
+            # Generic native macOS Vision OCR fallback for local credentials screenshots detection
+            if classification is None:
+                import sys
+                if sys.platform == 'darwin':
+                    try:
+                        import subprocess
+                        decrypted_bytes = load_image_bytes_decrypted(full_path, req.session_id)
+                        temp_ocr_path = os.path.join(os.path.dirname(full_path), f"temp_ocr_{f}")
+                        with open(temp_ocr_path, "wb") as temp_f:
+                            temp_f.write(decrypted_bytes)
+                        try:
+                            ocr_js_path = os.path.join(os.path.dirname(__file__), "ocr.js")
+                            res = subprocess.run(
+                                ["osascript", "-l", "JavaScript", ocr_js_path, temp_ocr_path],
+                                capture_output=True,
+                                text=True,
+                                timeout=8
+                            )
+                            if res.returncode == 0:
+                                extracted_text = res.stdout.strip()
+                                lower_text = extracted_text.lower()
+                                if "password" in lower_text or ("email" in lower_text and ("log in" in lower_text or "signin" in lower_text or "username" in lower_text or "sso" in lower_text)):
+                                    classification = {
+                                        "category": "info",
+                                        "subcategory": "Credential/Account Details",
+                                        "extracted_text": extracted_text,
+                                        "reason": "Offline macOS Vision OCR detected username/password inputs in screenshot",
+                                        "confidence": 10
+                                    }
+                        finally:
+                            if os.path.exists(temp_ocr_path):
+                                os.remove(temp_ocr_path)
+                    except Exception as ocr_err:
+                        print(f"Offline macOS OCR failed: {ocr_err}")
+                        
             if classification is None:
                 # Check session classification cache first
                 if f in vault["classifications"] and not req.force_refresh:
