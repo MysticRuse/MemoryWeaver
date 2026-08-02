@@ -1,191 +1,151 @@
-# MemoryWeaver 🧵📸
+# MemoryWeaver Cleaner 🧹📸
 
-![MemoryWeaver Project Card](memoryweaver_card_560x280.jpg)
+**Clean up, organise and edit a messy photo and video library — locally, on your own machine.**
 
-**Turn a family's chaotic post-event photo dump into a curated, narrated keepsake journal — automatically, with a team of AI agents.**
+Phone camera rolls fill with screenshots, receipts, burst duplicates, credential
+screengrabs and blurry misfires. This app sorts that pile: it classifies every
+photo, isolates anything sensitive into a passcode-locked vault, finds
+near-duplicates, shows you what deleting them would reclaim, and writes
+deletions back to the folder they came from. It also carries a full photo and
+video editor for the images worth keeping.
 
-After every trip, birthday, or wedding, the photos scatter: hundreds on Mom's phone, more on Dad's, a few gems on Grandma's. Someone (usually a busy parent) is supposed to collect them all, delete the blurry ones, pick the best, and make something worth keeping. Nobody ever does.
-
-MemoryWeaver does. Family members upload photos through a shareable link — no accounts, no app installs. A five-agent pipeline moderates, de-duplicates, scores, and narrates them into a journal with per-moment entries, accurate landmark names, and a flowing trip story. Every event (a weekend trip, a soccer final, a wedding) lives in its own isolated session.
-
----
-
-## Architecture
-
-```mermaid
-flowchart TD
-    subgraph Contributors["👨‍👩‍👧 Contributors (shareable link /join/<event>?code=...)"]
-        C1[Phone camera roll<br/>or desktop folder upload]
-    end
-
-    subgraph Admin["🎛️ Curator Hub ( / )"]
-        A1[Create events · share QR<br/>run pipeline · view logs]
-    end
-
-    subgraph Agents["🤖 Five-agent system (Google ADK)"]
-        COL[Collector<br/>EXIF, contributor IDs, QR]
-        MOD[Moderator<br/>Gemini vision safety screen]
-        CUR[Curator<br/>CLIP dedup + LLM-as-judge scoring]
-        MEM[Memory<br/>contributor profiles, missed moments]
-        NAR[Narrator<br/>per-moment journal + trip story]
-        COL --> MOD --> CUR --> MEM --> NAR
-    end
-
-    CONC[🎩 memoryweaver_concierge<br/>root ADK agent · A2A endpoint<br/>5 specialists as sub-agents]
-    MCP[🔌 MCP server<br/>4 read-only tools over stdio]
-    STORE[(Per-event isolated storage<br/>photos · memory bank · artifacts)]
-    VIEW[📖 Journal Viewer /viewer]
-
-    C1 -->|POST /upload + share_code| STORE
-    A1 -->|POST /generate + admin token| Agents
-    Agents --> STORE
-    STORE --> VIEW
-    CONC -.tools.-> Agents
-    CONC -.-> STORE
-    MCP -.-> STORE
-```
-
-**Two ways to drive the same system:**
-- The **web product**: contributors upload via the share link; the admin runs the pipeline from the Curator Hub; everyone reads the result in the viewer.
-- The **agent layer**: the `memoryweaver_concierge` (served over A2A, or via `agents-cli playground`) manages events, launches the pipeline, and discusses results conversationally — with the five specialists attached as sub-agents for fine-grained follow-ups ("who missed the beach day?"). An MCP server exposes the same memory bank to any MCP client (e.g. Claude Desktop).
-
-**Design note — why the pipeline is deterministic:** the heavy per-photo work (vision moderation, LLM-as-judge scoring, batched journaling) runs as orchestrated Python that calls the agents' Gemini-powered tools in batches, rather than routing every photo through LLM tool-calling. For a 200-photo dump this is the difference between ~15 batched API calls and hundreds of agent turns — same quality, fraction of the cost and latency. The concierge agent operates at the *task* level, where reasoning actually adds value.
-
-### Pipeline phases
-
-| Phase | Agent | What happens |
-|---|---|---|
-| 1. Moderation | Moderator | Gemini vision screens batches of 50: safety, sharpness, real-photo-vs-screenshot |
-| 2. Deduplication | Curator | CLIP embeddings + cosine similarity drop burst duplicates |
-| 3. Scoring | Curator | LLM-as-judge rates sharpness/composition/uniqueness/human-presence, names landmarks from GPS + vision, writes captions (batches of 15) |
-| 4. Memory | Memory | Updates per-contributor profiles: who was present at which moments |
-| 5. Narration | Narrator | One batched call writes every moment's journal entry, then the trip story |
-
-Results are cached per photo, so re-runs are near-free.
+Everything runs against a local folder. Media is encrypted at rest.
 
 ---
 
-## Key Architecture Concepts
+## What it does
 
-| Concept | Where |
-|---|---|
-| **Agent / Multi-agent system (ADK)** | [`app/agent.py`](app/agent.py) — root concierge with 6 tools + 5 sub-agents; specialists in [`agents/*/agent.py`](agents/); A2A card exposes 23 skills |
-| **MCP server** | [`mcp_server.py`](mcp_server.py) — 4 read-only tools over stdio, deliberately unable to bypass the web auth layer |
-| **Security features** | Admin-token gate on destructive/billable endpoints; per-event `share_code` upload credential; EXIF-stripping `/media` endpoint (raw GPS never leaves the server); prompt-injection sanitizer ([`pipeline/prompt_safety.py`](pipeline/prompt_safety.py)); STRIDE notes in [`CONTEXT.md`](../CONTEXT.md) |
-| **Agent skills (Agents CLI)** | Project scaffolded and driven with `agents-cli` (see [`agents-cli-manifest.yaml`](agents-cli-manifest.yaml)); `agents-cli playground` runs the concierge |
-| **Agent Evaluation (Agents CLI)** | [`tests/eval/eval_config.yaml`](tests/eval/eval_config.yaml) and [`tests/eval/datasets/basic-dataset.json`](tests/eval/datasets/basic-dataset.json) — run `agents-cli eval generate && agents-cli eval grade`: deterministic tool-trajectory checks + local LLM-as-judge (this suite caught a share-code credential leak pre-submission) |
-| **Deployability** | [`Dockerfile`](Dockerfile) + [`deployment/terraform/`](deployment/terraform/) + `agents-cli deploy` (Cloud Run); see [Deployment](#deployment) |
+**Clean**
+- Classifies the library into categories (people, scenery, food, pets, junk,
+  documents, screenshots) using on-device Apple Vision OCR first, escalating to
+  Gemini only when local detection is inconclusive
+- Detects credential screenshots and routes them to a **Protected Notes Vault**
+- Passcode-locks individual photos into a **Private Vault**
+- Finds near-duplicates with a local 8×8 average hash — no API cost
+- Reports how much space staged deletions would reclaim, then purges
+- Two-way folder sync: scan a device folder in, write deletions back out
+
+**Edit — photos**
+- Detail panel: full EXIF (device, lens, ISO, aperture, capture date), GPS on a
+  Leaflet map, and an AI photographer's critique
+- Magic Auto-Enhance with model-tuned brightness/contrast/saturation/warmth, and
+  one-click switching between the original and enhanced version
+- Transformations: black & white, coloured-pencil sketch, meme captions, kids
+  stickers, photogenic correction
+- Voice notes and transcription attached to a photo
+- Rename, re-caption, move between categories
+
+**Edit — video**
+- Watermark and logo removal (classical frame-variance detection first, Gemini
+  Vision only on escalation)
+- Frame extraction, and adding an extracted frame back to the library
+- H.264 compression to reclaim space
+- Live Photo → video conversion
 
 ---
 
 ## Quick start
 
-**Prerequisites:** Python 3.12+, [uv](https://docs.astral.sh/uv/), a [Google AI Studio API key](https://aistudio.google.com/apikey) (free tier works).
+**Prerequisites:** Python 3.12+, [uv](https://docs.astral.sh/uv/), and a
+[Google AI Studio API key](https://aistudio.google.com/apikey) for the AI
+features (classification, enhancement and critique; the free tier is fine).
+Cleaning, dedup and compression work without a key.
 
 ```bash
-git clone <this-repo> && cd MemoryWeaver/memoryweaver
-
-# Install dependencies (core only - small and fast)
+cd memoryweaver
 uv sync
-
-# Configure
-cp ../.env.example .env      # then edit: set GEMINI_API_KEY=<your key>
-
-# Run the web app
+cp .env.example .env      # add GEMINI_API_KEY
 uv run uvicorn app.fast_api_app:app --port 8000
 ```
 
-Open **http://localhost:8000** — the Curator Hub, with a default event ready.
+Open **http://localhost:8000**.
 
-Optional extras (not needed for the core demo): `uv sync --extra local-preclean`
-adds the on-device CLIP pre-cleaning used by the macOS bulk-folder wizard
-(~2GB torch download); `--extra drive-import` enables `scripts/drive_downloader.py`.
-
-### The full loop (5 minutes)
-
-1. **Create an event** in the session bar (name + type: trip / birthday / wedding / sports match / reunion).
-2. **Share & Collect** — copy the contributor link or let family scan the QR. They open it on their phones: name, pick photos, done. Desktop contributors can upload a whole folder at once.
-3. **Manage the Photo Pool** — expand the collapsible "View Uploaded Photo Pool" tray right under the upload status. Toggle photos in/out of the curation pipeline using the **Included** and **Excluded** tabs and the `❌` / `➕` overlays.
-4. When the pool is ready, click **▶ Curate & Narrate Now** and watch the live agent logs and progress bar.
-5. Open the **viewer** — highlights carousel, per-moment journal with captions and dates, the full trip story, and a per-contributor filter. Contributors' share page automatically shows a *"journal is ready"* link.
-
-### Talk to the agent
-
-```bash
-uv run adk web          # pick "app" — or: agents-cli playground
-```
-
-Try: *"What events do I have?"* → *"Create an event called Summer Soccer Final, it's a sports match"* → *"Run the curation pipeline on it"* → *"Read me the story."* The concierge shares state with the web app — events created in either place appear in both.
-
-### MCP server (Claude Desktop, etc.)
-
-```json
-{
-  "mcpServers": {
-    "memoryweaver": {
-      "command": "uv",
-      "args": ["run", "--directory", "/path/to/MemoryWeaver/memoryweaver", "python", "mcp_server.py"]
-    }
-  }
-}
-```
-
-Then ask your MCP client: *"Who contributed photos to my default event, and which moments did they miss?"*
+Point it at a folder via **Run Magic Scanner**, or drag files in directly.
 
 ---
 
-## Security model
+## Configuration
 
-| Tier | Who | Credential |
+| Variable | Purpose |
+|---|---|
+| `GEMINI_API_KEY` | Required for classification, enhancement, critique, transformations |
+| `MW_ENCRYPTION_KEY` | Master key for media encryption at rest. Auto-generated to `local_storage/.encryption_key` (mode 0600) if unset — **back that file up** |
+| `MW_ADMIN_TOKEN` | When set, mutating and billable routes require an `X-MW-Token` header. Unset is a no-op, which suits a local single-user install |
+| `MW_BROWSE_ROOTS` | Colon-separated directories the folder browser may read. Defaults to your home directory |
+| `MW_MAX_AI_REQUESTS_PER_MIN` / `MW_MAX_AI_TOKENS_PER_HOUR` | Spend cap per library (defaults 60 / 150,000) |
+| `MW_PIPELINE_MODEL`, `MW_IMAGE_MODEL`, `MW_TTS_MODEL` | Override model IDs without a code change |
+
+---
+
+## Layout
+
+```
+app/
+  fast_api_app.py     app construction, media serving, uploads, libraries
+  deps.py             admin token + AI spend cap dependencies
+  schemas.py          request bodies
+  routers/
+    cleaner.py        vault, classification, dedup, storage, sync, purge
+    photo.py          metadata, enhance, transformations, rename
+    video.py          frames, watermark removal, compression, description
+  services/
+    media_store.py    storage, encryption and imaging helpers
+    classification.py auto-classification of newly ingested photos
+    transforms.py     the five photo transformation builders
+    video_ops.py      watermark detection and the ffmpeg delogo pipeline
+  app_utils/
+    crypto.py         AES-256-GCM encryption at rest (see its module docstring)
+    paths.py          path confinement for every filesystem-facing route
+    errors.py         typed errors -> correct HTTP status codes
+    genai_client.py   one Gemini client, model IDs by role
+pipeline/
+  local_cleaner.py    EXIF extraction
+  cost_tracker.py     per-feature cost and escalation accounting
+  prompt_safety.py    input sanitising + the AI spend circuit breaker
+frontend/
+  cleaner.html        the application
+```
+
+---
+
+## Cost design
+
+The expensive path is always the fallback, never the default:
+
+| Job | Default | Escalation |
 |---|---|---|
-| Admin (`/generate`, `/delete`, ingest, event creation) | Event organizer | `MW_ADMIN_TOKEN` env var → `X-MW-Token` header (open in local dev when unset; **required for any shared deployment**) |
-| Upload (`POST /upload`) | Family with the link | Per-event `share_code`, embedded in the `/join` link — no accounts needed |
-| Read-only (viewer, `/media`, `/api/trip-book`) | Everyone with a link | Open, but photos are re-encoded with **all EXIF stripped** (GPS, device IDs), and only curated artifacts are reachable — never raw storage |
+| Duplicate detection | 8×8 average hash, local | never |
+| Classification | Apple Vision OCR, local | Gemini Vision |
+| Watermark detection | 20-frame variance, local | Gemini Vision |
+| Compression / frame split | ffmpeg | never |
 
-Also: filenames are sanitized before entering Gemini prompts (injection guard), upload validation (20MB cap, type allowlist, path-traversal-safe), and contributor IDs are hashes rather than raw names in filenames and logs.
+`pipeline/cost_tracker.py` records per-feature spend and the escalation rate, so
+you can see when the cheap path stops carrying its weight.
 
-## Project structure
+---
 
-```
-memoryweaver/
-├── app/
-│   ├── agent.py            # memoryweaver_concierge (root ADK agent, A2A)
-│   ├── fast_api_app.py     # Web app: Curator Hub, contributor page, pipeline API
-│   └── app_utils/          # SessionStore, session-scoped StorageHelper
-├── agents/                 # The five specialists (agent.py + tools/ each)
-│   ├── collector/  moderator/  curator/  memory/  narrator/
-├── pipeline/
-│   ├── orchestrator.py     # 5-phase batched pipeline (the workhorse)
-│   ├── local_cleaner.py    # On-device CLIP pre-cleaning (bulk import)
-│   └── prompt_safety.py    # Prompt-injection sanitizer
-├── mcp_server.py           # MCP stdio server (4 read-only tools)
-├── frontend/               # upload.html (admin) · contribute.html · viewer.html
-├── tests/                  # Unit (security) + integration (agent stream)
-└── deployment/terraform/   # Cloud Run infrastructure
-```
-
-## Deployment
-
-To deploy this application to Google Cloud Run:
+## Tests
 
 ```bash
-gcloud config set project <your-project-id>
-agents-cli deploy
+uv run pytest tests/unit -q
+uv run ruff check app pipeline agents tests
 ```
 
-The Terraform under `deployment/terraform/` provisions Cloud Run, GCS buckets, and telemetry (Cloud Trace / BigQuery logs). For any non-local deployment, set:
+The suite covers the crypto (including backward compatibility with older
+on-disk formats), path confinement, the error contract, security wiring, the
+editor endpoints and the video pipeline. `test_endpoint_smoke.py` additionally
+asserts no route reports a failure as HTTP 200 — the defect class that once let
+five broken endpoints ship unnoticed.
 
-- `GEMINI_API_KEY` — model access
-- `MW_ADMIN_TOKEN` — **mandatory**; gates all destructive/billable endpoints
-- `APP_URL` — public base URL, so share links and QR codes are absolute
-- `GCS_BUCKET_NAME` / `GOOGLE_CLOUD_PROJECT` — switches storage from local disk to GCS
+---
 
-## Known limitations
+## History
 
-- **Photos only** — videos are filtered out at upload; video moderation/curation is roadmap.
-- Pipeline progress/log state is in-memory per process — fine for a family-scale single instance, needs Redis/Firestore for multi-instance serving.
-- The `share_code` travels in the URL query string — the right trade-off for "grandma scans a QR" (vs. accounts/OAuth), but links should be shared as privately as the photos themselves.
+This started as a multi-agent system that turned event photo dumps into narrated
+keepsake journals: a shareable contributor upload link, a five-agent ADK pipeline
+(moderate → dedup → score → remember → narrate), and a journal viewer.
 
-## Roadmap
-
-Event-type-aware narration (a soccer final shouldn't read like a travel diary), video support, face-aware people naming with an opt-in roster, and per-contributor "you missed this moment" digest emails.
+That product was retired. The cleaning and editing surface was the part worth
+keeping, so the curation pipeline, the specialist agents, the ADK/A2A layer and
+the contributor and viewer pages were removed, and the editor features that had
+lived in the old admin page were moved here. The git history has the full record.

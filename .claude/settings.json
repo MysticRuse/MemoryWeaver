@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv/bin/python -m pytest tests/unit/test_pipeline_e2e.py -q)",
+      "Bash(.venv/bin/python -c \"import ast;ast.parse\\(open\\('app/routers/media_edit.py'\\).read\\(\\)\\);print\\('AST OK'\\)\")"
+    ]
+  }
+}

@@ -1,5 +1,11 @@
 import os
+
 from google.cloud import storage
+
+from app.app_utils.logging_config import get_logger
+
+logger = get_logger(__name__)
+
 
 class StorageHelper:
     """
@@ -32,7 +38,7 @@ class StorageHelper:
                 self.bucket = self.storage_client.bucket(self.bucket_name)
                 self.use_gcs = True
             except Exception as e:
-                print(f"Failed to initialize GCS client: {e}. Falling back to local storage.")
+                logger.warning(f"Failed to initialize GCS client: {e}. Falling back to local storage.")
                 self.use_gcs = False
         else:
             self.use_gcs = False

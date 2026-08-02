@@ -11,10 +11,9 @@ app credentials from console.cloud.google.com); a token.json is created on
 first auth. Keep both files out of git - .gitignore already covers them.
 """
 
-import os
 import io
+import os
 import sys
-import hashlib
 
 # Make project-root imports work when run as a script from anywhere
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -25,12 +24,13 @@ except ImportError as e:
     raise SystemExit(
         "Google Drive import needs optional deps - run: uv sync --extra drive-import"
     ) from e
-from googleapiclient.http import MediaIoBaseDownload
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
-from agents.memory.tools.memory_bank import MemoryBankStore
+from googleapiclient.http import MediaIoBaseDownload
+
 from agents.collector.tools.upload import process_and_save_upload
+from agents.memory.tools.memory_bank import MemoryBankStore
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
@@ -42,7 +42,7 @@ def get_drive_service():
     # created automatically when the authorization flow completes for the first time.
     if os.path.exists('token.json'):
         creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-        
+
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
@@ -67,45 +67,45 @@ def download_and_ingest_drive_folder(folder_id: str, project_root: str):
     from file metadata, and saves them to local_storage/uploads/.
     """
     service = get_drive_service()
-    
+
     # Query to list all files in the specified folder
     query = f"'{folder_id}' in parents and mimeType startswith 'image/' and trashed = false"
-    
+
     # We request the 'owners' field to get uploader names
     results = service.files().list(
         q=query,
         fields="nextPageToken, files(id, name, owners, mimeType)",
         pageSize=100
     ).execute()
-    
+
     files = results.get('files', [])
     if not files:
         print("No image files found in the specified Google Drive folder.")
         return
 
     print(f"Found {len(files)} photos in Google Drive folder. Downloading & indexing...")
-    
+
     store = MemoryBankStore()
     uploads_count = 0
-    
+
     for f in files:
         file_id = f['id']
         original_name = f['name']
-        
+
         # Extract owner/uploader display name
         owners = f.get('owners', [])
         uploader_name = owners[0].get('displayName', 'Anonymous') if owners else 'Anonymous'
-        
+
         # Download the file content in-memory
         request = service.files().get_media(fileId=file_id)
         fh = io.BytesIO()
         downloader = MediaIoBaseDownload(fh, request)
         done = False
         while not done:
-            status, done = downloader.next_chunk()
-            
+            _status, done = downloader.next_chunk()
+
         file_bytes = fh.getvalue()
-        
+
         # Process and save the file using the existing Collector Agent upload logic
         try:
             info = process_and_save_upload(
@@ -113,10 +113,10 @@ def download_and_ingest_drive_folder(folder_id: str, project_root: str):
                 original_filename=original_name,
                 contributor_name=uploader_name
             )
-            
+
             # Map contributor name to ID in Memory Bank
             store.upsert_contributor(info["contributor_id"], uploader_name, [], 0)
-            
+
             print(f"  [SAVED] {original_name} -> Uploaded by {uploader_name} (ID: {info['contributor_id']})")
             uploads_count += 1
         except Exception as ex:

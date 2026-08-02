@@ -5,13 +5,14 @@ from google.adk.agents import Agent
 from google.adk.models import Gemini
 from google.genai import types
 
-from agents.collector.tools.upload import process_and_save_upload
 from agents.collector.tools.qr import generate_upload_qr
+from agents.collector.tools.upload import process_and_save_upload
+from app.app_utils.genai_client import AGENT_MODEL
 
 collector_agent = Agent(
     name="collector_agent",
     model=Gemini(
-        model="gemini-flash-latest",
+        model=AGENT_MODEL,
         retry_options=types.HttpRetryOptions(attempts=3),
     ),
     description="Frictionless upload agent that accepts media files, extracts metadata, saves to GCS, and generates event QR codes.",

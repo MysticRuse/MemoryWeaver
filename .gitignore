@@ -1,0 +1,79 @@
+# ---------------------------------------------------------------------------
+# Repository-root ignore rules.
+#
+# A .gitignore existed only under memoryweaver/, so sibling trees
+# (memoryweaver-mvp/, scratch/, rewind/) were never covered. That is how a live
+# GEMINI_API_KEY and 7,381 site-packages files reached version control.
+# Rules live here so every subtree inherits them.
+# ---------------------------------------------------------------------------
+
+# Secrets - never commit. Use .env.example as the tracked template.
+.env
+.env.*
+!.env.example
+credentials.json
+token.json
+client_secret_*.json
+*.apps.googleusercontent.com.json
+*.pem
+*.key
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+**/site-packages/
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ty/
+
+# Build and packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Coverage and test output
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Local runtime storage (media, caches, generated artifacts)
+local_storage/
+**/local_storage/
+local_storage.backup-*/
+artifacts/
+**/cost_logs/
+
+# Scratch experiments and their binary outputs - not source
+scratch/
+**/scratch/
+
+# Terraform state and local var files
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!**/vars/env.tfvars
+
+# OS and editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+
+# Large binary media that should live in object storage, not git
+*.mp4
+*.mov
+*.zip
+*.docx

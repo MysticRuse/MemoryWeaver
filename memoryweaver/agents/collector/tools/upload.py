@@ -1,13 +1,16 @@
-import os
-import io
-import hashlib
 import datetime
+import hashlib
+import io
+import os
+
 from PIL import Image
-from PIL.ExifTags import TAGS, GPSTAGS
-
-
-
+from PIL.ExifTags import GPSTAGS, TAGS
 from pillow_heif import register_heif_opener
+
+from app.app_utils.crypto import DecryptionError, decrypt_bytes, encrypt_bytes
+from app.app_utils.logging_config import get_logger
+
+logger = get_logger(__name__)
 register_heif_opener()
 
 def _get_decimal_coordinates(info):
@@ -16,15 +19,15 @@ def _get_decimal_coordinates(info):
     for key, val in info.items():
         tag = GPSTAGS.get(key, key)
         gps_info[tag] = val
-        
+
     gps_latitude = gps_info.get("GPSLatitude")
     gps_latitude_ref = gps_info.get("GPSLatitudeRef")
     gps_longitude = gps_info.get("GPSLongitude")
     gps_longitude_ref = gps_info.get("GPSLongitudeRef")
-    
+
     if not (gps_latitude and gps_latitude_ref and gps_longitude and gps_longitude_ref):
         return None, None
-        
+
     def _to_decimal(value, ref):
         # pillow returns rational numbers as fractions or floats
         # value is typically (degrees, minutes, seconds)
@@ -35,7 +38,7 @@ def _get_decimal_coordinates(info):
         if ref in ['S', 'W']:
             decimal = -decimal
         return decimal
-        
+
     try:
         lat = _to_decimal(gps_latitude, gps_latitude_ref)
         lon = _to_decimal(gps_longitude, gps_longitude_ref)
@@ -43,285 +46,349 @@ def _get_decimal_coordinates(info):
     except Exception:
         return None, None
 
+
+# Every field extract_exif can populate, with its default. A copy is returned
+# when a photo carries no EXIF at all, so callers always see the same shape.
+_EMPTY_EXIF = {
+    "timestamp": None,
+    "timestamp_original": None,
+    "gps": {"latitude": None, "longitude": None},
+    "device": None,
+    "altitude": None,
+    "heading": None,
+    "aperture": None,
+    "shutter_speed": None,
+    "iso": None,
+    "focal_length": None,
+    "lens": None,
+    "software": None,
+    "color_space": None,
+    "scene_type": None,         # Portrait / Landscape / Night / Standard
+    "light_source": None,       # Daylight / Cloudy / Tungsten / Flash
+    "flash": None,              # Fired / Did not fire / No flash function
+    "subject_distance": None,   # Macro / Close / Medium / Far (metres)
+    "brightness": None,         # Dim / Low light / Indoor / Outdoor / Bright sun
+    "exposure_program": None,   # Manual / Aperture priority / Action etc.
+    "artist": None,             # Photographer name embedded in the file
+    "image_description": None,  # In-camera caption
+    "user_comment": None,       # Free-text field from camera apps
+    "gps_speed": None,          # Speed at capture (moving vehicle etc.)
+    "gps_track": None,          # Direction of travel (N/NE/E etc.)
+}
+
+
+# Lookup tables for coded EXIF values. Module-level: they are constants, and
+# rebuilding three dicts on every photo was pure overhead.
+# Lookup tables for coded EXIF values
+SCENE_CAPTURE_TYPES = {0: "Standard", 1: "Landscape", 2: "Portrait", 3: "Night Scene"}
+LIGHT_SOURCES = {
+    0: "Unknown", 1: "Daylight", 2: "Fluorescent", 3: "Tungsten",
+    4: "Flash", 9: "Fine Weather", 10: "Cloudy", 11: "Shade",
+    12: "Daylight Fluorescent", 17: "Standard Light A", 18: "Standard Light B",
+    19: "Standard Light C", 20: "D55", 21: "D65", 22: "D75", 23: "D50",
+    24: "ISO Studio Tungsten", 255: "Other"
+}
+EXPOSURE_PROGRAMS = {
+    0: "Unidentified", 1: "Manual", 2: "Program Auto", 3: "Aperture Priority",
+    4: "Shutter Priority", 5: "Creative (Depth)", 6: "Action (Speed)",
+    7: "Portrait Mode", 8: "Landscape Mode"
+}
+
+
+
+def _as_fraction(value) -> tuple[float, float]:
+    """Normalises an EXIF rational to (numerator, denominator).
+
+    EXIF stores rationals three ways depending on the writer and the Pillow
+    version: an ``IFDRational`` with numerator/denominator, a plain 2-tuple, or
+    an already-divided float. Code that checked only for a tuple silently fell
+    through for the other two, which is how aperture and shutter speed ended up
+    rendered as raw floats.
+    """
+    num = getattr(value, "numerator", None)
+    den = getattr(value, "denominator", None)
+    if num is not None and den:
+        return float(num), float(den)
+    if isinstance(value, tuple) and len(value) == 2 and value[1]:
+        return float(value[0]), float(value[1])
+    try:
+        return float(value), 1.0
+    except (TypeError, ValueError):
+        return 0.0, 0.0
+
+
+def _parse_main_ifd(exif_data, result) -> None:
+    """Reads the top-level IFD: capture time, device, software, description."""
+    # Parse main IFD tags
+    for tag_id in exif_data:
+        tag = TAGS.get(tag_id, tag_id)
+        data = exif_data.get(tag_id)
+        if tag == "DateTime":
+            try:
+                dt = datetime.datetime.strptime(str(data), "%Y:%m:%d %H:%M:%S")
+                result["timestamp"] = dt.isoformat()
+            except ValueError as exc:
+                logger.warning("%s: best-effort step failed, continuing: %s", "upload", exc)
+        elif tag == "Model":
+            result["device"] = str(data).strip()
+        elif tag == "Software":
+            result["software"] = str(data).strip()
+        elif tag == "Artist":
+            result["artist"] = str(data).strip()
+        elif tag == "ImageDescription":
+            desc = str(data).strip()
+            if desc:
+                result["image_description"] = desc
+
+    # Parse nested Exif IFD block (34665)
+
+
+def _parse_exif_ifd(exif_data, result) -> None:
+    """Reads the EXIF SubIFD (tag 34665): exposure, lens, scene and light data."""
+    exif_ifd = exif_data.get_ifd(34665)
+    if exif_ifd:
+        # DateTimeOriginal (true capture time, preferred over DateTime)
+        dto = exif_ifd.get(36867)
+        if dto:
+            try:
+                dt = datetime.datetime.strptime(str(dto), "%Y:%m:%d %H:%M:%S")
+                result["timestamp_original"] = dt.isoformat()
+                result["timestamp"] = dt.isoformat()  # Prefer original
+            except ValueError as exc:
+                logger.warning("%s: best-effort step failed, continuing: %s", "upload", exc)
+
+        # ExposureTime. Pillow hands these back as IFDRational, not a 2-tuple,
+        # so the tuple branch never fired and a 1/120s exposure was rendered as
+        # "0.008333333333333333s". Photographers read shutter speed as a
+        # fraction, so normalise both shapes to numerator/denominator.
+        et = exif_ifd.get(33434)
+        if et is not None:
+            num, den = _as_fraction(et)
+            if den:
+                if num == 1:
+                    result["shutter_speed"] = f"1/{den:g}s"
+                elif num / den < 1:
+                    result["shutter_speed"] = f"1/{den / num:.0f}s"
+                else:
+                    result["shutter_speed"] = f"{num / den:.4g}s"
+            else:
+                result["shutter_speed"] = f"{et}s"
+
+        # FNumber (Aperture)
+        fn = exif_ifd.get(33437)
+        if fn is not None:
+            if isinstance(fn, tuple) and len(fn) == 2 and fn[1] != 0:
+                fn = fn[0] / fn[1]
+            # Rational EXIF values divide to long floats; the panel showed
+            # "f/1.7799999713880652". Two decimals is how lenses are marked.
+            result["aperture"] = f"f/{float(fn):.2f}".rstrip("0").rstrip(".")
+
+        # ISOSpeedRatings
+        iso = exif_ifd.get(34855)
+        if iso is not None:
+            result["iso"] = str(iso)
+
+        # FocalLength
+        fl = exif_ifd.get(37386)
+        if fl is not None:
+            if isinstance(fl, tuple) and len(fl) == 2 and fl[1] != 0:
+                fl = fl[0] / fl[1]
+            result["focal_length"] = f"{float(fl):.2f}".rstrip("0").rstrip(".") + "mm"
+
+        # LensModel
+        lens = exif_ifd.get(42036)
+        if lens is not None:
+            result["lens"] = str(lens).strip()
+
+        # ColorSpace
+        cs = exif_ifd.get(40961)
+        if cs is not None:
+            if cs == 1:
+                result["color_space"] = "sRGB"
+            elif cs == 2 or cs == 65535:
+                result["color_space"] = "Adobe RGB (or Uncalibrated)"
+            else:
+                result["color_space"] = f"Code {cs}"
+
+        # Flash (tag 37385)
+        flash_val = exif_ifd.get(37385)
+        if flash_val is not None:
+            if flash_val & 0x1:
+                result["flash"] = "Fired"
+            elif flash_val == 0:
+                result["flash"] = "Did not fire"
+            else:
+                result["flash"] = "No flash function"
+
+        # LightSource (tag 37384)
+        ls = exif_ifd.get(37384)
+        if ls is not None:
+            result["light_source"] = LIGHT_SOURCES.get(int(ls), f"Code {ls}")
+
+        # ExposureProgram (tag 34850)
+        ep = exif_ifd.get(34850)
+        if ep is not None:
+            result["exposure_program"] = EXPOSURE_PROGRAMS.get(int(ep), f"Code {ep}")
+
+        # SceneCaptureType (tag 41990)
+        sct = exif_ifd.get(41990)
+        if sct is not None:
+            result["scene_type"] = SCENE_CAPTURE_TYPES.get(int(sct), f"Code {sct}")
+
+        # SubjectDistance (tag 37382) — in metres
+        sd = exif_ifd.get(37382)
+        if sd is not None:
+            try:
+                if isinstance(sd, tuple) and len(sd) == 2 and sd[1] != 0:
+                    sd = sd[0] / sd[1]
+                sd = float(sd)
+                if sd < 0.3:
+                    result["subject_distance"] = f"Macro ({sd:.2f}m)"
+                elif sd < 1.5:
+                    result["subject_distance"] = f"Close ({sd:.1f}m)"
+                elif sd < 5.0:
+                    result["subject_distance"] = f"Medium ({sd:.1f}m)"
+                elif sd < 10000:
+                    result["subject_distance"] = f"Far ({sd:.0f}m)"
+                else:
+                    result["subject_distance"] = "Infinity"
+            except Exception as exc:
+                logger.warning("%s: best-effort step failed, continuing: %s", "upload", exc)
+
+        # BrightnessValue (tag 37379) — APEX units (EV)
+        bv = exif_ifd.get(37379)
+        if bv is not None:
+            try:
+                if isinstance(bv, tuple) and len(bv) == 2 and bv[1] != 0:
+                    bv = bv[0] / bv[1]
+                bv = float(bv)
+                if bv < 0:
+                    result["brightness"] = f"Dim ({bv:.1f} EV)"
+                elif bv < 4:
+                    result["brightness"] = f"Low light ({bv:.1f} EV)"
+                elif bv < 8:
+                    result["brightness"] = f"Indoor ({bv:.1f} EV)"
+                elif bv < 12:
+                    result["brightness"] = f"Outdoor ({bv:.1f} EV)"
+                else:
+                    result["brightness"] = f"Bright sun ({bv:.1f} EV)"
+            except Exception as exc:
+                logger.warning("%s: best-effort step failed, continuing: %s", "upload", exc)
+
+        # UserComment (tag 37510) — free text from camera apps
+        uc = exif_ifd.get(37510)
+        if uc is not None:
+            try:
+                if isinstance(uc, bytes):
+                    text = uc.decode("utf-8", errors="ignore").strip("\x00").strip()
+                    if text.upper().startswith("ASCII"):
+                        text = text[8:].strip("\x00").strip()
+                    if text:
+                        result["user_comment"] = text
+                else:
+                    val = str(uc).strip()
+                    if val:
+                        result["user_comment"] = val
+            except Exception as exc:
+                logger.warning("%s: best-effort step failed, continuing: %s", "upload", exc)
+
+
+
+
+def _parse_gps_ifd(exif_data, result) -> None:
+    """Reads the GPS IFD (tag 34853): coordinates, altitude, bearing, speed."""
+    gps_info = exif_data.get_ifd(34853)
+    if gps_info:
+        lat, lon = _get_decimal_coordinates(gps_info)
+        result["gps"]["latitude"] = lat
+        result["gps"]["longitude"] = lon
+
+        # Altitude (tag 6)
+        alt = gps_info.get(6)
+        if alt is not None:
+            if isinstance(alt, tuple) and len(alt) == 2 and alt[1] != 0:
+                alt = alt[0] / alt[1]
+            ref = gps_info.get(5, b'\x00')  # 0 = above sea level, 1 = below sea level
+            is_below = False
+            if isinstance(ref, int) and ref == 1:
+                is_below = True
+            elif isinstance(ref, bytes) and len(ref) > 0 and ref[0] == 1:
+                is_below = True
+            val = float(alt)
+            if is_below:
+                val = -val
+            result["altitude"] = f"{val:.1f}m"
+
+        # Compass Heading / Image Direction (tag 17)
+        bearing = gps_info.get(17)
+        if bearing is not None:
+            if isinstance(bearing, tuple) and len(bearing) == 2 and bearing[1] != 0:
+                bearing = bearing[0] / bearing[1]
+            b_val = float(bearing)
+            cardinals = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+                         "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
+            idx = int((b_val + 11.25) / 22.5) % 16
+            result["heading"] = f"{b_val:.1f}° ({cardinals[idx]})"
+
+        # GPS Speed (tag 13)
+        speed = gps_info.get(13)
+        if speed is not None:
+            try:
+                if isinstance(speed, tuple) and len(speed) == 2 and speed[1] != 0:
+                    speed = speed[0] / speed[1]
+                speed_val = float(speed)
+                speed_ref = gps_info.get(12, "K")  # K=km/h, M=mph, N=knots
+                unit_map = {"K": "km/h", "M": "mph", "N": "knots"}
+                unit = unit_map.get(str(speed_ref), "km/h")
+                if speed_val > 0.5:  # Ignore near-zero GPS noise
+                    result["gps_speed"] = f"{speed_val:.1f} {unit}"
+            except Exception as exc:
+                logger.warning("%s: best-effort step failed, continuing: %s", "upload", exc)
+
+        # GPS Track / direction of travel (tag 15)
+        track = gps_info.get(15)
+        if track is not None:
+            try:
+                if isinstance(track, tuple) and len(track) == 2 and track[1] != 0:
+                    track = track[0] / track[1]
+                t_val = float(track)
+                cardinals = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+                             "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
+                idx = int((t_val + 11.25) / 22.5) % 16
+                result["gps_track"] = f"Travelling {cardinals[idx]} ({t_val:.1f}°)"
+            except Exception as exc:
+                logger.warning("%s: best-effort step failed, continuing: %s", "upload", exc)
+
+
+
 def extract_exif(image_path) -> dict:
-    """Extracts detailed shooting settings, GPS coordinates, device model, and
-    rich contextual fields (light, scene, subject distance, etc.) from photo EXIF tags."""
-    result = {
-        "timestamp": None,
-        "timestamp_original": None,
-        "gps": {"latitude": None, "longitude": None},
-        "device": None,
-        "altitude": None,
-        "heading": None,
-        "aperture": None,
-        "shutter_speed": None,
-        "iso": None,
-        "focal_length": None,
-        "lens": None,
-        "software": None,
-        "color_space": None,
-        # New high-value fields for richer journaling
-        "scene_type": None,        # Portrait / Landscape / Night / Standard
-        "light_source": None,      # Daylight / Cloudy / Tungsten / Flash / Candlelight
-        "flash": None,             # Fired / Not fired / No flash
-        "subject_distance": None,  # Macro / Close / Medium / Far (metres)
-        "brightness": None,        # Dim / Low light / Indoor / Outdoor / Bright sun (EV)
-        "exposure_program": None,  # Manual / Aperture-priority / Sports / Night etc.
-        "artist": None,            # Photographer name embedded in file
-        "image_description": None, # In-camera caption
-        "user_comment": None,      # Free-text field from camera apps
-        "gps_speed": None,         # Speed of camera at capture (moving vehicle etc.)
-        "gps_track": None,         # Direction of travel (N/NE/E etc.)
-    }
+    """Extracts shooting settings, GPS, device and contextual fields from EXIF.
 
-    # Lookup tables for coded EXIF values
-    SCENE_CAPTURE_TYPES = {0: "Standard", 1: "Landscape", 2: "Portrait", 3: "Night Scene"}
-    LIGHT_SOURCES = {
-        0: "Unknown", 1: "Daylight", 2: "Fluorescent", 3: "Tungsten",
-        4: "Flash", 9: "Fine Weather", 10: "Cloudy", 11: "Shade",
-        12: "Daylight Fluorescent", 17: "Standard Light A", 18: "Standard Light B",
-        19: "Standard Light C", 20: "D55", 21: "D65", 22: "D75", 23: "D50",
-        24: "ISO Studio Tungsten", 255: "Other"
-    }
-    EXPOSURE_PROGRAMS = {
-        0: "Unidentified", 1: "Manual", 2: "Program Auto", 3: "Aperture Priority",
-        4: "Shutter Priority", 5: "Creative (Depth)", 6: "Action (Speed)",
-        7: "Portrait Mode", 8: "Landscape Mode"
-    }
+    `image_path` may be a path or a file object - callers holding decrypted
+    bytes pass a BytesIO, since stored media is encrypted at rest.
 
+    Was a single 281-line function that inlined three IFD parsers plus their
+    lookup tables. Each IFD is now parsed separately and failures are per-block,
+    so unreadable GPS no longer costs you the exposure data.
+    """
+    result = dict(_EMPTY_EXIF)
+    result["gps"] = dict(_EMPTY_EXIF["gps"])  # avoid sharing the nested dict
     try:
         with Image.open(image_path) as img:
             exif_data = img.getexif()
             if not exif_data:
                 return result
-
-            # Parse main IFD tags
-            for tag_id in exif_data:
-                tag = TAGS.get(tag_id, tag_id)
-                data = exif_data.get(tag_id)
-                if tag == "DateTime":
-                    try:
-                        dt = datetime.datetime.strptime(str(data), "%Y:%m:%d %H:%M:%S")
-                        result["timestamp"] = dt.isoformat()
-                    except ValueError:
-                        pass
-                elif tag == "Model":
-                    result["device"] = str(data).strip()
-                elif tag == "Software":
-                    result["software"] = str(data).strip()
-                elif tag == "Artist":
-                    result["artist"] = str(data).strip()
-                elif tag == "ImageDescription":
-                    desc = str(data).strip()
-                    if desc:
-                        result["image_description"] = desc
-
-            # Parse nested Exif IFD block (34665)
-            exif_ifd = exif_data.get_ifd(34665)
-            if exif_ifd:
-                # DateTimeOriginal (true capture time, preferred over DateTime)
-                dto = exif_ifd.get(36867)
-                if dto:
-                    try:
-                        dt = datetime.datetime.strptime(str(dto), "%Y:%m:%d %H:%M:%S")
-                        result["timestamp_original"] = dt.isoformat()
-                        result["timestamp"] = dt.isoformat()  # Prefer original
-                    except ValueError:
-                        pass
-
-                # ExposureTime
-                et = exif_ifd.get(33434)
-                if et is not None:
-                    if isinstance(et, tuple) and len(et) == 2 and et[1] != 0:
-                        if et[0] == 1:
-                            result["shutter_speed"] = f"1/{et[1]}s"
-                        else:
-                            result["shutter_speed"] = f"{et[0]/et[1]:.4f}s"
-                    else:
-                        result["shutter_speed"] = f"{et}s"
-
-                # FNumber (Aperture)
-                fn = exif_ifd.get(33437)
-                if fn is not None:
-                    if isinstance(fn, tuple) and len(fn) == 2 and fn[1] != 0:
-                        fn = fn[0] / fn[1]
-                    result["aperture"] = f"f/{fn}"
-
-                # ISOSpeedRatings
-                iso = exif_ifd.get(34855)
-                if iso is not None:
-                    result["iso"] = str(iso)
-
-                # FocalLength
-                fl = exif_ifd.get(37386)
-                if fl is not None:
-                    if isinstance(fl, tuple) and len(fl) == 2 and fl[1] != 0:
-                        fl = fl[0] / fl[1]
-                    result["focal_length"] = f"{fl}mm"
-
-                # LensModel
-                lens = exif_ifd.get(42036)
-                if lens is not None:
-                    result["lens"] = str(lens).strip()
-
-                # ColorSpace
-                cs = exif_ifd.get(40961)
-                if cs is not None:
-                    if cs == 1:
-                        result["color_space"] = "sRGB"
-                    elif cs == 2 or cs == 65535:
-                        result["color_space"] = "Adobe RGB (or Uncalibrated)"
-                    else:
-                        result["color_space"] = f"Code {cs}"
-
-                # Flash (tag 37385)
-                flash_val = exif_ifd.get(37385)
-                if flash_val is not None:
-                    if flash_val & 0x1:
-                        result["flash"] = "Fired"
-                    elif flash_val == 0:
-                        result["flash"] = "Did not fire"
-                    else:
-                        result["flash"] = "No flash function"
-
-                # LightSource (tag 37384)
-                ls = exif_ifd.get(37384)
-                if ls is not None:
-                    result["light_source"] = LIGHT_SOURCES.get(int(ls), f"Code {ls}")
-
-                # ExposureProgram (tag 34850)
-                ep = exif_ifd.get(34850)
-                if ep is not None:
-                    result["exposure_program"] = EXPOSURE_PROGRAMS.get(int(ep), f"Code {ep}")
-
-                # SceneCaptureType (tag 41990)
-                sct = exif_ifd.get(41990)
-                if sct is not None:
-                    result["scene_type"] = SCENE_CAPTURE_TYPES.get(int(sct), f"Code {sct}")
-
-                # SubjectDistance (tag 37382) — in metres
-                sd = exif_ifd.get(37382)
-                if sd is not None:
-                    try:
-                        if isinstance(sd, tuple) and len(sd) == 2 and sd[1] != 0:
-                            sd = sd[0] / sd[1]
-                        sd = float(sd)
-                        if sd < 0.3:
-                            result["subject_distance"] = f"Macro ({sd:.2f}m)"
-                        elif sd < 1.5:
-                            result["subject_distance"] = f"Close ({sd:.1f}m)"
-                        elif sd < 5.0:
-                            result["subject_distance"] = f"Medium ({sd:.1f}m)"
-                        elif sd < 10000:
-                            result["subject_distance"] = f"Far ({sd:.0f}m)"
-                        else:
-                            result["subject_distance"] = "Infinity"
-                    except Exception:
-                        pass
-
-                # BrightnessValue (tag 37379) — APEX units (EV)
-                bv = exif_ifd.get(37379)
-                if bv is not None:
-                    try:
-                        if isinstance(bv, tuple) and len(bv) == 2 and bv[1] != 0:
-                            bv = bv[0] / bv[1]
-                        bv = float(bv)
-                        if bv < 0:
-                            result["brightness"] = f"Dim ({bv:.1f} EV)"
-                        elif bv < 4:
-                            result["brightness"] = f"Low light ({bv:.1f} EV)"
-                        elif bv < 8:
-                            result["brightness"] = f"Indoor ({bv:.1f} EV)"
-                        elif bv < 12:
-                            result["brightness"] = f"Outdoor ({bv:.1f} EV)"
-                        else:
-                            result["brightness"] = f"Bright sun ({bv:.1f} EV)"
-                    except Exception:
-                        pass
-
-                # UserComment (tag 37510) — free text from camera apps
-                uc = exif_ifd.get(37510)
-                if uc is not None:
-                    try:
-                        if isinstance(uc, bytes):
-                            text = uc.decode("utf-8", errors="ignore").strip("\x00").strip()
-                            if text.upper().startswith("ASCII"):
-                                text = text[8:].strip("\x00").strip()
-                            if text:
-                                result["user_comment"] = text
-                        else:
-                            val = str(uc).strip()
-                            if val:
-                                result["user_comment"] = val
-                    except Exception:
-                        pass
-
-            # Parse nested GPS Info IFD block (34853)
-            gps_info = exif_data.get_ifd(34853)
-            if gps_info:
-                lat, lon = _get_decimal_coordinates(gps_info)
-                result["gps"]["latitude"] = lat
-                result["gps"]["longitude"] = lon
-
-                # Altitude (tag 6)
-                alt = gps_info.get(6)
-                if alt is not None:
-                    if isinstance(alt, tuple) and len(alt) == 2 and alt[1] != 0:
-                        alt = alt[0] / alt[1]
-                    ref = gps_info.get(5, b'\x00')  # 0 = above sea level, 1 = below sea level
-                    is_below = False
-                    if isinstance(ref, int) and ref == 1:
-                        is_below = True
-                    elif isinstance(ref, bytes) and len(ref) > 0 and ref[0] == 1:
-                        is_below = True
-                    val = float(alt)
-                    if is_below:
-                        val = -val
-                    result["altitude"] = f"{val:.1f}m"
-
-                # Compass Heading / Image Direction (tag 17)
-                bearing = gps_info.get(17)
-                if bearing is not None:
-                    if isinstance(bearing, tuple) and len(bearing) == 2 and bearing[1] != 0:
-                        bearing = bearing[0] / bearing[1]
-                    b_val = float(bearing)
-                    cardinals = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
-                                 "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
-                    idx = int((b_val + 11.25) / 22.5) % 16
-                    result["heading"] = f"{b_val:.1f}° ({cardinals[idx]})"
-
-                # GPS Speed (tag 13)
-                speed = gps_info.get(13)
-                if speed is not None:
-                    try:
-                        if isinstance(speed, tuple) and len(speed) == 2 and speed[1] != 0:
-                            speed = speed[0] / speed[1]
-                        speed_val = float(speed)
-                        speed_ref = gps_info.get(12, "K")  # K=km/h, M=mph, N=knots
-                        unit_map = {"K": "km/h", "M": "mph", "N": "knots"}
-                        unit = unit_map.get(str(speed_ref), "km/h")
-                        if speed_val > 0.5:  # Ignore near-zero GPS noise
-                            result["gps_speed"] = f"{speed_val:.1f} {unit}"
-                    except Exception:
-                        pass
-
-                # GPS Track / direction of travel (tag 15)
-                track = gps_info.get(15)
-                if track is not None:
-                    try:
-                        if isinstance(track, tuple) and len(track) == 2 and track[1] != 0:
-                            track = track[0] / track[1]
-                        t_val = float(track)
-                        cardinals = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
-                                     "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
-                        idx = int((t_val + 11.25) / 22.5) % 16
-                        result["gps_track"] = f"Travelling {cardinals[idx]} ({t_val:.1f}°)"
-                    except Exception:
-                        pass
-
-    except Exception as e:
-        print(f"Error parsing EXIF: {e}")
+            for name, parse in (("main", _parse_main_ifd),
+                                ("exif", _parse_exif_ifd),
+                                ("gps", _parse_gps_ifd)):
+                try:
+                    parse(exif_data, result)
+                except Exception as exc:
+                    logger.warning("EXIF %s IFD unreadable: %s", name, exc)
+    except Exception as exc:
+        logger.warning("Could not open image for EXIF extraction: %s", exc)
     return result
+
 
 def process_and_save_upload(file_bytes: bytes, original_filename: str, contributor_name: str, session_id: str = "default") -> dict:
     """
@@ -330,16 +397,15 @@ def process_and_save_upload(file_bytes: bytes, original_filename: str, contribut
     corresponding event's isolated storage namespace (see StorageHelper).
 
     Validates:
-    - Max size: 20MB (20 * 1024 * 1024 bytes)
-    - File extension: jpg, jpeg, png, heic
+    - Max size: 100MB (100 * 1024 * 1024 bytes)
     """
-    max_size = 20 * 1024 * 1024
+    max_size = 100 * 1024 * 1024
     if len(file_bytes) > max_size:
-        raise ValueError(f"File size exceeds the 20MB limit (size: {len(file_bytes)} bytes)")
-        
+        raise ValueError(f"File size exceeds the 100MB limit (size: {len(file_bytes)} bytes)")
+
     # Sanitize the input filename immediately to prevent path traversal
     safe_filename = os.path.basename(original_filename)
-    
+
     _, ext = os.path.splitext(safe_filename.lower())
     SUPPORTED_EXTS = (".jpg", ".jpeg", ".png", ".heic", ".mp4", ".mov", ".m4a", ".mp3", ".webm", ".wav", ".pdf", ".txt")
     if ext not in SUPPORTED_EXTS:
@@ -347,38 +413,26 @@ def process_and_save_upload(file_bytes: bytes, original_filename: str, contribut
 
     # Calculate anonymous contributor ID hash (no PII logging)
     contributor_id = hashlib.sha256(contributor_name.strip().lower().encode()).hexdigest()[:12]
-    
-    # Decrypt incoming bytes in-memory for extraction/thumbnails
-    decrypted_bytes = file_bytes
-    is_client_encrypted = False
+
+    # Recover plaintext for EXIF extraction and thumbnailing.
+    #
+    # The browser may still send a legacy client-encrypted blob (the upload page
+    # derived a key from the public session_id - see app_utils/crypto.py for why
+    # that provided no confidentiality). decrypt_bytes handles that format, the
+    # current server format, and plain media, so uploads from any client version
+    # keep working. Whatever arrives, the file is re-encrypted below under the
+    # real master key before it is stored.
     try:
-        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-        from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-        from cryptography.hazmat.primitives import hashes
-        
-        kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),
-            length=32,
-            salt=b"MemoryWeaverSecureSalt_2026",
-            iterations=10000,
-        )
-        key = kdf.derive(session_id.encode())
-        
-        aesgcm = AESGCM(key)
-        iv = file_bytes[:12]
-        ciphertext = file_bytes[12:]
-        decrypted_bytes = aesgcm.decrypt(iv, ciphertext, None)
-        is_client_encrypted = True
-        print(f"Successfully decrypted {original_filename} in-memory using session key.")
-    except Exception as de:
-        print(f"Decryption failed or file not client-encrypted in upload: {de}. Processing raw.")
+        decrypted_bytes = decrypt_bytes(file_bytes, session_id)
+    except DecryptionError as de:
+        logger.info(f"Upload for {original_filename} was not decryptable ({de}); treating as raw.")
         decrypted_bytes = file_bytes
 
     # Save the decrypted file temporarily to extract EXIF / run cv2
     temp_filename = f"temp_{safe_filename}"
     with open(temp_filename, "wb") as f:
         f.write(decrypted_bytes)
-        
+
     try:
         # Check video duration if it is a video file
         if ext in (".mp4", ".mov", ".webm"):
@@ -398,43 +452,24 @@ def process_and_save_upload(file_bytes: bytes, original_filename: str, contribut
             except ValueError as ve:
                 raise ve
             except Exception as e:
-                print(f"Error checking video duration: {e}")
-                
+                logger.warning(f"Error checking video duration: {e}")
         exif = extract_exif(temp_filename)
-        
+
         # Generate unique filename to prevent namespace collisions
         timestamp_prefix = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         unique_filename = f"{contributor_id}_{timestamp_prefix}_{safe_filename}"
-        
-        # Ensure the saved file is encrypted
-        saved_bytes = file_bytes
-        if not is_client_encrypted:
-            try:
-                from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-                from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-                from cryptography.hazmat.primitives import hashes
-                
-                kdf = PBKDF2HMAC(
-                    algorithm=hashes.SHA256(),
-                    length=32,
-                    salt=b"MemoryWeaverSecureSalt_2026",
-                    iterations=10000,
-                )
-                key = kdf.derive(session_id.encode())
-                
-                aesgcm = AESGCM(key)
-                iv = os.urandom(12)
-                ciphertext = aesgcm.encrypt(iv, decrypted_bytes, None)
-                saved_bytes = iv + ciphertext
-            except Exception as ee:
-                print(f"Failed to encrypt file on server-side: {ee}")
-                saved_bytes = file_bytes
+
+        # Always re-encrypt under the server's master key before storing,
+        # whatever the client sent. Previously a client-encrypted upload was
+        # stored verbatim, which meant it stayed under a key derived from the
+        # public session_id.
+        saved_bytes = encrypt_bytes(decrypted_bytes, session_id)
 
         # Save to storage (GCS/Local fallback), scoped to this event's session
         from app.app_utils.storage import StorageHelper
         storage = StorageHelper(session_id=session_id)
         gcs_uri = storage.save_upload(saved_bytes, unique_filename)
-        
+
         # Generate and save thumbnail
         thumb_path = ""
         try:
@@ -449,43 +484,25 @@ def process_and_save_upload(file_bytes: bytes, original_filename: str, contribut
                         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                         img = Image.fromarray(frame_rgb)
                 except Exception as ve:
-                    print(f"Failed to extract video thumbnail: {ve}")
+                    logger.warning(f"Failed to extract video thumbnail: {ve}")
             else:
                 img = Image.open(io.BytesIO(decrypted_bytes)).convert("RGB")
-                
+
             if img:
                 img.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
                 thumb_buf = io.BytesIO()
                 img.save(thumb_buf, format="JPEG", quality=82)
                 thumb_bytes = thumb_buf.getvalue()
-                
-                # Encrypt the thumbnail as well to match at-rest protection
-                try:
-                    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-                    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-                    from cryptography.hazmat.primitives import hashes
-                    
-                    kdf = PBKDF2HMAC(
-                        algorithm=hashes.SHA256(),
-                        length=32,
-                        salt=b"MemoryWeaverSecureSalt_2026",
-                        iterations=10000,
-                    )
-                    key = kdf.derive(session_id.encode())
-                    aesgcm = AESGCM(key)
-                    iv = os.urandom(12)
-                    encrypted_thumb = iv + aesgcm.encrypt(iv, thumb_bytes, None)
-                except Exception:
-                    encrypted_thumb = thumb_bytes
-                    
+
+                # Thumbnails get the same at-rest protection as the original.
+                encrypted_thumb = encrypt_bytes(thumb_bytes, session_id)
                 thumb_path = storage.save_thumbnail(encrypted_thumb, unique_filename)
         except Exception as te:
-            print(f"Failed to generate thumbnail: {te}")
-            
+            logger.warning(f"Failed to generate thumbnail: {te}")
     finally:
         if os.path.exists(temp_filename):
             os.remove(temp_filename)
-    
+
     return {
         "filename": unique_filename,
         "gcs_uri": gcs_uri,
