@@ -18,6 +18,7 @@ import os
 import threading
 
 from google import genai
+from google.genai import types
 
 # --- Model roles -----------------------------------------------------------
 # Conversational ADK agents (concierge and the five specialists).
@@ -36,8 +37,42 @@ IMAGE_MODEL = os.environ.get("MW_IMAGE_MODEL", "gemini-3.1-flash-image")
 # Multimodal embeddings used for burst deduplication.
 EMBEDDING_MODEL = os.environ.get("MW_EMBEDDING_MODEL", "multimodalembedding")
 
+
+# --- Cost guardrails -------------------------------------------------------
+# Every text call in this app returns a small JSON blob or a one-line caption,
+# so a cap well above what any of them legitimately need still bounds a
+# runaway generation. On Gemini 2.5+ thinking tokens count against this too,
+# which is the point: a model stuck in a reasoning loop stops costing money at
+# the cap instead of at the invoice.
+def _env_int(name: str, fallback: int) -> int:
+    try:
+        value = int(os.environ.get(name, ""))
+    except ValueError:
+        return fallback
+    return value if value > 0 else fallback
+
+
+MAX_OUTPUT_TOKENS = _env_int("MW_MAX_OUTPUT_TOKENS", 4096)
+
+# Unbounded retries re-bill on every attempt; half the damage in the widely
+# reported "$50,000 weekend" came from exactly that. Bound it explicitly here
+# rather than inheriting whatever the SDK default happens to be.
+RETRY_ATTEMPTS = _env_int("MW_AI_RETRY_ATTEMPTS", 3)
+REQUEST_TIMEOUT_MS = _env_int("MW_AI_TIMEOUT_MS", 120_000)
+
 _client: genai.Client | None = None
 _lock = threading.Lock()
+
+
+def text_config(**overrides) -> types.GenerateContentConfig:
+    """Config for a text/JSON generation call, with the output cap applied.
+
+    Pass this as ``config=`` on every PIPELINE_MODEL call. Image-generation
+    calls deliberately do not use it: their output is inline image data, not
+    text, and a token cap there truncates the image rather than bounding cost.
+    """
+    overrides.setdefault("max_output_tokens", MAX_OUTPUT_TOKENS)
+    return types.GenerateContentConfig(**overrides)
 
 
 class MissingAPIKeyError(RuntimeError):
@@ -62,7 +97,19 @@ def get_gemini_client() -> genai.Client:
                     raise MissingAPIKeyError(
                         "GEMINI_API_KEY environment variable is not set."
                     )
-                _client = genai.Client(api_key=api_key)
+                _client = genai.Client(
+                    api_key=api_key,
+                    http_options=types.HttpOptions(
+                        timeout=REQUEST_TIMEOUT_MS,
+                        retry_options=types.HttpRetryOptions(
+                            attempts=RETRY_ATTEMPTS,
+                            initial_delay=1.0,
+                            max_delay=8.0,
+                            exp_base=2.0,
+                            jitter=1.0,
+                        ),
+                    ),
+                )
     return _client
 
 

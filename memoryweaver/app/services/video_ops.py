@@ -14,7 +14,7 @@ import cv2
 import imageio_ffmpeg
 import numpy as np
 
-from app.app_utils.genai_client import PIPELINE_MODEL, get_gemini_client
+from app.app_utils.genai_client import PIPELINE_MODEL, get_gemini_client, text_config
 from app.app_utils.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -120,7 +120,7 @@ def detect_watermark_regions(sample_frames, width, height, req):
                     )
 
                     response = client.models.generate_content(
-                        model=PIPELINE_MODEL,
+                        model=PIPELINE_MODEL, config=text_config(),
                         contents=[
                             types.Part.from_bytes(data=img_bytes, mime_type="image/jpeg"),
                             prompt

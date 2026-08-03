@@ -21,6 +21,7 @@ from app.app_utils.genai_client import (
     IMAGE_MODEL,
     PIPELINE_MODEL,
     get_gemini_client,
+    text_config,
 )
 from app.app_utils.logging_config import get_logger
 from app.app_utils.storage import StorageHelper
@@ -162,7 +163,7 @@ def get_photo_metadata(filename: str, session_id: str = "default", force_refresh
                             "}"
                         )
                         response = client.models.generate_content(
-                            model=PIPELINE_MODEL,
+                            model=PIPELINE_MODEL, config=text_config(),
                             contents=[img, prompt]
                         )
                         text = response.text
@@ -281,7 +282,7 @@ def run_magic_enhance(req: MagicEnhanceRequest):
                 "}"
             )
             response = client.models.generate_content(
-                model=PIPELINE_MODEL,
+                model=PIPELINE_MODEL, config=text_config(),
                 contents=[img, prompt]
             )
             text = response.text
@@ -591,7 +592,7 @@ def get_nano_suggestions(req: NanoSuggestionsRequest):
                 )
 
                 response = client.models.generate_content(
-                    model=PIPELINE_MODEL,
+                    model=PIPELINE_MODEL, config=text_config(),
                     contents=[img, prompt]
                 )
 

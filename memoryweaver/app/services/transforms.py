@@ -18,7 +18,12 @@ import cv2
 import numpy as np
 from PIL import Image, ImageDraw, ImageEnhance, ImageFont, ImageOps
 
-from app.app_utils.genai_client import IMAGE_MODEL, PIPELINE_MODEL, get_gemini_client
+from app.app_utils.genai_client import (
+    IMAGE_MODEL,
+    PIPELINE_MODEL,
+    get_gemini_client,
+    text_config,
+)
 from app.app_utils.logging_config import get_logger
 from app.services.media_store import draw_kids_stickers_and_banner
 
@@ -100,7 +105,7 @@ def _sketch_parameters(orig_img):
     )
     try:
         response = get_gemini_client().models.generate_content(
-            model=PIPELINE_MODEL, contents=[orig_img, prompt]
+            model=PIPELINE_MODEL, config=text_config(), contents=[orig_img, prompt]
         )
         text = response.text
         if "```json" in text:
@@ -329,7 +334,7 @@ def build_meme(orig_img, temp_dir, file_id, req) -> str:
                 )
 
                 response1 = client.models.generate_content(
-                    model=PIPELINE_MODEL,
+                    model=PIPELINE_MODEL, config=text_config(),
                     contents=[orig_img, plan_prompt]
                 )
 
@@ -501,7 +506,7 @@ def build_kids(orig_img, temp_dir, file_id, req) -> dict:
                 )
 
                 response1 = client.models.generate_content(
-                    model=PIPELINE_MODEL,
+                    model=PIPELINE_MODEL, config=text_config(),
                     contents=[orig_img, analysis_prompt]
                 )
 

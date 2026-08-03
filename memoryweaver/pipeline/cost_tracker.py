@@ -9,6 +9,20 @@ from app.app_utils.logging_config import get_logger
 logger = get_logger(__name__)
 
 
+def _env_float(name: str, fallback: float) -> float:
+    try:
+        value = float(os.environ.get(name, ""))
+    except ValueError:
+        return fallback
+    return value if value > 0 else fallback
+
+
+# Hard ceiling on recorded AI spend per calendar month. Set this to an amount
+# you would be fine losing outright; enforce_ai_budget refuses billable routes
+# once it is reached.
+MONTHLY_BUDGET_USD = _env_float("MW_MONTHLY_BUDGET_USD", 25.0)
+
+
 class CostTracker:
     """Itemized Cost & Escalation Rate Tracker for Photo/Video AI Features.
     Tracks monthly cost per feature, escalation rates (classical -> AI fallback),
@@ -83,6 +97,23 @@ class CostTracker:
     def get_magic_user_count(self, session_id: str) -> int:
         with self._lock:
             return self._data["magic_user_counts"].get(session_id, 0)
+
+    def get_month_total(self, month: str | None = None) -> float:
+        """Total recorded spend for a month, in USD."""
+        month_key = month or time.strftime("%Y-%m")
+        with self._lock:
+            return round(sum(self._data["monthly_spend"].get(month_key, {}).values()), 6)
+
+    def over_budget(self) -> tuple[bool, float, float]:
+        """Whether this month's recorded spend has hit the hard ceiling.
+
+        Recording spend is not the same as capping it: before this, every
+        billable call was metered into feature_costs.json and nothing ever
+        read the total back. Returns (is_over, spent, ceiling).
+        """
+        ceiling = MONTHLY_BUDGET_USD
+        spent = self.get_month_total()
+        return spent >= ceiling, spent, ceiling
 
     def get_summary(self, month: str | None = None) -> dict[str, Any]:
         month_key = month or time.strftime("%Y-%m")

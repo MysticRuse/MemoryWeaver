@@ -20,10 +20,12 @@ from fastapi import (
 from fastapi.responses import Response, StreamingResponse
 from PIL import Image
 
+from app.app_utils.ai_budget import max_ai_calls_per_run, track_ai_call
 from app.app_utils.errors import AppError, NotFoundError, UpstreamError
 from app.app_utils.genai_client import (
     PIPELINE_MODEL,
     get_gemini_client,
+    text_config,
 )
 from app.app_utils.logging_config import get_logger
 from app.app_utils.paths import resolve_browsable_path
@@ -50,6 +52,7 @@ from app.services.media_store import (
     load_image_bytes_decrypted,
     trash_file_safely,
 )
+from pipeline.cost_tracker import get_cost_tracker
 
 logger = get_logger(__name__)
 
@@ -359,7 +362,6 @@ def update_photo_classification(req: UpdateClassificationRequest):
                 "food": "Food & Dining",
                 "trips": "Trips",
                 "pets": "Pets",
-                "unique": "Unique Shots",
                 "emotional": "Private Vault",
                 "info": "Notes Vault",
                 "other": "Other / Misc"
@@ -659,6 +661,14 @@ def analyze_all_cleaner(req: CleanerAnalyzeRequest):
             yield "data: " + json.dumps({"status": "start", "total": total_files}) + "\n\n"
             await asyncio.sleep(0.001)
 
+            # enforce_ai_budget guards the *request*, but one request fans out
+            # into one Gemini call per uncached image - a 2,000-photo library
+            # was 2,000 billable calls behind a single budget check. Bound the
+            # fan-out explicitly and re-check the spend ceiling each iteration,
+            # so a runaway run stops mid-loop rather than at the invoice.
+            ai_calls_remaining = max_ai_calls_per_run()
+            budget_stop = None
+
             api_key = os.getenv("GEMINI_API_KEY")
             client = None
             if api_key:
@@ -746,6 +756,10 @@ def analyze_all_cleaner(req: CleanerAnalyzeRequest):
                                         elif "email" in lower_text and ("log in" in lower_text or "signin" in lower_text or "sign in" in lower_text or "username" in lower_text or "sso" in lower_text or "auth" in lower_text):
                                             is_credential = True
 
+                                        # $0, but counting local passes is what
+                                        # makes the Gemini escalation rate real.
+                                        track_ai_call("vault_ocr_local", req.session_id)
+
                                         if is_credential:
                                             classification = {
                                                 "category": "info",
@@ -759,8 +773,28 @@ def analyze_all_cleaner(req: CleanerAnalyzeRequest):
                                         os.remove(temp_ocr_path)
                             except Exception as ocr_err:
                                 logger.warning(f"Offline macOS OCR failed: {ocr_err}")
-                # Gemini lookup
-                if client and classification is None:
+                # Gemini lookup - the only billable step in this loop, so the
+                # fan-out limit and the spend ceiling are both checked here
+                # rather than once per request.
+                if client and classification is None and budget_stop is None:
+                    over, spent, ceiling = get_cost_tracker().over_budget()
+                    if over:
+                        budget_stop = (
+                            f"Monthly AI spend cap reached (${spent:.2f} of "
+                            f"${ceiling:.2f}); remaining files classified locally."
+                        )
+                    elif ai_calls_remaining <= 0:
+                        budget_stop = (
+                            f"Reached the {max_ai_calls_per_run()}-call limit for a "
+                            "single run; remaining files classified locally. "
+                            "Re-run to continue, or raise MW_MAX_AI_CALLS_PER_RUN."
+                        )
+                    if budget_stop:
+                        logger.warning("analyze-all stopped calling Gemini: %s", budget_stop)
+                        yield "data: " + json.dumps({"status": "budget", "message": budget_stop}) + "\n\n"
+                        await asyncio.sleep(0.001)
+
+                if client and classification is None and budget_stop is None:
                     try:
                         import io
 
@@ -789,8 +823,15 @@ def analyze_all_cleaner(req: CleanerAnalyzeRequest):
                                 "- DO NOT use dry, technical safety or quality classification terms (like 'clear', 'well-composed', 'sharp', 'appropriate', 'valid', 'rejected'). Focus purely on casual, warm visual descriptions.\n"
                             )
                             response = client.models.generate_content(
-                                model=PIPELINE_MODEL,
+                                model=PIPELINE_MODEL, config=text_config(),
                                 contents=[img, prompt]
+                            )
+                            ai_calls_remaining -= 1
+                            track_ai_call(
+                                "classification_caption_combined",
+                                req.session_id,
+                                response=response,
+                                is_escalation=True,
                             )
                             res_txt = response.text.strip()
                             if res_txt.startswith("```json"):
@@ -1522,7 +1563,7 @@ def get_cleaner_video_frames(session_id: str = Form(...), filename: str = Form(.
                     )
 
                     response = client.models.generate_content(
-                        model=PIPELINE_MODEL,
+                        model=PIPELINE_MODEL, config=text_config(),
                         contents=[video_ref, prompt]
                     )
 

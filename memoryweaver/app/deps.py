@@ -17,6 +17,7 @@ import secrets
 
 from fastapi import Header, HTTPException
 
+from pipeline.cost_tracker import get_cost_tracker
 from pipeline.prompt_safety import get_circuit_breaker
 
 
@@ -39,11 +40,29 @@ def require_admin_token(x_mw_token: str | None = Header(None), token: str | None
 
 
 def enforce_ai_budget(session_id: str = "default"):
-    """Rejects a billable AI request once a library exceeds its rate/token budget.
+    """Rejects a billable AI request once a budget ceiling is reached.
 
-    Backs the CircuitBreaker in pipeline.prompt_safety, which previously existed
-    but was called by nothing outside its own unit test.
+    Two independent ceilings, because they catch different failures:
+
+    * the monthly dollar cap (MW_MONTHLY_BUDGET_USD) is the kill switch - it
+      stops spend that is legitimate per-request but has added up past what
+      the project is willing to pay;
+    * the CircuitBreaker's rate/token governor catches a *burst* - a loop, a
+      bot, or a runaway retry - within the hour rather than at month end.
+
+    A month's spend can be under the cap while an hour's velocity is clearly
+    abnormal, so neither check subsumes the other.
     """
+    over, spent, ceiling = get_cost_tracker().over_budget()
+    if over:
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                f"AI spend cap reached: ${spent:.2f} of ${ceiling:.2f} this month. "
+                "Raise MW_MONTHLY_BUDGET_USD to continue."
+            ),
+        )
+
     allowed, message = get_circuit_breaker().check_budget(session_id)
     if not allowed:
         raise HTTPException(status_code=429, detail=message)

@@ -18,6 +18,7 @@ from app.app_utils.errors import AppError, NotFoundError, UpstreamError
 from app.app_utils.genai_client import (
     PIPELINE_MODEL,
     get_gemini_client,
+    text_config,
 )
 from app.app_utils.logging_config import get_logger
 from app.app_utils.storage import StorageHelper
@@ -457,7 +458,7 @@ def describe_video(req: VideoDescribeRequest):
 
                                 client = get_gemini_client()
                                 response = client.models.generate_content(
-                                    model=PIPELINE_MODEL,
+                                    model=PIPELINE_MODEL, config=text_config(),
                                     contents=parts_content
                                 )
                                 if response.text:

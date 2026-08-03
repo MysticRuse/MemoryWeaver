@@ -44,7 +44,12 @@ from app.app_utils.errors import (
     UpstreamError,
     register_error_handlers,
 )
-from app.app_utils.genai_client import PIPELINE_MODEL, TTS_MODEL, get_gemini_client
+from app.app_utils.genai_client import (
+    PIPELINE_MODEL,
+    TTS_MODEL,
+    get_gemini_client,
+    text_config,
+)
 from app.app_utils.logging_config import get_logger
 from app.app_utils.paths import (
     safe_storage_join,
@@ -812,7 +817,7 @@ def describe_photo(body: DescribePhotoBody):
             "for this photo, written from a traveler's perspective. Do not include quotes."
         )
         response = client.models.generate_content(
-            model=PIPELINE_MODEL,
+            model=PIPELINE_MODEL, config=text_config(),
             contents=[img, prompt]
         )
         caption = response.text.strip().strip('"').strip("'")

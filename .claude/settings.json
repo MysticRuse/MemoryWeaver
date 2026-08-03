@@ -1,8 +1,32 @@
 {
+  "model": "sonnet",
+  "effortLevel": "low",
+  "fastMode": false,
+  "fastModePerSessionOptIn": true,
+  "skillListingMaxDescChars": 400,
   "permissions": {
     "allow": [
       "Bash(.venv/bin/python -m pytest tests/unit/test_pipeline_e2e.py -q)",
       "Bash(.venv/bin/python -c \"import ast;ast.parse\\(open\\('app/routers/media_edit.py'\\).read\\(\\)\\);print\\('AST OK'\\)\")"
+    ]
+  },
+  "hooks": {
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "( python3 /Users/hironmoy/MemoryWeaver/tools/daily_cost_log.py --save >> /Users/hironmoy/MemoryWeaver/tools/claude_cost_log_hook.log 2>&1 & )",
+            "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "( python3 /Users/hironmoy/MemoryWeaver/tools/auto_session_notes.py >> /Users/hironmoy/MemoryWeaver/tools/claude_cost_log_hook.log 2>&1 & )",
+            "timeout": 20
+          }
+        ]
+      }
     ]
   }
 }

@@ -77,3 +77,8 @@ Thumbs.db
 *.mov
 *.zip
 *.docx
+
+# Local Claude cost-tracking output (generated, not code)
+tools/claude_cost_log_hook.log
+tools/claude_daily_log.csv
+tools/claude_reports/

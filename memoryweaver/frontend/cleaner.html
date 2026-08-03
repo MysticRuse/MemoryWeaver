@@ -1236,9 +1236,6 @@
         <div class="nav-container">
             <a href="/" class="nav-logo"><i data-lucide="rewind"
                     style="fill: var(--accent); stroke: var(--accent);"></i> Rewind</a>
-            <div class="nav-links" style="display: flex; align-items: center; gap: 12px;">
-                <a href="/cleaner" class="nav-link active" id="nav-cleaner-link"><i data-lucide="trash-2"></i> Vault &amp; Organizer</a>
-            </div>
         </div>
     </nav>
 
@@ -1343,10 +1340,6 @@
                         <button class="tab-btn" id="photo-tool-btn-pets" onclick="switchPhotoTool('pets')"
                             style="height: 38px; padding: 0 16px; font-size: 11px; font-weight: 800; display: flex; align-items: center; gap: 6px; border-radius: 20px; transition: all 0.2s; white-space: nowrap; flex-shrink: 0;">
                             <i data-lucide="dog" style="width: 14px; height: 14px;"></i> Pets
-                        </button>
-                        <button class="tab-btn" id="photo-tool-btn-unique" onclick="switchPhotoTool('unique')"
-                            style="height: 38px; padding: 0 16px; font-size: 11px; font-weight: 800; display: flex; align-items: center; gap: 6px; border-radius: 20px; transition: all 0.2s; white-space: nowrap; flex-shrink: 0;">
-                            <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i> Unique Shots
                         </button>
                         <button class="tab-btn" id="photo-tool-btn-emotional" onclick="switchPhotoTool('emotional')"
                             style="height: 38px; padding: 0 16px; font-size: 11px; font-weight: 800; display: flex; align-items: center; gap: 6px; border-radius: 20px; transition: all 0.2s; white-space: nowrap; flex-shrink: 0;">
@@ -3437,7 +3430,7 @@
             const c = classifications[fn];
             if (!c) return 'other';
 
-            const validCats = ['people', 'scrap', 'scenery', 'food', 'trips', 'pets', 'unique', 'emotional', 'info', 'docs', 'other'];
+            const validCats = ['people', 'scrap', 'scenery', 'food', 'trips', 'pets', 'emotional', 'info', 'docs', 'other'];
             if (validCats.includes(c.category)) {
                 return c.category;
             }
@@ -3478,7 +3471,6 @@
                 food: { title: "Food & Dining", icon: "utensils", desc: "AI grouped photos of food, restaurants, meals, and drinks here." },
                 trips: { title: "Trips & Travel", icon: "globe", desc: "AI grouped vacation highlights, scenic landmarks, and travel shots here." },
                 pets: { title: "Pets & Animals", icon: "dog", desc: "AI grouped photos of dogs, cats, and pets here." },
-                unique: { title: "Unique Shots", icon: "sparkles", desc: "AI identified these as unique standalone moments with no duplicate bursts." },
                 emotional: { title: "Private Vault", icon: "lock", desc: "Lock sweet chat logs, private screenshots, or sensitive messages with a passcode passcode." },
                 info: { title: "Credentials Vault", icon: "shield-check", desc: "Screenshots of credentials, Wi-Fi keys, account logins, or password pages." },
                 docs: { title: "Documents & Receipts", icon: "file-text", desc: "Screenshots of receipts, tickets, travel bookings, barcodes, and scanned documents." },
@@ -3749,7 +3741,6 @@
                                     { val: 'food', icon: 'utensils', label: 'Food', color: '#F59E0B' },
                                     { val: 'trips', icon: 'globe', label: 'Trips', color: '#3B82F6' },
                                     { val: 'pets', icon: 'dog', label: 'Pets', color: '#EC4899' },
-                                    { val: 'unique', icon: 'sparkles', label: 'Unique', color: '#6366F1' },
                                     { val: 'emotional', icon: 'lock', label: 'Private', color: '#F43F5E' },
                                     { val: 'info', icon: 'shield-check', label: 'Creds', color: '#0EA5E9' },
                                     { val: 'docs', icon: 'file-text', label: 'Docs', color: '#8B5CF6' },
@@ -4011,7 +4002,6 @@
                 food: 0,
                 trips: 0,
                 pets: 0,
-                unique: 0,
                 emotional: 0,
                 info: 0,
                 docs: 0,
@@ -4037,7 +4027,6 @@
                 food: { name: "Food & Dining", icon: "utensils" },
                 trips: { name: "Trips", icon: "globe" },
                 pets: { name: "Pets", icon: "dog" },
-                unique: { name: "Unique Shots", icon: "sparkles" },
                 emotional: { name: "Private Vault", icon: "lock" },
                 info: { name: "Credentials Vault", icon: "shield-check" },
                 docs: { name: "Documents & Receipts", icon: "file-text" },

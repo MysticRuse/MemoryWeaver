@@ -91,6 +91,32 @@ class CircuitBreaker:
 
             return True, "OK"
 
+    def record_actual_usage(self, session_id: str, total_tokens: int) -> None:
+        """Replaces a request's ``estimated_tokens`` reservation with real usage.
+
+        ``check_budget`` has to reserve budget *before* the call, so it books a
+        flat estimate. Without this correction the hourly token ceiling was
+        really just a request counter: the estimate never moved, no matter how
+        large the actual response was. Callers pass
+        ``response.usage_metadata.total_token_count`` after a successful call.
+        """
+        if total_tokens <= 0:
+            return
+        now = time.time()
+        one_hour_ago = now - 3600
+        with self._lock:
+            entries = [
+                (t, count)
+                for t, count in self._token_history.get(session_id, [])
+                if t > one_hour_ago
+            ]
+            # Drop this request's reservation (the most recent entry) and book
+            # the measured figure in its place.
+            if entries:
+                entries.pop()
+            entries.append((now, int(total_tokens)))
+            self._token_history[session_id] = entries
+
     def reset(self):
         with self._lock:
             self._request_history.clear()

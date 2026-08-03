@@ -20,6 +20,38 @@ class SyncManager:
 
         self.config_path = os.path.join(self.session_dir, "sync_config.json")
         self.registry_path = os.path.join(self.session_dir, "sync_registry.json")
+        self._adopt_legacy_session_sync_state()
+
+    def _adopt_legacy_session_sync_state(self):
+        """Pull a watched-folder setup left behind by the old library switcher.
+
+        Before the app settled on one library, sync state was written to
+        ``local_storage/sessions/<session_id>/``. The default library reads
+        ``local_storage/`` directly, so after the switcher was removed the
+        configured folder became invisible: ``scan_folder`` saw no target and
+        bailed, freezing the pool at whatever had been synced that day. New
+        files on the folder never arrived and removed ones never left.
+        """
+        if os.path.exists(self.config_path):
+            return
+
+        legacy_root = os.path.join(self.session_dir, "sessions")
+        if not os.path.isdir(legacy_root):
+            return
+
+        for legacy_id in sorted(os.listdir(legacy_root)):
+            legacy_config = os.path.join(legacy_root, legacy_id, "sync_config.json")
+            if not os.path.exists(legacy_config):
+                continue
+            try:
+                shutil.move(legacy_config, self.config_path)
+                legacy_registry = os.path.join(legacy_root, legacy_id, "sync_registry.json")
+                if os.path.exists(legacy_registry) and not os.path.exists(self.registry_path):
+                    shutil.move(legacy_registry, self.registry_path)
+                logger.info(f"Adopted folder-sync state from legacy session '{legacy_id}'")
+            except Exception as exc:
+                logger.warning(f"Failed to adopt legacy sync state from '{legacy_id}': {exc}")
+            return
 
     def get_config(self) -> dict:
         if os.path.exists(self.config_path):
@@ -225,18 +257,13 @@ class SyncManager:
                 del files_dict[rel_path]
                 deleted_count += 1
 
-        # Prune unregistered untracked files from uploads directory
-        registered_upload_filenames = {
-            item.get("upload_filename") for item in files_dict.values() if item.get("upload_filename")
-        }
-        for file in os.listdir(uploads_dir):
-            if file.startswith('.') or file.lower().endswith(('_enhanced.jpg', '_original.jpg')):
-                continue
-            if file not in registered_upload_filenames:
-                try:
-                    os.remove(os.path.join(uploads_dir, file))
-                except Exception as exc:
-                    logger.warning("%s: best-effort step failed, continuing: %s", "sync_manager", exc)
+        # Anything left in uploads that the registry does not know about is
+        # deliberately left alone. This used to be a blanket prune, which made a
+        # folder scan authoritative over the *entire* pool: direct uploads, magic
+        # edit outputs and extracted video frames all vanished on the next page
+        # load, because the vault endpoint runs a scan on every fetch. Removals
+        # driven by the watched folder are already handled above, where the
+        # registry says which upload each device file owns.
 
         self.save_registry(registry)
 

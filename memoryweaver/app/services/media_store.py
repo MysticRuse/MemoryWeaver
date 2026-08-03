@@ -17,7 +17,10 @@ from app.app_utils.logging_config import get_logger
 logger = get_logger(__name__)
 
 def get_global_vault_file_path() -> str:
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # Three levels up: app/services/media_store.py -> app/services -> app -> memoryweaver.
+    # Two levels landed on app/local_storage, an empty directory the vault was never
+    # written to, so every photo came back unclassified and fell into Other / Misc.
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     storage_root = os.path.join(project_root, "local_storage")
     os.makedirs(storage_root, exist_ok=True)
     return os.path.join(storage_root, "cleaner_vault.json")

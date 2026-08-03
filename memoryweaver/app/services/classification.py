@@ -5,7 +5,8 @@ can call it without an import cycle.
 """
 
 
-from app.app_utils.genai_client import PIPELINE_MODEL, get_gemini_client
+from app.app_utils.ai_budget import track_ai_call
+from app.app_utils.genai_client import PIPELINE_MODEL, get_gemini_client, text_config
 from app.app_utils.logging_config import get_logger
 from app.app_utils.storage import StorageHelper
 from app.services.media_store import (
@@ -109,6 +110,10 @@ def classify_new_photos(session_id: str, new_files: list):
                                     elif "email" in lower_text and ("log in" in lower_text or "signin" in lower_text or "sign in" in lower_text or "username" in lower_text or "sso" in lower_text or "auth" in lower_text):
                                         is_credential = True
 
+                                    # Metered at $0, but the count is what makes
+                                    # the Gemini escalation rate below meaningful.
+                                    track_ai_call("vault_ocr_local", session_id)
+
                                     if is_credential:
                                         classification = {
                                             "category": "info",
@@ -153,8 +158,16 @@ def classify_new_photos(session_id: str, new_files: list):
                             "- DO NOT use dry, technical safety or quality classification terms (like 'clear', 'well-composed', 'sharp', 'appropriate', 'valid', 'rejected'). Focus purely on casual, warm visual descriptions.\n"
                         )
                         response = client.models.generate_content(
-                            model=PIPELINE_MODEL,
+                            model=PIPELINE_MODEL, config=text_config(),
                             contents=[img, prompt]
+                        )
+                        # Escalation: the local OCR pass could not settle this
+                        # image, so it cost a billable call.
+                        track_ai_call(
+                            "classification_caption_combined",
+                            session_id,
+                            response=response,
+                            is_escalation=True,
                         )
                         res_txt = response.text.strip()
                         if res_txt.startswith("```json"):
