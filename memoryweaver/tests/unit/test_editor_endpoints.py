@@ -60,14 +60,17 @@ def test_photo_metadata_reads_exif_through_decryption(editor_session, fake_gemin
     """
     from app.routers.photo import get_photo_metadata
 
-    fake_gemini.script('{"summary":"A teal frame.","rating":"7/10",'
-                       '"critique":"Flat but clean.","tips":["t1","t2"]}')
+    fake_gemini.script('{"headline":"Teal test frame","quality_score":7.0,'
+                       '"verdict":"review","verdict_reason":"Flat but clean",'
+                       '"tag":"other"}')
     result = get_photo_metadata(filename="shot.jpg", session_id="default")
     assert result["status"] == "success", result
     # Dimensions prove the image was actually decoded, not just probed.
     assert "200" in result["dimensions"] and "150" in result["dimensions"]
-    # And the vision analysis round-tripped through the real parser.
-    assert result.get("gemini_analysis", {}).get("rating") == "7/10"
+    # And the cleanup card round-tripped through the real parser.
+    card = result.get("gemini_analysis", {})
+    assert card.get("verdict") == "review"
+    assert card.get("quality_score") == 7.0
 
 
 def test_photo_metadata_rejects_traversal(editor_session, fake_gemini):

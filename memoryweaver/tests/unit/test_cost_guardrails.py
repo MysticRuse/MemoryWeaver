@@ -136,10 +136,18 @@ def test_max_ai_calls_per_run_is_configurable(monkeypatch):
 
 
 def test_classification_paths_are_metered():
-    """The highest-volume AI path was absent from the spend report entirely."""
+    """The highest-volume AI path was absent from the spend report entirely.
+
+    The local OCR pass itself is metered inside the shared
+    `run_local_ocr_credential_check` helper (both call sites use it), so this
+    checks for that call rather than the "vault_ocr_local" literal.
+    """
+    classification_src = (PROJECT_ROOT / "app/services/classification.py").read_text()
+    assert "vault_ocr_local" in classification_src, "shared OCR helper must meter its local pass"
+
     for rel in ("app/services/classification.py", "app/routers/cleaner.py"):
         src = (PROJECT_ROOT / rel).read_text()
-        assert "vault_ocr_local" in src, f"{rel}: local OCR pass not counted"
+        assert "run_local_ocr_credential_check(" in src, f"{rel}: local OCR pass not counted"
         assert "classification_caption_combined" in src, f"{rel}: Gemini call not metered"
 
 
@@ -177,6 +185,26 @@ def test_env_overrides_are_honoured_for_the_output_cap(monkeypatch):
         monkeypatch.delenv("MW_MAX_OUTPUT_TOKENS")
         importlib.reload(genai_client)
     assert genai_client.MAX_OUTPUT_TOKENS == 4096
+
+
+def test_every_generate_content_call_is_metered():
+    """Every billable call must feed the spend ledger, or the 429 guardrail
+    is blind to whatever route skipped it.
+
+    Counting instead of pairing each call site by hand: a `generate_content(`
+    that outnumbers `track_ai_call(` in the same file means at least one
+    response went unmetered. This under-counts a site that manually calls
+    `cost_tracker.record_feature_use` instead, but every current call site
+    uses `track_ai_call`, so equal-or-more is the right invariant.
+    """
+    unmetered = []
+    for rel in SOURCE_FILES:
+        src = (PROJECT_ROOT / rel).read_text()
+        calls = len(re.findall(r"generate_content\(", src))
+        tracked = len(re.findall(r"track_ai_call\(", src))
+        if tracked < calls:
+            unmetered.append(f"{rel}: {calls} generate_content vs {tracked} track_ai_call")
+    assert not unmetered, f"call site(s) missing track_ai_call(): {unmetered}"
 
 
 def test_no_test_writes_into_the_live_media_pool():

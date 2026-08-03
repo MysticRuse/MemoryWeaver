@@ -32,6 +32,7 @@ class CostTracker:
     # Feature cost rates per call ($ USD)
     FEATURE_RATES: ClassVar[dict[str, float]] = {
         "classification_caption_combined": 0.0004, # Gemini Flash combined call
+        "classification_caption_combined_batch": 0.0002, # Same call via Batch API (~50% off, delayed turnaround)
         "vault_ocr_local": 0.0,                    # Native Apple Vision / Tesseract
         "vault_ocr_gemini_fallback": 0.00075,      # Gemini Vision fallback
         "magic_overlay_gen": 0.03,                 # Generative overlay/sticker

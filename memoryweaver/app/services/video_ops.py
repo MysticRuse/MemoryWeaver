@@ -14,6 +14,7 @@ import cv2
 import imageio_ffmpeg
 import numpy as np
 
+from app.app_utils.ai_budget import track_ai_call
 from app.app_utils.genai_client import PIPELINE_MODEL, get_gemini_client, text_config
 from app.app_utils.logging_config import get_logger
 
@@ -99,9 +100,6 @@ def detect_watermark_regions(sample_frames, width, height, req):
             from google.genai import types
 
             try:
-                # Log explicit escalation event
-                cost_tracker.record_feature_use("watermark_remover_gemini_fallback", req.session_id, is_escalation=True)
-
                 client = get_gemini_client()
                 key_frames = [sample_frames[0], sample_frames[len(sample_frames)//2], sample_frames[-1]]
 
@@ -125,6 +123,12 @@ def detect_watermark_regions(sample_frames, width, height, req):
                             types.Part.from_bytes(data=img_bytes, mime_type="image/jpeg"),
                             prompt
                         ]
+                    )
+                    track_ai_call(
+                        "watermark_remover_gemini_fallback",
+                        req.session_id,
+                        response=response,
+                        is_escalation=True,
                     )
                     text = response.text.strip()
                     if text.startswith("```"):

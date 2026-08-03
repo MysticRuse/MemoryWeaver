@@ -33,6 +33,8 @@ from app.app_utils.storage import StorageHelper
 from app.deps import enforce_ai_budget, require_admin_token
 from app.schemas import (
     AddFrameToAlbumRequest,
+    BatchReclassifyStartRequest,
+    BatchReclassifyStatusRequest,
     CleanerAnalyzeRequest,
     CleanerLockPhotoRequest,
     CleanerSaveNoteRequest,
@@ -43,7 +45,13 @@ from app.schemas import (
     UnlockItemRequest,
     UpdateClassificationRequest,
 )
-from app.services.classification import classify_new_photos
+from app.services.batch_reclassify import poll_batch_reclassify, submit_batch_reclassify
+from app.services.classification import (
+    classify_known_credential_filename,
+    classify_new_photos,
+    classify_video_file,
+    run_local_ocr_credential_check,
+)
 from app.services.media_store import (
     encrypt_file_bytes,
     get_file_sha256,
@@ -51,6 +59,11 @@ from app.services.media_store import (
     humanize_caption,
     load_image_bytes_decrypted,
     trash_file_safely,
+)
+from app.services.photo_taxonomy import (
+    CATEGORIZER_PROMPT,
+    UI_SUBCATEGORY,
+    parse_categorizer_response,
 )
 from pipeline.cost_tracker import get_cost_tracker
 
@@ -355,18 +368,7 @@ def update_photo_classification(req: UpdateClassificationRequest):
         if req.subcategory is not None:
             c["subcategory"] = req.subcategory
         else:
-            cat_map = {
-                "people": "People",
-                "scrap": "Junk & Scrap",
-                "scenery": "Scenery & Nature",
-                "food": "Food & Dining",
-                "trips": "Trips",
-                "pets": "Pets",
-                "emotional": "Private Vault",
-                "info": "Notes Vault",
-                "other": "Other / Misc"
-            }
-            c["subcategory"] = cat_map.get(req.category, "Other / Misc")
+            c["subcategory"] = UI_SUBCATEGORY.get(req.category, "Other / Misc")
 
         c["confidence"] = 10
         c["reason"] = "Manually corrected by user"
@@ -689,28 +691,12 @@ def analyze_all_cleaner(req: CleanerAnalyzeRequest):
             for index, f in enumerate(file_list):
                 full_path = os.path.join(upload_dir, f)
 
-                classification = None
-                # Check for video file to auto-classify immediately without running image OCR/GenAI
-                if f.lower().endswith(('.mp4', '.mov', '.avi', '.mkv')):
-                    classification = {
-                        "category": "organized",
-                        "subcategory": "Video",
-                        "extracted_text": "",
-                        "reason": "Standard local video file",
-                        "confidence": 10
-                    }
+                classification = classify_video_file(f)
 
                 img_hash = get_file_sha256(full_path)
 
                 if classification is None:
-                    if "PHOTO-2026-06-24-15-57-23.jpg" in f or "ngrok" in f.lower():
-                        classification = {
-                            "category": "info",
-                            "subcategory": "Credential/Account Details",
-                            "extracted_text": "Website: ngrok\nUsername: hironroy@gmail.com\nPassword: meamoryweaver",
-                            "reason": "Detected screenshot containing username and password credentials (ngrok)",
-                            "confidence": 10
-                        }
+                    classification = classify_known_credential_filename(f)
 
                 # Cache lookup FIRST
                 if classification is None:
@@ -723,56 +709,7 @@ def analyze_all_cleaner(req: CleanerAnalyzeRequest):
 
                 # macOS OCR (only if potential screenshot/doc, and classification still None)
                 if classification is None:
-                    lower_f = f.lower()
-                    run_ocr = False
-                    if f.lower().endswith('.png') or any(kw in lower_f for kw in ["screenshot", "screen", "capture", "receipt", "invoice", "document", "wifi", "password", "cred"]):
-                        run_ocr = True
-
-                    if run_ocr:
-                        import sys
-                        if sys.platform == 'darwin':
-                            try:
-                                import subprocess
-                                decrypted_bytes = load_image_bytes_decrypted(full_path, req.session_id)
-                                temp_ocr_path = os.path.join(os.path.dirname(full_path), f"temp_ocr_{f}")
-                                with open(temp_ocr_path, "wb") as temp_f:
-                                    temp_f.write(decrypted_bytes)
-                                try:
-                                    ocr_js_path = os.path.join(os.path.dirname(__file__), "ocr.js")
-                                    res = subprocess.run(
-                                        ["osascript", "-l", "JavaScript", ocr_js_path, temp_ocr_path],
-                                        capture_output=True,
-                                        text=True,
-                                        timeout=8
-                                    )
-                                    if res.returncode == 0:
-                                        extracted_text = res.stdout.strip()
-                                        lower_text = extracted_text.lower()
-                                        is_credential = False
-                                        if "password" in lower_text or "passcode" in lower_text or "credentials" in lower_text:
-                                            is_credential = True
-                                        elif "ngrok" in lower_text or "meamoryweaver" in lower_text:
-                                            is_credential = True
-                                        elif "email" in lower_text and ("log in" in lower_text or "signin" in lower_text or "sign in" in lower_text or "username" in lower_text or "sso" in lower_text or "auth" in lower_text):
-                                            is_credential = True
-
-                                        # $0, but counting local passes is what
-                                        # makes the Gemini escalation rate real.
-                                        track_ai_call("vault_ocr_local", req.session_id)
-
-                                        if is_credential:
-                                            classification = {
-                                                "category": "info",
-                                                "subcategory": "Credential/Account Details",
-                                                "extracted_text": extracted_text,
-                                                "reason": "A screenshot of login credentials and account details",
-                                                "confidence": 10
-                                            }
-                                finally:
-                                    if os.path.exists(temp_ocr_path):
-                                        os.remove(temp_ocr_path)
-                            except Exception as ocr_err:
-                                logger.warning(f"Offline macOS OCR failed: {ocr_err}")
+                    classification = run_local_ocr_credential_check(full_path, f, req.session_id)
                 # Gemini lookup - the only billable step in this loop, so the
                 # fan-out limit and the spend ceiling are both checked here
                 # rather than once per request.
@@ -804,27 +741,9 @@ def analyze_all_cleaner(req: CleanerAnalyzeRequest):
                             if img.mode not in ('RGB', 'RGBA'):
                                 img = img.convert('RGB')
 
-                            prompt = (
-                                "You are an expert AI photo organizer and cleaner. Analyze this image.\n"
-                                "Classify it into exactly one of these categories:\n"
-                                '1. "scrap": A junk photo, blurry picture, duplicate, meme, or a useless screenshot that can be deleted.\n'
-                                '2. "info": A screenshot or photo containing useful information to save (e.g. Wi-Fi password, barcode, ticket booking, address, recipe, note, phone number, card detail, username, password, login credentials).\n'
-                                '3. "emotional": A screenshot of a text message, sweet conversation, chat thread, emotional message, or social media memory.\n'
-                                '4. "organized": A standard camera roll photograph (e.g., travel scenery, food, landmark, family memory).\n\n'
-                                "Provide your output in valid JSON format with these exact keys:\n"
-                                '- "category": one of ["scrap", "info", "emotional", "organized"]\n'
-                                '- "subcategory": a short label\n'
-                                '- "extracted_text": text content\n'
-                                '- "reason": a short explanation\n'
-                                '- "confidence": score out of 10\n\n'
-                                "Requirements for 'reason':\n"
-                                "- The 'reason' must be a casual, engaging, human-like caption (like an Instagram post) summarizing what the photo shows.\n"
-                                "- Feel free to include a relevant emoji to make it warm and friendly (e.g., 'Happy puppy days! 🐶🐾' or 'Peaceful sleep 💤' or 'Dinner is served! 🍝').\n"
-                                "- DO NOT use dry, technical safety or quality classification terms (like 'clear', 'well-composed', 'sharp', 'appropriate', 'valid', 'rejected'). Focus purely on casual, warm visual descriptions.\n"
-                            )
                             response = client.models.generate_content(
                                 model=PIPELINE_MODEL, config=text_config(),
-                                contents=[img, prompt]
+                                contents=[img, CATEGORIZER_PROMPT]
                             )
                             ai_calls_remaining -= 1
                             track_ai_call(
@@ -833,20 +752,14 @@ def analyze_all_cleaner(req: CleanerAnalyzeRequest):
                                 response=response,
                                 is_escalation=True,
                             )
-                            res_txt = response.text.strip()
-                            if res_txt.startswith("```json"):
-                                res_txt = res_txt[7:]
-                            if res_txt.endswith("```"):
-                                res_txt = res_txt[:-3]
-                            res_txt = res_txt.strip()
-                            classification = json.loads(res_txt)
+                            classification = parse_categorizer_response(response.text)
                             if img_hash and classification:
                                 global_cache[img_hash] = classification
                     except Exception as e:
                         logger.warning(f"Gemini cleaner analysis failed for {f}: {e}")
                 # Heuristic fallbacks
                 if not classification:
-                    cat = "organized"
+                    cat = "other"
                     subcat = "Memory"
                     reason = "A beautiful memory from our trip! ✈️"
                     extracted = ""
@@ -863,9 +776,14 @@ def analyze_all_cleaner(req: CleanerAnalyzeRequest):
                             subcat = "Chat Screenshot"
                             reason = "Chatting away ❤️"
                             extracted = "Love you so much! Thank you for the trip memories ❤️"
-                        elif "password" in lower_f or "wifi" in lower_f or "ticket" in lower_f or "receipt" in lower_f or "bill" in lower_f:
+                        elif "password" in lower_f or "wifi" in lower_f:
                             cat = "info"
-                            subcat = "Document/Credential"
+                            subcat = "Credential/Account Details"
+                            reason = "Kept safe in the vault 🔐"
+                            extracted = ""
+                        elif "ticket" in lower_f or "receipt" in lower_f or "bill" in lower_f:
+                            cat = "docs"
+                            subcat = "Documents & Receipts"
                             reason = "Tickets ready for the journey! 🎫"
                             extracted = "WiFi: EventGuest_Secure / Pass: balitrip2026\nBooking ID: MW-Bali-99214A"
                         else:
@@ -882,13 +800,17 @@ def analyze_all_cleaner(req: CleanerAnalyzeRequest):
                         reason = "A quick snapshot 📸"
                     else:
                         if "bali" in lower_f or "beach" in lower_f or "sea" in lower_f:
+                            cat = "scenery"
                             subcat = "Beach & Scenic"
                         elif "food" in lower_f or "dinner" in lower_f or "drink" in lower_f:
+                            cat = "food"
                             subcat = "Culinary"
                         elif "group" in lower_f or "family" in lower_f or "friends" in lower_f:
+                            cat = "people"
                             subcat = "Portraits & People"
-                        else:
-                            subcat = "Travel Landmarks"
+                        elif "trip" in lower_f or "travel" in lower_f:
+                            cat = "trips"
+                            subcat = "Trips"
 
                     classification = {
                         "category": cat,
@@ -900,17 +822,10 @@ def analyze_all_cleaner(req: CleanerAnalyzeRequest):
                     if img_hash:
                         global_cache[img_hash] = classification
 
-                mapped_cat = "photo"
-                if classification.get("category") == "info":
-                    subc = classification.get("subcategory", "").lower()
-                    if "credential" in subc or "account" in subc or "password" in subc or "login" in subc:
-                        mapped_cat = "info"
-                    else:
-                        mapped_cat = "docs"
-                elif classification.get("category") == "scrap":
-                    mapped_cat = "scrap"
-                elif classification.get("category") == "emotional":
-                    mapped_cat = "emotional"
+                # The SSE summary keeps its own coarse buckets; everything that
+                # is not a vault/doc/junk item is just "photo" to the progress UI.
+                ui_cat = classification.get("category")
+                mapped_cat = ui_cat if ui_cat in ("info", "docs", "emotional", "scrap") else "photo"
 
                 summary_stats[mapped_cat] = summary_stats.get(mapped_cat, 0) + 1
                 if classification.get("reason"):
@@ -941,6 +856,50 @@ def analyze_all_cleaner(req: CleanerAnalyzeRequest):
             yield "data: " + json.dumps({"status": "error", "message": str(e)}) + "\n\n"
 
     return StreamingResponse(progress_generator(), media_type="text/event-stream")
+
+
+@router.post("/api/cleaner/batch-reclassify/start", dependencies=[Depends(require_admin_token)])
+def start_batch_reclassify(req: BatchReclassifyStartRequest):
+    """Submits an unattended, Batch-API reclassify job for the given
+    filenames (or the whole library if none are given).
+
+    Unlike analyze-all, nothing here is billed synchronously - poll
+    /api/cleaner/batch-reclassify/status with the returned job_name once the
+    job has had time to run (batch jobs take minutes to hours)."""
+    session_storage = StorageHelper(session_id=req.session_id)
+    upload_dir = os.path.join(session_storage.local_base, "uploads")
+
+    filenames = req.filenames
+    if filenames is None:
+        if not os.path.exists(upload_dir):
+            return {"status": "error", "message": "No uploads found for this session."}
+        filenames = sorted([
+            f for f in os.listdir(upload_dir)
+            if os.path.isfile(os.path.join(upload_dir, f))
+            and not f.startswith('.')
+            and f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif', '.mp4', '.mov', '.avi', '.mkv'))
+            and not f.lower().endswith('_enhanced.jpg')
+            and not f.lower().endswith('_original.jpg')
+        ])
+
+    try:
+        result = submit_batch_reclassify(req.session_id, filenames)
+    except Exception as e:
+        raise UpstreamError(str(e)) from e
+
+    return {"status": "success", **result}
+
+
+@router.post("/api/cleaner/batch-reclassify/status", dependencies=[Depends(require_admin_token)])
+def check_batch_reclassify(req: BatchReclassifyStatusRequest):
+    """Polls a submitted batch job; applies its results to the vault once done."""
+    try:
+        result = poll_batch_reclassify(req.session_id, req.job_name)
+    except Exception as e:
+        raise UpstreamError(str(e)) from e
+
+    return result
+
 
 @router.get("/api/cleaner/videos", dependencies=[Depends(require_admin_token)])
 def get_cleaner_videos(session_id: str = "default"):
@@ -1566,6 +1525,7 @@ def get_cleaner_video_frames(session_id: str = Form(...), filename: str = Form(.
                         model=PIPELINE_MODEL, config=text_config(),
                         contents=[video_ref, prompt]
                     )
+                    track_ai_call("video_moment_picking", session_id, response)
 
                     try:
                         client.files.delete(name=video_ref.name)
@@ -1702,7 +1662,7 @@ def add_cleaner_frame_to_album(req: AddFrameToAlbumRequest):
                 if "classifications" not in vault:
                     vault["classifications"] = {}
                 vault["classifications"][new_filename] = {
-                    "category": "organized",
+                    "category": "other",
                     "subcategory": "Travel Landmarks",
                     "extracted_text": "",
                     "reason": f"Extracted frame from video {req.original_video_filename}",

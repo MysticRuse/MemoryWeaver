@@ -38,6 +38,7 @@ from fastapi.responses import HTMLResponse, Response
 from google.cloud import logging as google_cloud_logging
 
 from agents.collector.tools.upload import process_and_save_upload
+from app.app_utils.ai_budget import track_ai_call
 from app.app_utils.errors import (
     AppError,
     NotFoundError,
@@ -484,6 +485,7 @@ async def save_photo_voice(
                         contents=contents,
                         config=types.GenerateContentConfig(**config_args)
                     )
+                    track_ai_call("voice_synthesis", session_id, response=response)
 
                     # Extract synthesized audio bytes
                     synthesized_bytes = None
@@ -820,6 +822,7 @@ def describe_photo(body: DescribePhotoBody):
             model=PIPELINE_MODEL, config=text_config(),
             contents=[img, prompt]
         )
+        track_ai_call("describe_photo", body.session_id, response=response)
         caption = response.text.strip().strip('"').strip("'")
         return {"status": "success", "caption": caption}
     except AppError:

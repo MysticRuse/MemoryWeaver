@@ -16,6 +16,7 @@ from fastapi import (
 )
 from PIL import Image
 
+from app.app_utils.ai_budget import track_ai_call
 from app.app_utils.errors import AppError, NotFoundError, UpstreamError
 from app.app_utils.genai_client import (
     IMAGE_MODEL,
@@ -40,6 +41,12 @@ from app.services.media_store import (
     encrypt_file_bytes,
     get_global_vault_file_path,
     load_image_bytes_decrypted,
+)
+from app.services.photo_cleanup_card import (
+    CLEANUP_CARD_PROMPT,
+    build_facts,
+    parse_cleanup_card,
+    unavailable_card,
 )
 from app.services.transforms import (
     build_black_and_white,
@@ -108,12 +115,11 @@ def get_photo_metadata(filename: str, session_id: str = "default", force_refresh
 
         file_size_kb = round(os.path.getsize(full_path) / 1024, 1)
 
-        # 3. Resolve location name via GPS if exists
-        location_desc = "Unknown Location"
+        # 3. GPS. Coordinates are passed through only to place the map pin —
+        # the old "37.4001° N, 122.1087° W" location string is gone, because
+        # the card must never render raw coordinates.
         lat = metadata["gps"]["latitude"]
         lon = metadata["gps"]["longitude"]
-        if lat is not None and lon is not None:
-            location_desc = f"{lat:.4f}° N, {lon:.4f}° W"
 
         # 4. Load caption/transcription metadata if exists
         transcription = ""
@@ -137,6 +143,20 @@ def get_photo_metadata(filename: str, session_id: str = "default", force_refresh
         except Exception as exc:
             logger.warning("%s: best-effort step failed, continuing: %s", "photo", exc)
 
+        card_facts = build_facts(
+            timestamp=metadata.get("timestamp"),
+            # No reverse geocoder is wired up, so the place slot stays empty and
+            # the file size takes it. Raw coordinates must never become a fact.
+            place=None,
+            device=metadata.get("device"),
+            size_kb=file_size_kb,
+        )
+
+        # A cached critique from the old photographer prompt has none of the card
+        # keys, so treat it as stale and regenerate rather than render blanks.
+        if gemini_analysis and "verdict" not in gemini_analysis:
+            gemini_analysis = None
+
         # Run dynamic Gemini Vision analysis if not cached or force_refresh is True
         if not gemini_analysis or force_refresh:
             api_key = os.getenv("GEMINI_API_KEY")
@@ -149,29 +169,12 @@ def get_photo_metadata(filename: str, session_id: str = "default", force_refresh
                         if img.mode not in ('RGB', 'RGBA'):
                             img = img.convert('RGB')
 
-                        prompt = (
-                            "You are a professional photographer reviewing a user's travel photo. "
-                            "Analyze this photo and provide your feedback in JSON format. Keep the feedback concise, short and punchy. Use these exact keys:\n"
-                            "{\n"
-                            "  \"summary\": \"Brief description of what is seen in the photo (max 2 sentences)\",\n"
-                            "  \"rating\": \"A rating out of 10 (e.g. 8.5/10)\",\n"
-                            "  \"critique\": \"A short, encouraging critique highlighting composition/mood (max 3 sentences)\",\n"
-                            "  \"tips\": [\n"
-                            "    \"Short actionable pro tip 1\",\n"
-                            "    \"Short actionable pro tip 2\"\n"
-                            "  ]\n"
-                            "}"
-                        )
                         response = client.models.generate_content(
                             model=PIPELINE_MODEL, config=text_config(),
-                            contents=[img, prompt]
+                            contents=[img, CLEANUP_CARD_PROMPT]
                         )
-                        text = response.text
-                        if "```json" in text:
-                            text = text.split("```json")[1].split("```")[0].strip()
-                        elif "```" in text:
-                            text = text.split("```")[1].split("```")[0].strip()
-                        gemini_analysis = json.loads(text.strip())
+                        track_ai_call("photo_cleanup_card", session_id, response=response)
+                        gemini_analysis = parse_cleanup_card(response.text, facts=card_facts)
 
                         # Cache the analysis result
                         try:
@@ -189,19 +192,9 @@ def get_photo_metadata(filename: str, session_id: str = "default", force_refresh
                             logger.warning("%s: best-effort step failed, continuing: %s", "photo", exc)
                 except Exception as e:
                     logger.warning(f"Gemini Vision analysis failed: {e}")
-                    gemini_analysis = {
-                        "summary": "Could not complete visual summary.",
-                        "rating": "N/A",
-                        "critique": f"Analysis failed: {e!s}",
-                        "tips": []
-                    }
+                    gemini_analysis = unavailable_card("Analysis unavailable", card_facts)
             else:
-                gemini_analysis = {
-                    "summary": "Gemini API key is not set.",
-                    "rating": "N/A",
-                    "critique": "Please set GEMINI_API_KEY environment variable to enable automatic visual ratings.",
-                    "tips": []
-                }
+                gemini_analysis = unavailable_card("No API key set", card_facts)
 
         return {
             "status": "success",
@@ -215,14 +208,10 @@ def get_photo_metadata(filename: str, session_id: str = "default", force_refresh
                 "latitude": lat,
                 "longitude": lon
             },
-            "location": location_desc,
-            "altitude": metadata.get("altitude"),
-            "heading": metadata.get("heading"),
-            "aperture": metadata.get("aperture"),
-            "shutter_speed": metadata.get("shutter_speed"),
-            "iso": metadata.get("iso"),
-            "focal_length": metadata.get("focal_length"),
-            "lens": metadata.get("lens"),
+            # Camera settings (aperture/shutter/ISO/focal length/lens) and
+            # altitude/heading used to ship here for the Camera Settings tab.
+            # The cleanup card excludes them, and the tab is gone, so the route
+            # no longer reads them out.
             "software": metadata.get("software"),
             "color_space": metadata.get("color_space"),
             "transcription": transcription,
@@ -285,6 +274,7 @@ def run_magic_enhance(req: MagicEnhanceRequest):
                 model=PIPELINE_MODEL, config=text_config(),
                 contents=[img, prompt]
             )
+            track_ai_call("magic_enhance", req.session_id, response=response)
             text = response.text
             if "```json" in text:
                 text = text.split("```json")[1].split("```")[0].strip()
@@ -595,6 +585,7 @@ def get_nano_suggestions(req: NanoSuggestionsRequest):
                     model=PIPELINE_MODEL, config=text_config(),
                     contents=[img, prompt]
                 )
+                track_ai_call("nano_suggestions", req.session_id, response=response)
 
                 text = response.text.strip()
                 if "```json" in text:
@@ -744,6 +735,7 @@ def save_photo_transformation(req: SaveTransformRequest):
                                     model=IMAGE_MODEL,
                                     contents=[orig_img, edit_prompt]
                                 )
+                                track_ai_call("nano_sticker_redraw", req.session_id, response=response, is_escalation=True)
 
                                 temp_bytes = None
                                 for part in response.candidates[0].content.parts:

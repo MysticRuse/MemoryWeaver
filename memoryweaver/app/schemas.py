@@ -103,6 +103,16 @@ class CleanerAnalyzeRequest(BaseModel):
     force_refresh: bool = False
 
 
+class BatchReclassifyStartRequest(BaseModel):
+    session_id: str
+    filenames: list[str] | None = None
+
+
+class BatchReclassifyStatusRequest(BaseModel):
+    session_id: str
+    job_name: str
+
+
 class CompressVideosRequest(BaseModel):
     session_id: str
     filenames: list[str]

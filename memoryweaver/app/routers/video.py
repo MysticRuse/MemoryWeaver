@@ -14,6 +14,7 @@ from fastapi import (
     HTTPException,
 )
 
+from app.app_utils.ai_budget import track_ai_call
 from app.app_utils.errors import AppError, NotFoundError, UpstreamError
 from app.app_utils.genai_client import (
     PIPELINE_MODEL,
@@ -441,9 +442,6 @@ def describe_video(req: VideoDescribeRequest):
                                     key_frames = [frame]
 
                             if key_frames:
-                                from pipeline.cost_tracker import get_cost_tracker
-                                get_cost_tracker().record_feature_use("video_scene_describe", req.session_id)
-
                                 parts_content = []
                                 for frame in key_frames[:8]:
                                     h, w = frame.shape[:2]
@@ -461,6 +459,7 @@ def describe_video(req: VideoDescribeRequest):
                                     model=PIPELINE_MODEL, config=text_config(),
                                     contents=parts_content
                                 )
+                                track_ai_call("video_scene_describe", req.session_id, response=response)
                                 if response.text:
                                     description = response.text.strip()
                     except Exception as ex:

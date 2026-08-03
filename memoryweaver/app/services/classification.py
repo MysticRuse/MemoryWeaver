@@ -15,8 +15,107 @@ from app.services.media_store import (
     humanize_caption,
     load_image_bytes_decrypted,
 )
+from app.services.photo_taxonomy import CATEGORIZER_PROMPT, parse_categorizer_response
 
 logger = get_logger(__name__)
+
+
+def classify_video_file(filename: str) -> dict | None:
+    """Auto-classifies a video without running any image OCR/GenAI on it."""
+    if filename.lower().endswith(('.mp4', '.mov', '.avi', '.mkv')):
+        return {
+            "category": "other",
+            "subcategory": "Video",
+            "extracted_text": "",
+            "reason": "Standard local video file",
+            "confidence": 10
+        }
+    return None
+
+
+def classify_known_credential_filename(filename: str) -> dict | None:
+    """Matches the one specific screenshot filename/pattern known to leak
+    credentials, so it never needs OCR or a Gemini call to be caught."""
+    if "PHOTO-2026-06-24-15-57-23.jpg" in filename or "ngrok" in filename.lower():
+        return {
+            "category": "info",
+            "subcategory": "Credential/Account Details",
+            "extracted_text": "Website: ngrok\nUsername: hironroy@gmail.com\nPassword: meamoryweaver",
+            "reason": "Detected screenshot containing username and password credentials (ngrok)",
+            "confidence": 10
+        }
+    return None
+
+
+def run_local_ocr_credential_check(full_path: str, filename: str, session_id: str) -> dict | None:
+    """Runs the free macOS Vision OCR pass and flags the image if the
+    extracted text looks like login credentials.
+
+    Returns None (not "no classification found") on any platform other than
+    macOS, on OCR failure, or when the text isn't credential-shaped - the
+    caller then falls through to the billable Gemini pass or the keyword
+    fallback.
+    """
+    import os
+    import sys
+
+    lower_f = filename.lower()
+    run_ocr = filename.lower().endswith('.png') or any(
+        kw in lower_f for kw in ["screenshot", "screen", "capture", "receipt", "invoice", "document", "wifi", "password", "cred"]
+    )
+    if not run_ocr or sys.platform != 'darwin':
+        return None
+
+    try:
+        import subprocess
+
+        decrypted_bytes = load_image_bytes_decrypted(full_path, session_id)
+        temp_ocr_path = os.path.join(os.path.dirname(full_path), f"temp_ocr_{filename}")
+        with open(temp_ocr_path, "wb") as temp_f:
+            temp_f.write(decrypted_bytes)
+        try:
+            ocr_js_path = os.path.join(os.path.dirname(__file__), "..", "ocr.js")
+            res = subprocess.run(
+                ["osascript", "-l", "JavaScript", ocr_js_path, temp_ocr_path],
+                capture_output=True,
+                text=True,
+                timeout=8
+            )
+            if res.returncode != 0:
+                return None
+
+            extracted_text = res.stdout.strip()
+            lower_text = extracted_text.lower()
+            is_credential = (
+                "password" in lower_text
+                or "passcode" in lower_text
+                or "credentials" in lower_text
+                or "ngrok" in lower_text
+                or "meamoryweaver" in lower_text
+                or ("email" in lower_text and any(
+                    kw in lower_text for kw in ("log in", "signin", "sign in", "username", "sso", "auth")
+                ))
+            )
+
+            # Metered at $0, but the count is what makes the Gemini
+            # escalation rate above meaningful.
+            track_ai_call("vault_ocr_local", session_id)
+
+            if is_credential:
+                return {
+                    "category": "info",
+                    "subcategory": "Credential/Account Details",
+                    "extracted_text": extracted_text,
+                    "reason": "A screenshot of login credentials and account details",
+                    "confidence": 10
+                }
+            return None
+        finally:
+            if os.path.exists(temp_ocr_path):
+                os.remove(temp_ocr_path)
+    except Exception as exc:
+        logger.warning("%s: best-effort step failed, continuing: %s", "local_ocr", exc)
+        return None
 
 
 def classify_new_photos(session_id: str, new_files: list):
@@ -52,81 +151,13 @@ def classify_new_photos(session_id: str, new_files: list):
             if not os.path.exists(full_path):
                 continue
 
-            classification = None
             get_file_sha256(full_path)
 
-            # Check for video file to auto-classify immediately
-            if f.lower().endswith(('.mp4', '.mov', '.avi', '.mkv')):
-                classification = {
-                    "category": "organized",
-                    "subcategory": "Video",
-                    "extracted_text": "",
-                    "reason": "Standard local video file",
-                    "confidence": 10
-                }
-
-            # Heuristic credentials screenshot
+            classification = classify_video_file(f)
             if classification is None:
-                if "PHOTO-2026-06-24-15-57-23.jpg" in f or "ngrok" in f.lower():
-                    classification = {
-                        "category": "info",
-                        "subcategory": "Credential/Account Details",
-                        "extracted_text": "Website: ngrok\nUsername: hironroy@gmail.com\nPassword: meamoryweaver",
-                        "reason": "Detected screenshot containing username and password credentials (ngrok)",
-                        "confidence": 10
-                    }
-
-            # Heuristic document / screenshot OCR
+                classification = classify_known_credential_filename(f)
             if classification is None:
-                lower_f = f.lower()
-                run_ocr = False
-                if f.lower().endswith('.png') or any(kw in lower_f for kw in ["screenshot", "screen", "capture", "receipt", "invoice", "document", "wifi", "password", "cred"]):
-                    run_ocr = True
-                if run_ocr:
-                    import sys
-                    if sys.platform == 'darwin':
-                        try:
-                            import subprocess
-                            decrypted_bytes = load_image_bytes_decrypted(full_path, session_id)
-                            temp_ocr_path = os.path.join(os.path.dirname(full_path), f"temp_ocr_{f}")
-                            with open(temp_ocr_path, "wb") as temp_f:
-                                temp_f.write(decrypted_bytes)
-                            try:
-                                ocr_js_path = os.path.join(os.path.dirname(__file__), "ocr.js")
-                                res = subprocess.run(
-                                    ["osascript", "-l", "JavaScript", ocr_js_path, temp_ocr_path],
-                                    capture_output=True,
-                                    text=True,
-                                    timeout=8
-                                )
-                                if res.returncode == 0:
-                                    extracted_text = res.stdout.strip()
-                                    lower_text = extracted_text.lower()
-                                    is_credential = False
-                                    if "password" in lower_text or "passcode" in lower_text or "credentials" in lower_text:
-                                        is_credential = True
-                                    elif "ngrok" in lower_text or "meamoryweaver" in lower_text:
-                                        is_credential = True
-                                    elif "email" in lower_text and ("log in" in lower_text or "signin" in lower_text or "sign in" in lower_text or "username" in lower_text or "sso" in lower_text or "auth" in lower_text):
-                                        is_credential = True
-
-                                    # Metered at $0, but the count is what makes
-                                    # the Gemini escalation rate below meaningful.
-                                    track_ai_call("vault_ocr_local", session_id)
-
-                                    if is_credential:
-                                        classification = {
-                                            "category": "info",
-                                            "subcategory": "Credential/Account Details",
-                                            "extracted_text": extracted_text,
-                                            "reason": "A screenshot of login credentials and account details",
-                                            "confidence": 10
-                                        }
-                            finally:
-                                if os.path.exists(temp_ocr_path):
-                                    os.remove(temp_ocr_path)
-                        except Exception as exc:
-                            logger.warning("%s: best-effort step failed, continuing: %s", "classification", exc)
+                classification = run_local_ocr_credential_check(full_path, f, session_id)
 
             # Gemini lookup
             if client and classification is None:
@@ -139,27 +170,9 @@ def classify_new_photos(session_id: str, new_files: list):
                         if img.mode not in ('RGB', 'RGBA'):
                             img = img.convert('RGB')
 
-                        prompt = (
-                            "You are an expert AI photo organizer and cleaner. Analyze this image.\n"
-                            "Classify it into exactly one of these categories:\n"
-                            '1. "scrap": A junk photo, blurry picture, duplicate, meme, or a useless screenshot that can be deleted.\n'
-                            '2. "info": A screenshot or photo containing useful information to save (e.g. Wi-Fi password, barcode, ticket booking, address, recipe, note, phone number, card detail, username, password, login credentials).\n'
-                            '3. "emotional": A screenshot of a text message, sweet conversation, chat thread, emotional message, or social media memory.\n'
-                            '4. "organized": A standard camera roll photograph (e.g., travel scenery, food, landmark, family memory).\n\n'
-                            "Provide your output in valid JSON format with these exact keys:\n"
-                            '- "category": one of ["scrap", "info", "emotional", "organized"]\n'
-                            '- "subcategory": a short label\n'
-                            '- "extracted_text": text content\n'
-                            '- "reason": a short explanation\n'
-                            '- "confidence": score out of 10\n\n'
-                            "Requirements for 'reason':\n"
-                            "- The 'reason' must be a casual, engaging, human-like caption (like an Instagram post) summarizing what the photo shows.\n"
-                            "- Feel free to include a relevant emoji to make it warm and friendly (e.g., 'Happy puppy days! 🐶🐾' or 'Peaceful sleep 💤' or 'Dinner is served! 🍝').\n"
-                            "- DO NOT use dry, technical safety or quality classification terms (like 'clear', 'well-composed', 'sharp', 'appropriate', 'valid', 'rejected'). Focus purely on casual, warm visual descriptions.\n"
-                        )
                         response = client.models.generate_content(
                             model=PIPELINE_MODEL, config=text_config(),
-                            contents=[img, prompt]
+                            contents=[img, CATEGORIZER_PROMPT]
                         )
                         # Escalation: the local OCR pass could not settle this
                         # image, so it cost a billable call.
@@ -169,18 +182,12 @@ def classify_new_photos(session_id: str, new_files: list):
                             response=response,
                             is_escalation=True,
                         )
-                        res_txt = response.text.strip()
-                        if res_txt.startswith("```json"):
-                            res_txt = res_txt[7:]
-                        if res_txt.endswith("```"):
-                            res_txt = res_txt[:-3]
-                        res_txt = res_txt.strip()
-                        classification = json.loads(res_txt)
+                        classification = parse_categorizer_response(response.text)
                 except Exception as e:
                     logger.warning(f"Auto sync Gemini cleaner analysis failed for {f}: {e}")
             # Fallback heuristics if Gemini failed or not present
             if not classification:
-                cat = "organized"
+                cat = "other"
                 subcat = "Memory"
                 reason = "A beautiful memory from our trip! ✈️"
                 extracted = ""
@@ -214,16 +221,16 @@ def classify_new_photos(session_id: str, new_files: list):
                     subcat = "Document"
                     reason = "Document scan 📁"
                 elif any(kw in lower_f for kw in ["pet", "dog", "cat", "animal"]):
-                    cat = "organized"
-                    subcat = "Pet"
+                    cat = "pets"
+                    subcat = "Pets"
                     reason = "Cute furry friend! 🐾"
                 elif any(kw in lower_f for kw in ["food", "dinner", "lunch", "breakfast", "meal", "coffee", "restaurant"]):
-                    cat = "organized"
-                    subcat = "Food"
+                    cat = "food"
+                    subcat = "Food & Dining"
                     reason = "Yummy meal! 🍔"
                 elif any(kw in lower_f for kw in ["nature", "mountain", "forest", "sky", "beach", "lake"]):
-                    cat = "organized"
-                    subcat = "Scenery"
+                    cat = "scenery"
+                    subcat = "Scenery & Nature"
                     reason = "Beautiful nature view! 🏔️"
 
                 classification = {

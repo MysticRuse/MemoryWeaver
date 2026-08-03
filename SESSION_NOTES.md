@@ -9,6 +9,56 @@ curation product — Curator Hub, Trip Highlights, contributor `/join` links, th
 five-agent ADK pipeline, the MCP server — was **removed entirely**. All photo and
 video editing was ported into the Cleaner first and verified before deletion.
 
+## Last session (2026-08-02) — Photo Cleanup Card v1
+- New `app/services/photo_cleanup_card.py` replaces the photographer critique in
+  `/api/photo-metadata` with a keep/review/likely_delete card. Two deliberate
+  departures from the pasted spec: the model is not given EXIF and does not emit
+  `facts` (built in code by `build_facts`, so raw GPS can't leak and file size
+  can't be guessed), and the "never auto-delete a human/pet subject" rule is
+  re-applied after parsing rather than trusted to the model.
+- Frontend dropped the Pro Tips block, the Camera Settings tab, Color Space, and
+  the GPS/altitude/heading rows; the map keeps its pin but no longer prints
+  coordinates. The route stopped returning those fields at all.
+- Cached pre-card analyses regenerate once (detected by a missing `verdict` key).
+  That call was also unmetered — now goes through `track_ai_call`.
+- Place fact now resolves client-side via OSM Nominatim (`resolvePlaceName`, cached
+  per coordinate) and `promotePlaceFact` swaps it in over the file size. The server
+  still has no geocoder — `build_facts(place=...)` remains the hook if that changes.
+- Detail panel rebuilt: Magic Auto-Enhance and the whole voice-recorder feature are
+  gone (markup, CSS, ~490 lines of JS); the card is now verdict chip + score +
+  headline + facts + Keep/Delete/Re-evaluate, above a location card with the map.
+- **Three pre-existing breakages found and fixed, all dead at HEAD:**
+  `switchMetaTab` and `navigateCarousel` were wired to onclick but never defined,
+  and there was no `.meta-tab-content` CSS at all — so both metadata tabs rendered
+  stacked and the carousel arrows did nothing. Photo cards now carry `data-filename`
+  so the carousel can walk the visible grid.
+- Gotcha that cost a round trip: `setSafeText`/`setSafeHTML` are **local closures
+  inside `selectPhoto`**. A top-level function calling them throws ReferenceError
+  and silently aborts the panel. Top-level render helpers use their own `setText`.
+- STILL BROKEN (pre-existing, out of scope): 19 inline handlers reference functions
+  that do not exist anywhere — the whole Overlay Studio / nano-sticker feature,
+  plus `sharePhoto`, `changePhotoCategory`, `setPhotoLayoutMode`, `scrollToYear`,
+  `enableFilenameEdit`/`saveInlineFilename`. Every one is dead at HEAD too.
+
+## Last session (2026-08-03) — cost audit fixes
+Acted on all 5 items from a cost-driver audit (frontend size, Gemini call efficiency,
+redundant work, tool noise, batch-ability); see prior commit for the audit report.
+- `track_ai_call()` wired into the ~10 routes that were spending unmetered (magic-enhance,
+  nano-suggestions, save-transformation redraw, video describe, watermark fallback,
+  sketch/meme/kids transforms, voice synthesis, describe_photo). `test_cost_guardrails.py`
+  now has a generic `generate_content(` vs `track_ai_call(` count check so this can't regress silently.
+- OCR/credential/video heuristics deduped: `classify_video_file`, `classify_known_credential_filename`,
+  `run_local_ocr_credential_check` now live once in `services/classification.py`; both
+  `classify_new_photos` and `analyze_all_cleaner` call them. Also fixed the OCR script path
+  (`ocr_js_path`) — it pointed at `app/routers/ocr.js` / `app/services/ocr.js`, neither of
+  which exists; the real file is `app/ocr.js`. OCR was silently failing before this.
+- New `app/services/batch_reclassify.py` + `/api/cleaner/batch-reclassify/{start,status}`:
+  submits an unattended Gemini Batch job (~50% cheaper) for whatever analyze-all's local
+  heuristics can't resolve. No frontend UI for it yet — backend-only, meant for a future
+  "resync entire vault" trigger or a cron caller.
+- `cleaner.html`: deduped the two copies of `elementDrag`/`closeDragElement` into `startPercentDrag`.
+- 238 tests green (5 new in `test_batch_reclassify.py`), ruff clean.
+
 ## Last session (2026-08-03) — AI cost guardrails
 Audited the project against The AI Cost Playbook and closed the gaps it found.
 - `app/app_utils/genai_client.py`: client now built with bounded retries
@@ -62,10 +112,47 @@ Audited the project against The AI Cost Playbook and closed the gaps it found.
 - Removed the **Unique Shots** category (pill, counts, labels, reassign menu, backend
   `cat_map`). The separate `similarViewMode === 'unique'` tab in Similar Photos is a
   different feature and was left alone.
-- **Known gap, not fixed:** the classifier only emits `scrap|info|emotional|organized`.
-  Everything informational lands in `info`, which the UI labels "Credentials Vault" —
-  flight details and code screenshots are filing there. The taxonomy needs widening in
-  `app/services/classification.py:145` to match the 10 UI categories.
+- ~~Known gap: the classifier only emits `scrap|info|emotional|organized`.~~ **Fixed
+  2026-08-02** — see "Photo Auto-Categorizer v1" below.
+
+## Last session (2026-08-02) — Photo Auto-Categorizer v1
+- New `app/services/photo_taxonomy.py` is the single source of truth: the 10-category
+  prompt, `SPEC_TO_UI` (spec name -> pill slug), and `parse_categorizer_response()`.
+  The prompt + fence-stripping + `json.loads` had been copy-pasted into
+  `services/classification.py` and `routers/cleaner.py`, which is how they drifted.
+- Model emits spec names (`credentials_vault`, `documents_receipts`, ...); the vault
+  stores the existing UI slugs (`info`, `docs`, ...). Only the parser crosses over.
+  `organized` is gone — videos are `other`, heuristic fallbacks emit real slugs.
+- Two deliberate extensions to the pasted spec: `caption` (warm emoji line, what the
+  gallery card renders — the spec's terse `reason` is kept as `classification_reason`)
+  and `extracted_text` (force-emptied whenever the category is `info`, so the
+  no-transcription rule is enforced locally, not just requested of the model).
+- `trips` stays a secondary tag and is only promoted to the Trips pill from
+  `scenery`/`other`. Promoting a trip selfie would have emptied the People pill.
+- `frontend/cleaner.html`: `resolvePhotoCategory` consulted two filename hardcodes
+  *before* the stored classification, so the AI verdict lost to a filename containing
+  "doc"/"scan". Stored verdict now wins; filename guesses are the unanalyzed fallback.
+- Re-ran `analyze-all --force_refresh` over the live pool: 24 files, 16 Gemini calls.
+  Now emotional 10 / other 8 (4 are videos) / pets 4 / info 2. Backup of the old vault
+  at `/tmp/cleaner_vault.backup-pre-taxonomy.json`.
+- 191 tests green, ruff clean. New: `tests/unit/test_photo_taxonomy.py` (parser +
+  taxonomy contract, incl. a check that the pill list matches the frontend's
+  `validCats`) and `tests/unit/test_classification_taxonomy.py` (ingest wiring).
+
+## Last session (2026-08-02) — duplicate cards: orphan upload copies
+- **Fixed: every photo rendered twice (2 pets showed as 4).** `uploads/` held each of the
+  12 files under *two* prefixes — `default_<h>_x` and `family-trip-california-435cf2_<h>_x`,
+  byte-identical (verified md5 on all 12). Left by the library flattening; the listing
+  correctly no longer filters by session prefix, so both copies enumerated as separate items.
+- Deleted the 12 `family-trip-*` orphans + their vault rows (267→255 classifications).
+  Backup at `/tmp/mw_orphan_backup/`. Pool 26→14 files; pets 4→2; halves analyze-all cost.
+- **Deleted the `family-trip-*` copies, never the `default_*` ones.** All 12 sync_registry
+  rows point at `default_*`, and `writeback_changes()` does `os.remove(device_path)` on any
+  registry-tracked upload that goes missing — deleting the `default_` twins would have wiped
+  the 12 originals off `~/Desktop`. Verified Desktop 16 entries before/after, registry byte-identical.
+- STILL OPEN: no dedup guard, so this recurs if another library's files land in the pool.
+  Also `writeback_changes()` deletes from the watched folder with no confirmation
+  (`silentSyncWriteback()` fires after every UI photo delete, `cleaner.html:4830`).
 
 ## State
 - `cd memoryweaver` — **145 tests green, ruff clean, app boots with 0 tracebacks, 44 routes.**
@@ -90,8 +177,9 @@ Audited the project against The AI Cost Playbook and closed the gaps it found.
    not reproduced here: writing it into a tracked file would put it straight back
    into the repo.
    This is the only item requiring the account owner.
-2. `local_storage/sessions/family-trip-california-435cf2/` — originals were **copied**
-   into the main pool, not moved. Safe to delete once the library looks right.
+2. ~~`local_storage/sessions/family-trip-california-435cf2/` — originals were **copied**
+   into the main pool, not moved.~~ **Orphan uploads cleared 2026-08-02** — see below.
+   The `sessions/family-trip-california-435cf2/` dir itself still exists; still safe to delete.
 3. 258 test fixtures moved out of live storage to `/tmp/mw_fixture_backup`.
 4. `memoryweaver/specs/` still documents the retired product. README was rewritten; specs weren't.
 5. 14 functions still exceed 150 lines (worst: `analyze_all_cleaner`, 291).
@@ -352,6 +440,445 @@ M .claude/settings.json
  memoryweaver/pipeline/cost_tracker.py       |  31 +++
  memoryweaver/pipeline/prompt_safety.py      |  26 +++
  17 files changed, 665 insertions(+), 260 deletions(-)
+```
+
+**Staged diff summary:**
+```
+(none)
+```
+
+## Auto-captured state — 2026-08-03 03:25 UTC
+_(mechanical snapshot, zero-cost, written by the SessionEnd hook — not a substitute for a real handoff summary)_
+
+- Branch: `forward`
+- Last commit: `5e83e3c Add AI spend guardrails, sync hardening, and cost tooling`
+
+**Uncommitted changes (git status --short):**
+```
+(none)
+```
+
+**Unstaged diff summary:**
+```
+(none)
+```
+
+**Staged diff summary:**
+```
+(none)
+```
+
+## Auto-captured state — 2026-08-03 03:25 UTC
+_(mechanical snapshot, zero-cost, written by the SessionEnd hook — not a substitute for a real handoff summary)_
+
+- Branch: `forward`
+- Last commit: `5e83e3c Add AI spend guardrails, sync hardening, and cost tooling`
+
+**Uncommitted changes (git status --short):**
+```
+M SESSION_NOTES.md
+```
+
+**Unstaged diff summary:**
+```
+SESSION_NOTES.md | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+```
+
+**Staged diff summary:**
+```
+(none)
+```
+
+## Auto-captured state — 2026-08-03 04:52 UTC
+_(mechanical snapshot, zero-cost, written by the SessionEnd hook — not a substitute for a real handoff summary)_
+
+- Branch: `forward`
+- Last commit: `5e83e3c Add AI spend guardrails, sync hardening, and cost tooling`
+
+**Uncommitted changes (git status --short):**
+```
+M SESSION_NOTES.md
+ M memoryweaver/app/routers/cleaner.py
+ M memoryweaver/app/services/classification.py
+ M memoryweaver/frontend/cleaner.html
+?? memoryweaver/app/services/photo_taxonomy.py
+?? memoryweaver/tests/unit/test_classification_taxonomy.py
+?? memoryweaver/tests/unit/test_photo_taxonomy.py
+```
+
+**Unstaged diff summary:**
+```
+SESSION_NOTES.md                            | 73 +++++++++++++++++++++++--
+ memoryweaver/app/routers/cleaner.py         | 84 ++++++++++-------------------
+ memoryweaver/app/services/classification.py | 45 ++++------------
+ memoryweaver/frontend/cleaner.html          | 17 +++---
+ 4 files changed, 119 insertions(+), 100 deletions(-)
+```
+
+**Staged diff summary:**
+```
+(none)
+```
+
+## Auto-captured state — 2026-08-03 05:04 UTC
+_(mechanical snapshot, zero-cost, written by the SessionEnd hook — not a substitute for a real handoff summary)_
+
+- Branch: `forward`
+- Last commit: `5e83e3c Add AI spend guardrails, sync hardening, and cost tooling`
+
+**Uncommitted changes (git status --short):**
+```
+M SESSION_NOTES.md
+ M memoryweaver/app/routers/cleaner.py
+ M memoryweaver/app/services/classification.py
+ M memoryweaver/frontend/cleaner.html
+?? memoryweaver/app/services/photo_taxonomy.py
+?? memoryweaver/tests/unit/test_classification_taxonomy.py
+?? memoryweaver/tests/unit/test_photo_taxonomy.py
+```
+
+**Unstaged diff summary:**
+```
+SESSION_NOTES.md                            | 124 ++++++++++++++++++++++++++--
+ memoryweaver/app/routers/cleaner.py         |  84 +++++++------------
+ memoryweaver/app/services/classification.py |  45 +++-------
+ memoryweaver/frontend/cleaner.html          |  17 ++--
+ 4 files changed, 168 insertions(+), 102 deletions(-)
+```
+
+**Staged diff summary:**
+```
+(none)
+```
+
+## Auto-captured state — 2026-08-03 05:04 UTC
+_(mechanical snapshot, zero-cost, written by the SessionEnd hook — not a substitute for a real handoff summary)_
+
+- Branch: `forward`
+- Last commit: `5e83e3c Add AI spend guardrails, sync hardening, and cost tooling`
+
+**Uncommitted changes (git status --short):**
+```
+M SESSION_NOTES.md
+ M memoryweaver/app/routers/cleaner.py
+ M memoryweaver/app/services/classification.py
+ M memoryweaver/frontend/cleaner.html
+?? memoryweaver/app/services/photo_taxonomy.py
+?? memoryweaver/tests/unit/test_classification_taxonomy.py
+?? memoryweaver/tests/unit/test_photo_taxonomy.py
+```
+
+**Unstaged diff summary:**
+```
+SESSION_NOTES.md                            | 155 ++++++++++++++++++++++++++--
+ memoryweaver/app/routers/cleaner.py         |  84 +++++----------
+ memoryweaver/app/services/classification.py |  45 ++------
+ memoryweaver/frontend/cleaner.html          |  17 +--
+ 4 files changed, 199 insertions(+), 102 deletions(-)
+```
+
+**Staged diff summary:**
+```
+(none)
+```
+
+## Auto-captured state — 2026-08-03 05:40 UTC
+_(mechanical snapshot, zero-cost, written by the SessionEnd hook — not a substitute for a real handoff summary)_
+
+- Branch: `forward`
+- Last commit: `5e83e3c Add AI spend guardrails, sync hardening, and cost tooling`
+
+**Uncommitted changes (git status --short):**
+```
+M SESSION_NOTES.md
+ M memoryweaver/app/routers/cleaner.py
+ M memoryweaver/app/routers/photo.py
+ M memoryweaver/app/services/classification.py
+ M memoryweaver/frontend/cleaner.html
+ M memoryweaver/tests/unit/test_editor_endpoints.py
+?? memoryweaver/app/services/photo_cleanup_card.py
+?? memoryweaver/app/services/photo_taxonomy.py
+?? memoryweaver/tests/unit/test_classification_taxonomy.py
+?? memoryweaver/tests/unit/test_photo_cleanup_card.py
+?? memoryweaver/tests/unit/test_photo_taxonomy.py
+```
+
+**Unstaged diff summary:**
+```
+SESSION_NOTES.md                                 | 201 +++++++++-
+ memoryweaver/app/routers/cleaner.py              |  84 ++--
+ memoryweaver/app/routers/photo.py                |  77 ++--
+ memoryweaver/app/services/classification.py      |  45 +--
+ memoryweaver/frontend/cleaner.html               | 473 ++++++++++-------------
+ memoryweaver/tests/unit/test_editor_endpoints.py |  11 +-
+ 6 files changed, 476 insertions(+), 415 deletions(-)
+```
+
+**Staged diff summary:**
+```
+(none)
+```
+
+## Auto-captured state — 2026-08-03 06:33 UTC
+_(mechanical snapshot, zero-cost, written by the SessionEnd hook — not a substitute for a real handoff summary)_
+
+- Branch: `forward`
+- Last commit: `5e83e3c Add AI spend guardrails, sync hardening, and cost tooling`
+
+**Uncommitted changes (git status --short):**
+```
+M SESSION_NOTES.md
+ M memoryweaver/app/routers/cleaner.py
+ M memoryweaver/app/routers/photo.py
+ M memoryweaver/app/services/classification.py
+ M memoryweaver/frontend/cleaner.html
+ M memoryweaver/tests/unit/test_editor_endpoints.py
+ M tools/daily_cost_log.py
+?? memoryweaver/app/services/photo_cleanup_card.py
+?? memoryweaver/app/services/photo_taxonomy.py
+?? memoryweaver/tests/unit/test_classification_taxonomy.py
+?? memoryweaver/tests/unit/test_photo_cleanup_card.py
+?? memoryweaver/tests/unit/test_photo_taxonomy.py
+```
+
+**Unstaged diff summary:**
+```
+SESSION_NOTES.md                                 | 238 +++++++++++-
+ memoryweaver/app/routers/cleaner.py              |  84 ++--
+ memoryweaver/app/routers/photo.py                |  77 ++--
+ memoryweaver/app/services/classification.py      |  45 +--
+ memoryweaver/frontend/cleaner.html               | 473 ++++++++++-------------
+ memoryweaver/tests/unit/test_editor_endpoints.py |  11 +-
+ tools/daily_cost_log.py                          | 279 +++++++++----
+ 7 files changed, 724 insertions(+), 483 deletions(-)
+```
+
+**Staged diff summary:**
+```
+(none)
+```
+
+## Auto-captured state — 2026-08-03 06:44 UTC
+_(mechanical snapshot, zero-cost, written by the SessionEnd hook — not a substitute for a real handoff summary)_
+
+- Branch: `forward`
+- Last commit: `5e83e3c Add AI spend guardrails, sync hardening, and cost tooling`
+
+**Uncommitted changes (git status --short):**
+```
+M SESSION_NOTES.md
+ M memoryweaver/app/routers/cleaner.py
+ M memoryweaver/app/routers/photo.py
+ M memoryweaver/app/services/classification.py
+ M memoryweaver/frontend/cleaner.html
+ M memoryweaver/tests/unit/test_editor_endpoints.py
+ M tools/daily_cost_log.py
+?? memoryweaver/app/services/photo_cleanup_card.py
+?? memoryweaver/app/services/photo_taxonomy.py
+?? memoryweaver/tests/unit/test_classification_taxonomy.py
+?? memoryweaver/tests/unit/test_photo_cleanup_card.py
+?? memoryweaver/tests/unit/test_photo_taxonomy.py
+```
+
+**Unstaged diff summary:**
+```
+SESSION_NOTES.md                                 | 277 ++++++++++++-
+ memoryweaver/app/routers/cleaner.py              |  84 ++--
+ memoryweaver/app/routers/photo.py                |  77 ++--
+ memoryweaver/app/services/classification.py      |  45 +--
+ memoryweaver/frontend/cleaner.html               | 473 ++++++++++-------------
+ memoryweaver/tests/unit/test_editor_endpoints.py |  11 +-
+ tools/daily_cost_log.py                          | 279 +++++++++----
+ 7 files changed, 763 insertions(+), 483 deletions(-)
+```
+
+**Staged diff summary:**
+```
+(none)
+```
+
+## Auto-captured state — 2026-08-03 06:47 UTC
+_(mechanical snapshot, zero-cost, written by the SessionEnd hook — not a substitute for a real handoff summary)_
+
+- Branch: `forward`
+- Last commit: `5e83e3c Add AI spend guardrails, sync hardening, and cost tooling`
+
+**Uncommitted changes (git status --short):**
+```
+M SESSION_NOTES.md
+ M memoryweaver/app/routers/cleaner.py
+ M memoryweaver/app/routers/photo.py
+ M memoryweaver/app/services/classification.py
+ M memoryweaver/frontend/cleaner.html
+ M memoryweaver/tests/unit/test_editor_endpoints.py
+ M tools/daily_cost_log.py
+?? memoryweaver/app/services/photo_cleanup_card.py
+?? memoryweaver/app/services/photo_taxonomy.py
+?? memoryweaver/tests/unit/test_classification_taxonomy.py
+?? memoryweaver/tests/unit/test_photo_cleanup_card.py
+?? memoryweaver/tests/unit/test_photo_taxonomy.py
+```
+
+**Unstaged diff summary:**
+```
+SESSION_NOTES.md                                 | 316 ++++++++++++++-
+ memoryweaver/app/routers/cleaner.py              |  84 ++--
+ memoryweaver/app/routers/photo.py                |  77 ++--
+ memoryweaver/app/services/classification.py      |  45 +--
+ memoryweaver/frontend/cleaner.html               | 473 ++++++++++-------------
+ memoryweaver/tests/unit/test_editor_endpoints.py |  11 +-
+ tools/daily_cost_log.py                          | 279 +++++++++----
+ 7 files changed, 802 insertions(+), 483 deletions(-)
+```
+
+**Staged diff summary:**
+```
+(none)
+```
+
+## Auto-captured state — 2026-08-03 07:25 UTC
+_(mechanical snapshot, zero-cost, written by the SessionEnd hook — not a substitute for a real handoff summary)_
+
+- Branch: `forward`
+- Last commit: `5e83e3c Add AI spend guardrails, sync hardening, and cost tooling`
+
+**Uncommitted changes (git status --short):**
+```
+M SESSION_NOTES.md
+ M memoryweaver/app/routers/cleaner.py
+ M memoryweaver/app/routers/photo.py
+ M memoryweaver/app/services/classification.py
+ M memoryweaver/frontend/cleaner.html
+ M memoryweaver/tests/unit/test_editor_endpoints.py
+ M tools/daily_cost_log.py
+?? memoryweaver/app/services/photo_cleanup_card.py
+?? memoryweaver/app/services/photo_taxonomy.py
+?? memoryweaver/tests/unit/test_classification_taxonomy.py
+?? memoryweaver/tests/unit/test_photo_cleanup_card.py
+?? memoryweaver/tests/unit/test_photo_taxonomy.py
+```
+
+**Unstaged diff summary:**
+```
+SESSION_NOTES.md                                 |  371 ++++-
+ memoryweaver/app/routers/cleaner.py              |   84 +-
+ memoryweaver/app/routers/photo.py                |   77 +-
+ memoryweaver/app/services/classification.py      |   45 +-
+ memoryweaver/frontend/cleaner.html               | 1564 +++++++---------------
+ memoryweaver/tests/unit/test_editor_endpoints.py |   11 +-
+ tools/daily_cost_log.py                          |  279 +++-
+ 7 files changed, 1136 insertions(+), 1295 deletions(-)
+```
+
+**Staged diff summary:**
+```
+(none)
+```
+
+## Auto-captured state — 2026-08-03 07:50 UTC
+_(mechanical snapshot, zero-cost, written by the SessionEnd hook — not a substitute for a real handoff summary)_
+
+- Branch: `forward`
+- Last commit: `5e83e3c Add AI spend guardrails, sync hardening, and cost tooling`
+
+**Uncommitted changes (git status --short):**
+```
+M SESSION_NOTES.md
+ M memoryweaver/app/fast_api_app.py
+ M memoryweaver/app/routers/cleaner.py
+ M memoryweaver/app/routers/photo.py
+ M memoryweaver/app/routers/video.py
+ M memoryweaver/app/schemas.py
+ M memoryweaver/app/services/classification.py
+ M memoryweaver/app/services/transforms.py
+ M memoryweaver/app/services/video_ops.py
+ M memoryweaver/frontend/cleaner.html
+ M memoryweaver/pipeline/cost_tracker.py
+ M memoryweaver/tests/unit/test_cost_guardrails.py
+ M memoryweaver/tests/unit/test_editor_endpoints.py
+ M tools/daily_cost_log.py
+?? memoryweaver/app/services/batch_reclassify.py
+?? memoryweaver/app/services/photo_cleanup_card.py
+?? memoryweaver/app/services/photo_taxonomy.py
+?? memoryweaver/tests/unit/test_batch_reclassify.py
+?? memoryweaver/tests/unit/test_classification_taxonomy.py
+?? memoryweaver/tests/unit/test_photo_cleanup_card.py
+?? memoryweaver/tests/unit/test_photo_taxonomy.py
+```
+
+**Unstaged diff summary:**
+```
+SESSION_NOTES.md                                 |  429 +++++-
+ memoryweaver/app/fast_api_app.py                 |    3 +
+ memoryweaver/app/routers/cleaner.py              |  208 ++-
+ memoryweaver/app/routers/photo.py                |   80 +-
+ memoryweaver/app/routers/video.py                |    5 +-
+ memoryweaver/app/schemas.py                      |   10 +
+ memoryweaver/app/services/classification.py      |  215 +--
+ memoryweaver/app/services/transforms.py          |   15 +-
+ memoryweaver/app/services/video_ops.py           |   10 +-
+ memoryweaver/frontend/cleaner.html               | 1664 +++++++---------------
+ memoryweaver/pipeline/cost_tracker.py            |    1 +
+ memoryweaver/tests/unit/test_cost_guardrails.py  |   32 +-
+ memoryweaver/tests/unit/test_editor_endpoints.py |   11 +-
+ tools/daily_cost_log.py                          |  279 +++-
+ 14 files changed, 1456 insertions(+), 1506 deletions(-)
+```
+
+**Staged diff summary:**
+```
+(none)
+```
+
+## Auto-captured state — 2026-08-03 20:28 UTC
+_(mechanical snapshot, zero-cost, written by the SessionEnd hook — not a substitute for a real handoff summary)_
+
+- Branch: `forward`
+- Last commit: `5e83e3c Add AI spend guardrails, sync hardening, and cost tooling`
+
+**Uncommitted changes (git status --short):**
+```
+M SESSION_NOTES.md
+ M memoryweaver/app/fast_api_app.py
+ M memoryweaver/app/routers/cleaner.py
+ M memoryweaver/app/routers/photo.py
+ M memoryweaver/app/routers/video.py
+ M memoryweaver/app/schemas.py
+ M memoryweaver/app/services/classification.py
+ M memoryweaver/app/services/transforms.py
+ M memoryweaver/app/services/video_ops.py
+ M memoryweaver/frontend/cleaner.html
+ M memoryweaver/pipeline/cost_tracker.py
+ M memoryweaver/tests/unit/test_cost_guardrails.py
+ M memoryweaver/tests/unit/test_editor_endpoints.py
+ M tools/daily_cost_log.py
+?? memoryweaver/app/services/batch_reclassify.py
+?? memoryweaver/app/services/photo_cleanup_card.py
+?? memoryweaver/app/services/photo_taxonomy.py
+?? memoryweaver/tests/unit/test_batch_reclassify.py
+?? memoryweaver/tests/unit/test_classification_taxonomy.py
+?? memoryweaver/tests/unit/test_photo_cleanup_card.py
+?? memoryweaver/tests/unit/test_photo_taxonomy.py
+```
+
+**Unstaged diff summary:**
+```
+SESSION_NOTES.md                                 |  484 +++++-
+ memoryweaver/app/fast_api_app.py                 |    3 +
+ memoryweaver/app/routers/cleaner.py              |  208 ++-
+ memoryweaver/app/routers/photo.py                |   80 +-
+ memoryweaver/app/routers/video.py                |    5 +-
+ memoryweaver/app/schemas.py                      |   10 +
+ memoryweaver/app/services/classification.py      |  215 +--
+ memoryweaver/app/services/transforms.py          |   15 +-
+ memoryweaver/app/services/video_ops.py           |   10 +-
+ memoryweaver/frontend/cleaner.html               | 1731 +++++++---------------
+ memoryweaver/pipeline/cost_tracker.py            |    1 +
+ memoryweaver/tests/unit/test_cost_guardrails.py  |   32 +-
+ memoryweaver/tests/unit/test_editor_endpoints.py |   11 +-
+ tools/daily_cost_log.py                          |  279 +++-
+ 14 files changed, 1549 insertions(+), 1535 deletions(-)
 ```
 
 **Staged diff summary:**

@@ -18,6 +18,7 @@ import cv2
 import numpy as np
 from PIL import Image, ImageDraw, ImageEnhance, ImageFont, ImageOps
 
+from app.app_utils.ai_budget import track_ai_call
 from app.app_utils.genai_client import (
     IMAGE_MODEL,
     PIPELINE_MODEL,
@@ -40,7 +41,7 @@ def build_black_and_white(orig_img, temp_dir, file_id, req) -> str:
     return bw_name
 
 
-def _sketch_via_image_model(orig_img):
+def _sketch_via_image_model(orig_img, session_id):
     """Asks the image model for a colored-pencil rendering.
 
     Returns the generated image, or None if no key is configured or the call
@@ -64,6 +65,7 @@ def _sketch_via_image_model(orig_img):
         response = get_gemini_client().models.generate_content(
             model=IMAGE_MODEL, contents=[orig_img, prompt]
         )
+        track_ai_call("sketch_image_model", session_id, response=response)
         for part in response.candidates[0].content.parts:
             if getattr(part, "inline_data", None):
                 return Image.open(io.BytesIO(part.inline_data.data))
@@ -83,7 +85,7 @@ SKETCH_DEFAULTS = {
 }
 
 
-def _sketch_parameters(orig_img):
+def _sketch_parameters(orig_img, session_id):
     """Returns OpenCV pipeline parameters, model-tuned when a key is present.
 
     Note: the original code also solicited and clamped a `blur_ksize` and then
@@ -107,6 +109,7 @@ def _sketch_parameters(orig_img):
         response = get_gemini_client().models.generate_content(
             model=PIPELINE_MODEL, config=text_config(), contents=[orig_img, prompt]
         )
+        track_ai_call("sketch_parameter_tuning", session_id, response=response)
         text = response.text
         if "```json" in text:
             text = text.split("```json")[1].split("```")[0]
@@ -145,13 +148,13 @@ def build_sketch(orig_img, temp_dir, file_id, req) -> str:
     if req.type not in ("all", "sketch"):
         return sketch_name
 
-    generated = _sketch_via_image_model(orig_img)
+    generated = _sketch_via_image_model(orig_img, req.session_id)
     if generated is not None:
         generated.save(os.path.join(temp_dir, sketch_name), format="PNG")
         return sketch_name
 
     logger.info("Falling back to local OpenCV sketch rendering pipeline...")
-    params = _sketch_parameters(orig_img)
+    params = _sketch_parameters(orig_img, req.session_id)
     threshold_block_size = params["threshold_block_size"]
     threshold_c = params["threshold_c"]
     gamma = params["gamma"]
@@ -337,6 +340,7 @@ def build_meme(orig_img, temp_dir, file_id, req) -> str:
                     model=PIPELINE_MODEL, config=text_config(),
                     contents=[orig_img, plan_prompt]
                 )
+                track_ai_call("meme_layout_planning", req.session_id, response=response1)
 
                 text = response1.text
                 if "```json" in text:
@@ -367,6 +371,7 @@ def build_meme(orig_img, temp_dir, file_id, req) -> str:
                     model=IMAGE_MODEL,
                     contents=[orig_img, edit_prompt]
                 )
+                track_ai_call("meme_render", req.session_id, response=response2)
 
                 img_bytes = None
                 for part in response2.candidates[0].content.parts:
@@ -509,6 +514,7 @@ def build_kids(orig_img, temp_dir, file_id, req) -> dict:
                     model=PIPELINE_MODEL, config=text_config(),
                     contents=[orig_img, analysis_prompt]
                 )
+                track_ai_call("kids_decoration_planning", req.session_id, response=response1)
 
                 text = response1.text
                 if "```json" in text:
@@ -546,6 +552,7 @@ def build_kids(orig_img, temp_dir, file_id, req) -> dict:
                     model=IMAGE_MODEL,
                     contents=[orig_img, edit_prompt]
                 )
+                track_ai_call("kids_decoration_render", req.session_id, response=response2)
 
                 img_bytes = None
                 for part in response2.candidates[0].content.parts:
