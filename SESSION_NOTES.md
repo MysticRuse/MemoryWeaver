@@ -885,3 +885,68 @@ SESSION_NOTES.md                                 |  484 +++++-
 ```
 (none)
 ```
+
+## Auto-captured state — 2026-08-04 20:58 UTC
+_(mechanical snapshot, zero-cost, written by the SessionEnd hook — not a substitute for a real handoff summary)_
+
+- Branch: `forward`
+- Last commit: `3252eb3 Photo Cleanup Card v1, Auto-Categorizer v1, and cost audit fixes`
+
+**Uncommitted changes (git status --short):**
+```
+(none)
+```
+
+**Unstaged diff summary:**
+```
+(none)
+```
+
+**Staged diff summary:**
+```
+(none)
+```
+
+## Auto-captured state — 2026-08-04 20:58 UTC
+_(mechanical snapshot, zero-cost, written by the SessionEnd hook — not a substitute for a real handoff summary)_
+
+- Branch: `forward`
+- Last commit: `3252eb3 Photo Cleanup Card v1, Auto-Categorizer v1, and cost audit fixes`
+
+**Uncommitted changes (git status --short):**
+```
+M SESSION_NOTES.md
+```
+
+**Unstaged diff summary:**
+```
+SESSION_NOTES.md | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+```
+
+**Staged diff summary:**
+```
+(none)
+```
+
+## Auto-captured state — 2026-08-04 21:22 UTC
+_(mechanical snapshot, zero-cost, written by the SessionEnd hook — not a substitute for a real handoff summary)_
+
+- Branch: `forward`
+- Last commit: `3252eb3 Photo Cleanup Card v1, Auto-Categorizer v1, and cost audit fixes`
+
+**Uncommitted changes (git status --short):**
+```
+M SESSION_NOTES.md
+```
+
+**Unstaged diff summary:**
+```
+SESSION_NOTES.md | 43 +++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 43 insertions(+)
+```
+
+**Staged diff summary:**
+```
+(none)
+```
