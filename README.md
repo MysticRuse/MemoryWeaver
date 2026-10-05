@@ -25,7 +25,7 @@ flowchart TD
     subgraph Agents["🤖 Five-agent system (Google ADK)"]
         COL[Collector<br/>EXIF, contributor IDs, QR]
         MOD[Moderator<br/>Gemini vision safety screen]
-        CUR[Curator<br/>CLIP dedup + LLM-as-judge scoring]
+        CUR[Curator<br/>embedding dedup + LLM-as-judge scoring]
         MEM[Memory<br/>contributor profiles, missed moments]
         NAR[Narrator<br/>per-moment journal + trip story]
         COL --> MOD --> CUR --> MEM --> NAR
@@ -60,7 +60,7 @@ The pipeline executes in two user-controlled sequential stages:
 | Phase | Agent | What happens |
 |---|---|---|
 | 1. Moderation | Moderator | Gemini vision screens batches of 50: safety, sharpness, real-photo-vs-screenshot |
-| 2. Deduplication | Curator | CLIP embeddings + cosine similarity drop burst duplicates |
+| 2. Deduplication | Curator | Gemini image embeddings (`gemini-embedding-2`, 768 dims) + cosine similarity drop burst duplicates (threshold 0.92, calibrated on real photos) |
 | 3. Scoring | Curator | LLM-as-judge rates sharpness/composition/uniqueness/human-presence, names landmarks from GPS + vision, writes captions (batches of 15) |
 | 4. Memory | Memory | Updates per-contributor profiles: who was present at which moments |
 | 5. Narration | Narrator | One batched call writes every moment's journal entry, then the trip story |
