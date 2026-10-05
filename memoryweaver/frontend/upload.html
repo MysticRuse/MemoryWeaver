@@ -2739,7 +2739,7 @@
             listContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; padding: 12px;">Loading directory...</div>';
             
             try {
-                const res = await fetch(`/api/local-fs/list?path=${encodeURIComponent(path)}`);
+                const res = await fetch(`/api/local-fs/list?path=${encodeURIComponent(path)}`, { headers: authHeaders() });
                 const data = await res.json();
                 if (data.status === 'success') {
                     fsCurrentPath = data.current_path;

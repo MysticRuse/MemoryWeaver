@@ -106,12 +106,38 @@ def find_missed_moments(contributor_id: str, session_id: str = "default") -> str
     returning the top-scored photo of each missed moment so they can catch up.
     Get contributor_id values from get_contributor_profiles."""
     storage = StorageHelper(session_id=session_id)
-    manifest_path = os.path.join(storage.local_base, "artefacts", "manifest.json")
-    if not os.path.exists(manifest_path):
-        return json.dumps({"error": f"No curated manifest for session '{session_id}' - run the pipeline first."})
-    with open(manifest_path) as f:
-        manifest_json = f.read()
-    return _recommend(session_id, contributor_id, manifest_json)
+    artefacts_dir = os.path.join(storage.local_base, "artefacts")
+    journal_path = os.path.join(artefacts_dir, "journal.json")
+    manifest_path = os.path.join(artefacts_dir, "manifest.json")
+
+    journal = []
+    if os.path.exists(journal_path):
+        with open(journal_path) as f:
+            journal = json.load(f)
+    if not journal:
+        return json.dumps({"error": f"No journal generated yet for session '{session_id}' - run the pipeline first."})
+
+    # The moments an event "has" are the ones in its journal - the same set the
+    # viewer's catch-up section uses, and the same scenes the contributor
+    # profiles are built from. Feeding the full scoring manifest here would
+    # count every scored scene that never made the journal as "missed".
+    # The manifest is only consulted for each photo's score and caption.
+    scored = {}
+    if os.path.exists(manifest_path):
+        with open(manifest_path) as f:
+            scored = {p["filename"]: p for p in json.load(f) if isinstance(p, dict) and "filename" in p}
+
+    rows = []
+    for entry in journal:
+        for photo in entry.get("photos", []):
+            info = scored.get(photo, {})
+            rows.append({
+                "filename": photo,
+                "scene_label": entry["moment"],
+                "caption": info.get("caption") or entry.get("entry"),
+                "score": info.get("score", 5.0),
+            })
+    return _recommend(session_id, contributor_id, json.dumps(rows))
 
 
 if __name__ == "__main__":

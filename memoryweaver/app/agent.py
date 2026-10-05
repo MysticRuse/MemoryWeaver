@@ -166,9 +166,11 @@ def run_curation_pipeline(session_id: str, photo_limit: int) -> str:
     try:
         stats = execute_trip_pipeline(_PROJECT_ROOT, session_id=session_id, limit=photo_limit)
         return json.dumps({"status": "complete", "stats": stats})
-    except ValueError as e:
-        # Pipeline raises ValueError for empty/fully-quarantined photo pools -
-        # surface that as a friendly, actionable message instead of crashing.
+    except (ValueError, RuntimeError) as e:
+        # ValueError: empty/fully-quarantined photo pools. RuntimeError
+        # (PipelineAPIError): a Gemini call failed and the run aborted without
+        # touching existing artifacts. Surface both as a friendly, actionable
+        # message instead of crashing the tool.
         return json.dumps({"status": "error", "message": str(e)})
 
 

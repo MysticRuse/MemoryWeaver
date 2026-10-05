@@ -151,6 +151,16 @@ def require_admin_token(x_mw_token: str | None = Header(None)):
         raise HTTPException(status_code=401, detail="Missing or invalid X-MW-Token header.")
 
 
+# The server-side folder picker (/api/local-fs/*) browses and copies from the
+# HOST machine's disk. That is a convenience for running the app on your own
+# computer; on a shared/cloud deployment it would expose the server's
+# filesystem. Cloud Run sets K_SERVICE, and MW_DISABLE_LOCAL_FS=1 turns it off
+# on any other host. (404, not 403: the feature simply does not exist there.)
+def require_local_host():
+    if os.environ.get("K_SERVICE") or os.environ.get("MW_DISABLE_LOCAL_FS") == "1":
+        raise HTTPException(status_code=404, detail="Local folder import is not available on this deployment.")
+
+
 # NOTE (STRIDE: information disclosure - see CONTEXT.md): raw uploads are
 # deliberately NOT static-mounted. Originals keep their EXIF (exact GPS,
 # device ids); serving them verbatim would leak location data to anyone with
@@ -742,7 +752,7 @@ def run_narrative_pipeline(background_tasks: BackgroundTasks, session_id: str = 
     return {"status": "success", "message": "Narrator journaling and story generation started in the background.", "session_id": session_id}
 
 
-@app.get("/api/local-fs/list")
+@app.get("/api/local-fs/list", dependencies=[Depends(require_local_host), Depends(require_admin_token)])
 def local_fs_list(path: str = ""):
     """Lists directories and image files at a given local path to support a web-based file picker."""
     try:
@@ -783,7 +793,7 @@ def local_fs_list(path: str = ""):
         return {"status": "error", "message": str(e)}
 
 
-@app.post("/api/local-fs/ingest", dependencies=[Depends(require_admin_token)])
+@app.post("/api/local-fs/ingest", dependencies=[Depends(require_local_host), Depends(require_admin_token)])
 def local_fs_ingest(session_id: str = Form(...), folder_path: str = Form(...)):
     """Ingests all images from a local directory path on the backend directly, avoiding HTTP browser uploads."""
     try:
@@ -829,7 +839,7 @@ class IngestFilesBody(BaseModel):
     session_id: str
     file_paths: list[str]
 
-@app.post("/api/local-fs/ingest-files", dependencies=[Depends(require_admin_token)])
+@app.post("/api/local-fs/ingest-files", dependencies=[Depends(require_local_host), Depends(require_admin_token)])
 def local_fs_ingest_files(body: IngestFilesBody):
     """Ingests a list of specific local image file paths on the backend directly."""
     try:
@@ -841,10 +851,13 @@ def local_fs_ingest_files(body: IngestFilesBody):
         copied = 0
         skipped = 0
         
+        supported = ('.jpg', '.jpeg', '.png', '.heic')
         for src in body.file_paths:
             if not os.path.exists(src) or not os.path.isfile(src):
                 continue
             f = os.path.basename(src)
+            if not f.lower().endswith(supported):
+                continue  # photos only - never copy arbitrary files into the event's storage
             dst = os.path.join(upload_dir, f)
             if not os.path.exists(dst):
                 shutil.copy2(src, dst)

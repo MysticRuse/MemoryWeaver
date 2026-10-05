@@ -47,13 +47,17 @@ def score_photos_as_judge_batch(photo_batch: list, others_summary: str = "") -> 
     
     # 1. Compress images and compile metadata contexts
     from pipeline.local_cleaner import get_exif_metadata
-    
+    from pipeline.prompt_safety import sanitize_for_prompt
+
     for idx, item in enumerate(photo_batch):
         filename = item["filename"]
         path = item["path"]
-        
+
         meta = get_exif_metadata(path)
-        meta_str = f"Image Index {idx} ({filename}): "
+        # Filenames are attacker-controlled (any contributor can upload any name)
+        # and land inside the prompt text, so only a sanitized form is shown to
+        # the model. Results are matched back by batch index, never by this text.
+        meta_str = f"Image Index {idx} ({sanitize_for_prompt(filename)}): "
         if meta.get("gps"):
             meta_str += f"GPS: {meta['gps']} | "
         if meta.get("date"):
@@ -105,6 +109,7 @@ def score_photos_as_judge_batch(photo_batch: list, others_summary: str = "") -> 
     contents.append(prompt)
     
     results_map = {}
+    batch_failed = False  # True when the API call/parse itself blew up (vs. one photo missing from a good reply)
     try:
         response = client.models.generate_content(
             model="gemini-2.5-flash",
@@ -143,9 +148,13 @@ def score_photos_as_judge_batch(photo_batch: list, others_summary: str = "") -> 
                     "caption": str(res.get("caption", "Exploring the sights."))
                 }
     except Exception as e:
+        batch_failed = True
         print(f"Error during batched vision scoring: {e}")
-        
-    # Populate fallbacks
+
+    # Populate fallbacks. These placeholder scores are NOT real judgments:
+    # "transient" marks them as "no answer" and "api_error" marks a whole-batch
+    # failure, so the orchestrator can refuse to cache or use them (a cached
+    # 5.0/"unknown" score would stick to the photo forever).
     for item in photo_batch:
         filename = item["filename"]
         if filename not in results_map:
@@ -156,7 +165,9 @@ def score_photos_as_judge_batch(photo_batch: list, others_summary: str = "") -> 
                 "uniqueness": 5.0,
                 "human_presence": 5.0,
                 "scene_label": "unknown",
-                "caption": "Exploring the sights."
+                "caption": "Exploring the sights.",
+                "transient": True,
+                "api_error": batch_failed,
             }
             
     return [results_map[item["filename"]] for item in photo_batch]

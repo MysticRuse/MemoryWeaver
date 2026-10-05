@@ -5,13 +5,58 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 from agents.moderator.tools.vision_check import run_vision_moderation_batch
 from agents.curator.tools.score import score_photos_as_judge_batch
-from agents.curator.tools.embed import get_image_embedding, calculate_cosine_similarity
+from agents.curator.tools.embed import get_image_embedding_checked, calculate_cosine_similarity, EMBEDDING_TAG
 from agents.memory.tools.memory_bank import MemoryBankStore
-from agents.narrator.tools.journal import generate_all_moments_journal
-from agents.narrator.tools.story import generate_trip_story
+from agents.narrator.tools.journal import generate_all_moments_journal_strict
+from agents.narrator.tools.story import generate_trip_story_strict
 from app.app_utils.storage import StorageHelper
 
 CACHE_FILE = "curation_cache.json"
+
+# Two photos whose embedding cosine similarity exceeds this are treated as
+# near-duplicates (a burst) and only the first is kept.
+#
+# Calibrated on real photos with gemini-embedding-2 @ 768 dims: re-compressed /
+# resized / brightness-shifted / cropped copies of a photo scored >= 0.943,
+# while genuinely different photos of the same subject (e.g. one laptop on a
+# table, shot from different angles) scored up to ~0.87 (one pair at 0.948).
+# 0.92 sits in the gap. The previous 0.85 was a guess for a model that never
+# actually ran; on real vectors it would merge same-subject photos that are not
+# duplicates - and wrongly dropping a unique photo costs more than keeping two
+# similar ones.
+DUPLICATE_SIMILARITY_THRESHOLD = 0.92
+
+
+class PipelineAPIError(RuntimeError):
+    """A Gemini call failed (bad key, quota, network, unparseable reply).
+
+    The pipeline raises this *before* writing any artifact, so a failed run
+    leaves the event's existing highlights/journal/story untouched instead of
+    reporting "complete" over an empty or filler result.
+    """
+
+
+def _save_cache(cache_path: str, cache: dict, log) -> None:
+    """Persists the per-photo curation cache (best effort)."""
+    try:
+        with open(cache_path, "w") as f:
+            json.dump(cache, f, indent=2)
+    except Exception as e:
+        log(f"Warning: Failed to save curation cache: {e}")
+
+
+# Placeholder results the leaf agents emit when an API call fails. Older runs
+# cached these as if they were real verdicts, permanently excluding or
+# mis-scoring the photo; recognise them so those cache entries get recomputed.
+_MODERATION_FAILURE_REASON = "Moderation batch request failed or skipped"
+
+
+def _is_poisoned_moderation(mod: dict) -> bool:
+    return str(mod.get("reason", "")).startswith(_MODERATION_FAILURE_REASON)
+
+
+def _is_poisoned_scoring(scoring: dict) -> bool:
+    return scoring.get("scene_label") == "unknown" and scoring.get("caption") == "Exploring the sights."
 
 def get_photo_date_info(path: str) -> tuple[float, str]:
     from pipeline.local_cleaner import get_exif_metadata
@@ -37,6 +82,27 @@ def get_photo_date_info(path: str) -> tuple[float, str]:
         return mtime, dt.strftime("%B %d, %Y")
     except:
         return 0.0, "Unknown Date"
+
+def _attach_capture_times(photos: list, uploads_dir: str) -> int:
+    """Sets "timestamp" (epoch seconds) and "date" on every photo dict that lacks them.
+
+    Capture time (EXIF, else file mtime) is what orders the journal
+    chronologically. It has to be stored on the dicts that get written to
+    manifest.json, because the Proceed stage rebuilds its photo list from that
+    file: times computed only in memory were lost, every photo then looked
+    undated, and moments fell back to score order. Returns how many photos
+    were filled in.
+    """
+    filled = 0
+    for p in photos:
+        if "timestamp" in p and "date" in p:
+            continue
+        ts, date_str = get_photo_date_info(os.path.join(uploads_dir, p["filename"]))
+        p["timestamp"] = ts
+        p["date"] = date_str
+        filled += 1
+    return filled
+
 
 def execute_trip_pipeline(project_root: str, session_id: str = "default", limit: int = 50, log=print, progress_callback=None, stage: str = "all") -> dict:
     """
@@ -82,6 +148,12 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
                 
         selected_photos = [p for p in manifest_scored if p["filename"] in reviewed_filenames]
         log(f"Stage 'narrate': loaded {len(selected_photos)} selected photos from highlights.json.")
+
+        # Manifests written before capture times were persisted have none; read
+        # them from the original files so those events also come out in time order.
+        backfilled = _attach_capture_times(selected_photos, uploads_dir)
+        if backfilled:
+            log(f"  Read capture times for {backfilled} photo(s) from the original files (older manifest had none).")
         
         # Fake approved / photos count for the rest of the statistics
         photos = list(reviewed_filenames)
@@ -127,7 +199,10 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
         
         # Filter photos using cache
         for photo in photos:
-            if photo in cache:
+            if photo in cache and _is_poisoned_moderation(cache[photo].get("moderation", {})):
+                # Cached from an earlier failed API call, not a real verdict: retry it
+                uncached_photos.append(photo)
+            elif photo in cache:
                 cached_data = cache[photo]
                 if cached_data.get("moderation", {}).get("usable", False):
                     approved.append((photo, os.path.join(uploads_dir, photo)))
@@ -175,23 +250,46 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
             with ThreadPoolExecutor(max_workers=4) as executor:
                 batch_results = list(executor.map(process_mod_batch, batches))
                 
+            failed_mod = 0   # whole batch failed (API/parse error)
+            skipped_mod = 0  # a good reply that simply omitted this photo
             for b_res in batch_results:
                 for mod_res in b_res:
                     photo = mod_res["filename"]
+                    if mod_res.get("transient"):
+                        # No real verdict. Never cache it: a cached fake quarantine
+                        # would exclude this photo from every future run.
+                        if mod_res.get("api_error"):
+                            failed_mod += 1
+                        else:
+                            skipped_mod += 1
+                        continue
                     if photo not in cache:
                         cache[photo] = {}
                     cache[photo]["moderation"] = mod_res
-                    
+
                     if mod_res["usable"]:
                         approved.append((photo, os.path.join(uploads_dir, photo)))
                     else:
                         quarantined.append({"filename": photo, "reason": mod_res["reason"]})
                         log(f"  [QUARANTINE] {photo} - {mod_res['reason']}")
+
+            if failed_mod:
+                _save_cache(cache_path, cache, log)  # keep verdicts from batches that did succeed
+                raise PipelineAPIError(
+                    f"Photo moderation failed for {failed_mod} photo(s) - the Gemini API call errored "
+                    "(check the API key, quota, and network). Nothing was changed; "
+                    "run again once the API is reachable. Photos already checked are cached."
+                )
+            if skipped_mod:
+                log(f"  Warning: {skipped_mod} photo(s) got no moderation verdict and were skipped this run; they will be retried next run.")
         else:
             if progress_callback:
                 progress_callback(100, 100, "moderation")
                 
         log(f"Phase 1 complete: Approved {len(approved)} photos. Quarantined {len(quarantined)} photos in {time.time() - p1_start:.1f}s.")
+        if not approved:
+            _save_cache(cache_path, cache, log)
+            raise ValueError("No usable photos: every photo was quarantined or got no moderation verdict. Nothing was changed.")
         trajectory["steps"].append({
             "phase": 1,
             "name": "Moderator Agent (Image Safety & Usability Checks)",
@@ -213,8 +311,12 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
         uncached_approved = []
         
         for photo, path in approved:
-            if "embedding" in cache.get(photo, {}):
-                embeddings.append((photo, path, cache[photo]["embedding"]))
+            # Reuse a cached vector only if it came from the current embedding
+            # model/dimension; older caches (other model, or fake fallback
+            # vectors) are recomputed once so vectors are never mixed.
+            cached = cache.get(photo, {})
+            if "embedding" in cached and cached.get("embedding_model") == EMBEDDING_TAG:
+                embeddings.append((photo, path, cached["embedding"]))
             else:
                 uncached_approved.append((photo, path))
                 
@@ -229,23 +331,32 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
                 
             def embed_photo(item):
                 photo, path = item
-                emb = get_image_embedding(path)
+                emb, is_fallback = get_image_embedding_checked(path)
                 with lock:
                     progress["count"] += 1
                     if progress_callback:
                         progress_callback(progress["count"], len(uncached_approved), "embedding")
-                return photo, emb
-                
+                return photo, emb, is_fallback
+
             with ThreadPoolExecutor(max_workers=4) as executor:
                 embed_results = list(executor.map(embed_photo, uncached_approved))
-                
-            for photo, emb in embed_results:
-                if photo not in cache:
-                    cache[photo] = {}
-                cache[photo]["embedding"] = emb
+
+            fallback_embeddings = 0
+            for photo, emb, is_fallback in embed_results:
+                if is_fallback:
+                    # Placeholder vector (embedding API failed): usable for this run only.
+                    # Caching it would pin the photo to a vector with no visual meaning.
+                    fallback_embeddings += 1
+                else:
+                    if photo not in cache:
+                        cache[photo] = {}
+                    cache[photo]["embedding"] = emb
+                    cache[photo]["embedding_model"] = EMBEDDING_TAG
                 # Find path
                 path = next(p for ph, p in approved if ph == photo)
                 embeddings.append((photo, path, emb))
+            if fallback_embeddings:
+                log(f"  Warning: embedding API unavailable for {fallback_embeddings} photo(s) - near-duplicate detection is degraded this run (placeholder vectors, not cached).")
         else:
             if progress_callback:
                 progress_callback(100, 100, "embedding")
@@ -258,8 +369,12 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
         for i, (photo, path, emb) in enumerate(embeddings):
             is_dupe = False
             for u_photo, u_path, u_emb in unique_photos:
+                if len(emb) != len(u_emb):
+                    # e.g. a placeholder fallback vector next to a real one: the
+                    # similarity of vectors of different sizes is meaningless.
+                    continue
                 sim = calculate_cosine_similarity(emb, u_emb)
-                if sim > 0.85:
+                if sim > DUPLICATE_SIMILARITY_THRESHOLD:
                     is_dupe = True
                     log(f"  [DUPLICATE DETECTED] {photo} is similar to {u_photo} (similarity: {sim:.3f})")
                     break
@@ -286,9 +401,10 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
         uncached_unique = []
         
         for photo, path, _ in unique_photos:
-            if "scoring" in cache.get(photo, {}):
+            if "scoring" in cache.get(photo, {}) and not _is_poisoned_scoring(cache[photo]["scoring"]):
                 scored_photos.append(cache[photo]["scoring"])
             else:
+                # Not cached yet, or cached from an earlier failed API call (placeholder score): (re)score
                 uncached_unique.append((photo, path))
                 
         if uncached_unique:
@@ -334,20 +450,44 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
                         "human_presence": score_res["human_presence"],
                         "scene_label": score_res["scene_label"],
                         "caption": score_res["caption"],
-                        "contributor_id": contributor_id
+                        "contributor_id": contributor_id,
+                        # Failure markers from the scorer; consumed (and removed) below, never cached
+                        "transient": score_res.get("transient", False),
+                        "api_error": score_res.get("api_error", False),
                     })
                 return mapped
 
             with ThreadPoolExecutor(max_workers=4) as executor:
                 batch_results = list(executor.map(process_scoring_batch, batches))
                 
+            failed_score = 0   # whole batch failed (API/parse error)
+            skipped_score = 0  # a good reply that simply omitted this photo
             for b_res in batch_results:
                 for s_res in b_res:
+                    transient = s_res.pop("transient", False)
+                    api_error = s_res.pop("api_error", False)
+                    if transient:
+                        # Placeholder score, not a judgment: don't cache it or rank with it.
+                        if api_error:
+                            failed_score += 1
+                        else:
+                            skipped_score += 1
+                        continue
                     photo = s_res["filename"]
                     if photo not in cache:
                         cache[photo] = {}
                     cache[photo]["scoring"] = s_res
                     scored_photos.append(s_res)
+
+            if failed_score:
+                _save_cache(cache_path, cache, log)  # keep moderation/embeddings/scores that did succeed
+                raise PipelineAPIError(
+                    f"Photo scoring failed for {failed_score} photo(s) - the Gemini API call errored "
+                    "(check the API key, quota, and network). Nothing was changed; "
+                    "run again once the API is reachable. Work already done is cached."
+                )
+            if skipped_score:
+                log(f"  Warning: {skipped_score} photo(s) got no score and were skipped this run; they will be retried next run.")
         else:
             if progress_callback:
                 progress_callback(100, 100, "scoring")
@@ -365,27 +505,24 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
         })
                 
         # Save the updated curation cache file
-        try:
-            with open(cache_path, "w") as f:
-                json.dump(cache, f, indent=2)
-        except Exception as e:
-            log(f"Warning: Failed to save curation cache: {e}")
+        _save_cache(cache_path, cache, log)
+
+        if not scored_photos:
+            raise ValueError("No photos could be scored. Nothing was changed.")
 
         # Sort by quality score descending
         scored_photos.sort(key=lambda x: x["score"], reverse=True)
-        
+
+        # Attach capture date & timestamp (for chronological sorting) BEFORE the
+        # manifest is written: the Proceed/narrate stage reloads its photos from
+        # manifest.json, so anything attached afterwards is lost.
+        uploads_dir = os.path.join(session_storage.local_base, "uploads")
+        _attach_capture_times(scored_photos, uploads_dir)
+
         # Save raw Curator manifest
         manifest_path = os.path.join(artefacts_dir, "manifest.json")
         with open(manifest_path, "w") as f:
             json.dump(scored_photos, f, indent=2)
-
-        # Extract date & timestamp for chronological sorting
-        uploads_dir = os.path.join(session_storage.local_base, "uploads")
-        for p in scored_photos:
-            p_path = os.path.join(uploads_dir, p["filename"])
-            ts, date_str = get_photo_date_info(p_path)
-            p["timestamp"] = ts
-            p["date"] = date_str
 
         # Apply diversity-maximizing size limits if requested
         selected_photos = list(scored_photos)
@@ -522,8 +659,20 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
     if progress_callback:
         progress_callback(50, 100, "journaling")
         
-    batched_entries_dict = generate_all_moments_journal(batched_moments_data)
-    
+    # Strict variant: if the API fails we abort here, before any artifact is
+    # written, instead of publishing generic filler as the journal.
+    try:
+        batched_entries_dict = generate_all_moments_journal_strict(batched_moments_data)
+    except Exception as e:
+        raise PipelineAPIError(
+            f"Journal narration failed ({e}). The event's existing journal and story were not changed; "
+            "run again once the API is reachable."
+        ) from e
+    if not batched_entries_dict:
+        raise PipelineAPIError(
+            "Journal narration returned no usable entries. The event's existing journal and story were not changed; run again."
+        )
+
     journal_entries = []
     for scene, items in sorted_moments:
         items.sort(key=lambda x: x["score"], reverse=True)
@@ -549,10 +698,16 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
         
     # Compile the final Trip Story
     log("  Compiling overall Trip Story...")
-    full_story = generate_trip_story(
-        journal_entries_json=json.dumps(journal_entries),
-        destination=memory_store.get_trip_context().get("destination") or "our trip"
-    )
+    try:
+        full_story = generate_trip_story_strict(
+            journal_entries_json=json.dumps(journal_entries),
+            destination=memory_store.get_trip_context().get("destination") or "our trip"
+        )
+    except Exception as e:
+        raise PipelineAPIError(
+            f"Trip story generation failed ({e}). The event's existing journal and story were not changed; "
+            "run again once the API is reachable."
+        ) from e
     
     trajectory["steps"].append({
         "phase": 5,

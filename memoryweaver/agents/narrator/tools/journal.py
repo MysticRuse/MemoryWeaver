@@ -9,6 +9,34 @@ def get_gemini_client():
         raise ValueError("GEMINI_API_KEY environment variable is not set.")
     return genai.Client(api_key=api_key)
 
+def _sanitize_filenames_for_prompt(moments_list: list) -> list:
+    """Returns a copy of moments_list whose photo filenames are prompt-safe.
+
+    Photo filenames come from uploads (any contributor can choose any name) and
+    are serialized into the prompt, so they are sanitized first. Works on a
+    copy: the caller's data - which still needs the real filenames - is never
+    modified.
+    """
+    from pipeline.prompt_safety import sanitize_for_prompt
+
+    def clean_photo(photo):
+        if isinstance(photo, dict) and "filename" in photo:
+            return {**photo, "filename": sanitize_for_prompt(photo["filename"])}
+        return photo
+
+    cleaned = []
+    for moment in moments_list:
+        if not isinstance(moment, dict):
+            cleaned.append(moment)
+            continue
+        copy = dict(moment)
+        for key in ("top_photos", "photos"):
+            if isinstance(copy.get(key), list):
+                copy[key] = [clean_photo(p) for p in copy[key]]
+        cleaned.append(copy)
+    return cleaned
+
+
 def generate_moment_journal(moment: str, photo_details: list) -> str:
     """
     Generates a journal entry for a single moment.
@@ -26,10 +54,28 @@ def generate_moment_journal(moment: str, photo_details: list) -> str:
 
 def generate_all_moments_journal(moments_list: list) -> dict:
     """
-    Generates factual, location-specific journal entries for all travel moments 
+    Generates factual, location-specific journal entries for all travel moments
     in a single, unified Gemini API call using YAML formatting.
     """
-    client = get_gemini_client()
+    client = get_gemini_client()  # a missing API key still raises, as before
+    try:
+        return generate_all_moments_journal_strict(moments_list, client=client)
+    except Exception as e:
+        print(f"Error during batched journal narration: {e}")
+        # Fallback mapping
+        return {}
+
+
+def generate_all_moments_journal_strict(moments_list: list, client=None) -> dict:
+    """
+    Same as generate_all_moments_journal, but lets API/parse errors propagate.
+
+    The pipeline uses this variant: when narration fails it must abort without
+    touching existing artifacts, instead of publishing generic filler text as if
+    it were the journal.
+    """
+    client = client or get_gemini_client()
+    moments_list = _sanitize_filenames_for_prompt(moments_list)
 
     prompt = (
         "You are the family archivist writing a day-by-day travel journal for a family trip.\n"
@@ -46,27 +92,22 @@ def generate_all_moments_journal(moments_list: list) -> dict:
         "- Respond ONLY with a raw YAML array matching the schema."
     )
 
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt
-        )
-        
-        # Clean any markdown wrapper if present
-        clean_text = response.text.strip()
-        if clean_text.startswith("```yaml"):
-            clean_text = clean_text[7:]
-        elif clean_text.startswith("```"):
-            clean_text = clean_text[3:]
-        if clean_text.endswith("```"):
-            clean_text = clean_text[:-3]
-        clean_text = clean_text.strip()
-        
-        entries = yaml.safe_load(clean_text)
-        # Convert list to dict mapping moment -> entry
-        return {item["moment"]: item["entry"] for item in entries if "moment" in item and "entry" in item}
-    except Exception as e:
-        print(f"Error during batched journal narration: {e}")
-        # Fallback mapping
-        return {}
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt
+    )
+
+    # Clean any markdown wrapper if present
+    clean_text = response.text.strip()
+    if clean_text.startswith("```yaml"):
+        clean_text = clean_text[7:]
+    elif clean_text.startswith("```"):
+        clean_text = clean_text[3:]
+    if clean_text.endswith("```"):
+        clean_text = clean_text[:-3]
+    clean_text = clean_text.strip()
+
+    entries = yaml.safe_load(clean_text)
+    # Convert list to dict mapping moment -> entry
+    return {item["moment"]: item["entry"] for item in entries if "moment" in item and "entry" in item}
 

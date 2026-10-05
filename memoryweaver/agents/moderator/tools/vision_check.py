@@ -77,6 +77,7 @@ def run_vision_moderation_batch(photo_batch: list) -> list:
     contents.append(prompt_intro)
     
     results_map = {}
+    batch_failed = False  # True when the API call/parse itself blew up (vs. one photo missing from a good reply)
     try:
         response = client.models.generate_content(
             model="gemini-2.5-flash",
@@ -105,9 +106,14 @@ def run_vision_moderation_batch(photo_batch: list) -> list:
                     "reason": str(res.get("reason", "Passed moderation"))
                 }
     except Exception as e:
+        batch_failed = True
         print(f"Error during batched vision moderation: {e}")
-        
-    # Populate fallbacks for any missing items in batch response
+
+    # Populate fallbacks for any missing items in batch response.
+    # These are NOT real verdicts: "transient" marks them as "no answer", and
+    # "api_error" marks a whole-batch failure. The orchestrator must neither
+    # cache them (a cached fake quarantine would permanently exclude the photo)
+    # nor treat them as results; direct callers can keep ignoring the flags.
     for item in photo_batch:
         filename = item["filename"]
         if filename not in results_map:
@@ -116,7 +122,9 @@ def run_vision_moderation_batch(photo_batch: list) -> list:
                 "appropriate": False,
                 "sharp": False,
                 "real_photo": False,
-                "reason": "Moderation batch request failed or skipped for this file."
+                "reason": "Moderation batch request failed or skipped for this file.",
+                "transient": True,
+                "api_error": batch_failed,
             }
             
     return [results_map[item["filename"]] for item in photo_batch]
