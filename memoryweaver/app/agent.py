@@ -159,8 +159,8 @@ def run_curation_pipeline(session_id: str, photo_limit: int) -> str:
         JSON of pipeline stats: photos processed/approved/quarantined,
         unique photos kept, number of moments, and story word count.
     """
-    # Imported lazily: the pipeline module pulls in torch/CLIP for embeddings,
-    # which we don't want on the critical path of agent startup.
+    # Imported lazily: keeps the pipeline module off the agent's import path
+    # until a curation run is actually requested.
     from pipeline.orchestrator import execute_trip_pipeline
 
     try:
