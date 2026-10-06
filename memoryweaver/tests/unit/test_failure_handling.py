@@ -12,6 +12,8 @@ What these lock in:
     cloud deployments, and only copies photo files.
   * Capture times survive from Curate into the manifest and Proceed, so the
     journal comes out in chronological order with real dates.
+  * vibe_trajectory.json records every phase of both stages with estimated
+    usage/cost, and the review grid gets per-photo score/label/caption.
 
 Every Gemini call is stubbed and all storage is redirected to tmp_path, so
 these tests are free, offline, and never touch real events.
@@ -636,3 +638,122 @@ def test_attach_capture_times_fills_only_missing_values(monkeypatch):
     assert photos[0]["timestamp"] == 5.0 and photos[0]["date"] == "Jan 1, 2026"
     assert photos[1]["timestamp"] == 1.0, "an existing capture time must not be overwritten"
     assert calls == [os.path.join("/u", "new.jpg")]
+
+
+# --------------------------------------------------------------------------
+# vibe_trajectory.json: complete across Curate + Proceed, with estimated usage
+# --------------------------------------------------------------------------
+
+def _trajectory(event):
+    return json.loads((event.art / "vibe_trajectory.json").read_text())
+
+
+def test_estimate_usage_formula():
+    u = orch.estimate_usage(10, 4, 3)
+    assert (u["input_tokens"], u["output_tokens"]) == (18_400, 2_350)
+    assert u["cost_usd"] == pytest.approx(0.002085)
+    assert orch.estimate_usage(0, 0, 0) == {"input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0}
+
+
+def test_trajectory_covers_all_five_phases_across_curate_and_proceed(dated_event):
+    dated_event.run(stage="curate", limit=10)
+    after_curate = _trajectory(dated_event)
+    assert set(after_curate["stages"]) == {"curate"}
+    assert [s["phase"] for s in after_curate["steps"]] == [1, 2, 3]
+    assert after_curate["stages"]["curate"]["metadata"]["embedding_calls"] == 3
+
+    dated_event.run(stage="narrate", limit=10)
+    t = _trajectory(dated_event)
+    assert set(t["stages"]) == {"curate", "narrate"}
+    assert [s["phase"] for s in t["steps"]] == [1, 2, 3, 4, 5]
+    assert all("duration_seconds" in s for s in t["steps"])
+    assert all("cached_hits" in s for s in t["steps"] if s["phase"] <= 3)
+
+    # estimated usage: per stage and a total that is their sum, clearly labelled as an estimate
+    per_stage = [t["stages"][k]["estimated_usage"] for k in ("curate", "narrate")]
+    total = t["estimated_usage_total"]
+    assert total["input_tokens"] == sum(u["input_tokens"] for u in per_stage) > 0
+    assert total["cost_usd"] > 0 and "Estimates" in total["note"]
+
+
+def test_rerunning_a_stage_replaces_its_entry_instead_of_duplicating_phases(dated_event):
+    dated_event.run(stage="curate", limit=10)
+    dated_event.run(stage="narrate", limit=10)
+    dated_event.run(stage="narrate", limit=10)  # press Proceed twice
+    t = _trajectory(dated_event)
+    assert [s["phase"] for s in t["steps"]] == [1, 2, 3, 4, 5]
+
+
+def test_full_run_replaces_both_stage_entries(dated_event):
+    dated_event.run(stage="curate", limit=10)
+    dated_event.run(stage="narrate", limit=10)
+    dated_event.run(stage="all", limit=10)
+    t = _trajectory(dated_event)
+    assert set(t["stages"]) == {"all"}
+    assert [s["phase"] for s in t["steps"]] == [1, 2, 3, 4, 5]
+
+
+def test_failed_run_does_not_touch_the_trajectory(dated_event, monkeypatch):
+    dated_event.run(stage="curate", limit=10)
+    before = (dated_event.art / "vibe_trajectory.json").read_text()
+    monkeypatch.setattr(orch, "run_vision_moderation_batch", _failing_mod)
+    (dated_event.art / "curation_cache.json").unlink()  # force fresh API calls, which fail
+    with pytest.raises(orch.PipelineAPIError):
+        dated_event.run(stage="curate", limit=10)
+    assert (dated_event.art / "vibe_trajectory.json").read_text() == before
+
+
+# --------------------------------------------------------------------------
+# Review grid: per-photo score / scene label / caption
+# --------------------------------------------------------------------------
+
+def test_list_uploads_returns_curation_details_for_scored_photos(client, tmp_path, monkeypatch):
+    c, fast_api_app = client
+    monkeypatch.delenv("MW_ADMIN_TOKEN", raising=False)
+    base = tmp_path / "event"
+    (base / "uploads").mkdir(parents=True)
+    (base / "artefacts").mkdir()
+    for n in ("a.jpg", "b.jpg", "unscored.jpg"):
+        (base / "uploads" / n).write_bytes(b"x")
+    (base / "artefacts" / "manifest.json").write_text(json.dumps([
+        {"filename": "a.jpg", "score": 8.2, "scene_label": "old town square", "caption": "Cobblestones at dusk", "sharpness": 9},
+        {"filename": "b.jpg", "score": 5.0, "scene_label": "market", "caption": "Apple stall"},
+    ]))
+
+    class _Storage:
+        def __init__(self, session_id="x"):
+            self.local_base = str(base)
+
+    monkeypatch.setattr(fast_api_app, "StorageHelper", _Storage)
+    data = c.get("/api/list-uploads", params={"session_id": "s"}).json()
+
+    assert data["status"] == "success" and data["photos"] == ["a.jpg", "b.jpg", "unscored.jpg"]
+    assert data["details"]["a.jpg"] == {"score": 8.2, "scene_label": "old town square", "caption": "Cobblestones at dusk"}
+    assert "unscored.jpg" not in data["details"]
+    assert "sharpness" not in data["details"]["a.jpg"], "only the fields the grid needs are exposed"
+
+
+def test_list_uploads_survives_a_damaged_manifest(client, tmp_path, monkeypatch):
+    c, fast_api_app = client
+    monkeypatch.delenv("MW_ADMIN_TOKEN", raising=False)
+    base = tmp_path / "event"
+    (base / "uploads").mkdir(parents=True)
+    (base / "artefacts").mkdir()
+    (base / "uploads" / "a.jpg").write_bytes(b"x")
+    (base / "artefacts" / "manifest.json").write_text("{ not json")
+
+    class _Storage:
+        def __init__(self, session_id="x"):
+            self.local_base = str(base)
+
+    monkeypatch.setattr(fast_api_app, "StorageHelper", _Storage)
+    data = c.get("/api/list-uploads", params={"session_id": "s"}).json()
+    assert data["status"] == "success" and data["photos"] == ["a.jpg"] and data["details"] == {}
+
+
+def test_review_grid_renders_ai_text_without_innerhtml():
+    html = open(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "upload.html")).read()
+    block = html[html.index("Score + scene/location label strip"):]
+    block = block[:block.index("if (curationView === 'curated')")]
+    assert "innerHTML" not in block, "scene labels/captions are AI-written text and must not be parsed as HTML"
+    assert "textContent" in block

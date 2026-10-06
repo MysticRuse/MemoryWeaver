@@ -104,6 +104,61 @@ def _attach_capture_times(photos: list, uploads_dir: str) -> int:
     return filled
 
 
+def estimate_usage(uncached_moderated: int, uncached_scored: int, moments_count: int) -> dict:
+    """Rough token and cost estimate for the Gemini calls a run actually made.
+
+    ESTIMATES, not measurements: fixed per-item token guesses times Flash-tier
+    list prices. Only uncached work counts (cached photos cost nothing), and the
+    per-photo embedding calls are not priced here (they are counted separately
+    as "embedding_calls" in the trajectory).
+    """
+    input_tokens = uncached_moderated * 1000 + uncached_scored * 1500 + moments_count * 800
+    output_tokens = uncached_moderated * 100 + uncached_scored * 150 + moments_count * 250
+    cost_usd = input_tokens * 0.000075 / 1000 + output_tokens * 0.0003 / 1000
+    return {"input_tokens": input_tokens, "output_tokens": output_tokens, "cost_usd": cost_usd}
+
+
+def _write_trajectory(artefacts_dir: str, session_id: str, stage: str, trajectory: dict, usage: dict) -> None:
+    """Records one stage of a run in vibe_trajectory.json, merged with the others.
+
+    Curate and Proceed are separate runs, so each writes its own entry under
+    "stages" (re-running a stage replaces only that stage's entry; a full "all"
+    run replaces both). The file always holds the complete picture: every phase
+    that has run, per-phase duration and cache hits, and estimated usage/cost
+    per stage plus a running total.
+    """
+    path = os.path.join(artefacts_dir, "vibe_trajectory.json")
+    stages = {}
+    if os.path.exists(path):
+        try:
+            with open(path) as f:
+                stages = json.load(f).get("stages", {})
+        except Exception:
+            stages = {}  # an unreadable old file is simply started over
+    if stage == "all":
+        stages = {}
+    else:
+        stages.pop("all", None)
+    stages[stage] = {
+        "started_at": trajectory["started_at"],
+        "ended_at": trajectory["ended_at"],
+        "steps": trajectory["steps"],
+        "metadata": trajectory["metadata"],
+        "estimated_usage": usage,
+    }
+    totals = {k: sum(s["estimated_usage"][k] for s in stages.values()) for k in ("input_tokens", "output_tokens", "cost_usd")}
+    totals["cost_usd"] = round(totals["cost_usd"], 6)
+    document = {
+        "pipeline_name": trajectory["pipeline_name"],
+        "session_id": session_id,
+        "stages": stages,
+        "steps": sorted((step for s in stages.values() for step in s["steps"]), key=lambda step: step["phase"]),
+        "estimated_usage_total": {**totals, "note": "Estimates (fixed per-item token guesses x list prices), not measured usage."},
+    }
+    with open(path, "w") as f:
+        json.dump(document, f, indent=2)
+
+
 def execute_trip_pipeline(project_root: str, session_id: str = "default", limit: int = 50, log=print, progress_callback=None, stage: str = "all") -> dict:
     """
     Runs the sequential 5-agent pipeline on all photos in local_storage/uploads.
@@ -162,6 +217,7 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
         unique_photos = []
         uncached_photos = []
         uncached_unique = []
+        uncached_approved = []
         # Jump directly to Phase 4
         
     else:
@@ -384,7 +440,7 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
         log(f"Phase 2 complete: Retained {len(unique_photos)} unique photos out of {len(approved)} in {time.time() - p2_start:.1f}s.")
         trajectory["steps"].append({
             "phase": 2,
-            "name": "Curator Agent (CLIP Embedding & Near-Duplicate Filtering)",
+            "name": "Curator Agent (Image Embedding & Near-Duplicate Filtering)",
             "duration_seconds": round(time.time() - p2_start, 2),
             "inputs": len(approved),
             "outputs": {
@@ -573,6 +629,19 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
             with open(os.path.join(artefacts_dir, "story.txt"), "w") as f:
                 f.write("Storybook synthesis pending approval...")
                 
+            trajectory["ended_at"] = datetime.datetime.utcnow().isoformat()
+            trajectory["metadata"] = {
+                "total_processed": len(photos),
+                "approved": len(approved),
+                "quarantined": len(quarantined),
+                "unique": len(unique_photos),
+                "uncached_moderated": len(uncached_photos),
+                "uncached_scored": len(uncached_unique),
+                "embedding_calls": len(uncached_approved),
+            }
+            _write_trajectory(artefacts_dir, session_id, "curate", trajectory,
+                              estimate_usage(len(uncached_photos), len(uncached_unique), 0))
+
             log("Curation stage complete! Selected highlights saved to highlights.json.")
             return {
                 "total_processed": len(photos),
@@ -626,7 +695,7 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
     log("Memory Bank profiles updated successfully.")
     trajectory["steps"].append({
         "phase": 4,
-        "name": "Memory Agent (Cross-Session Profile Indexing)",
+        "name": "Memory Agent (Per-Event Contributor Profile Indexing)",
         "duration_seconds": round(time.time() - p4_start, 2),
         "inputs": len(selected_photos),
         "outputs": {
@@ -734,12 +803,13 @@ def execute_trip_pipeline(project_root: str, session_id: str = "default", limit:
         "unique": len(unique_photos),
         "moments_count": len(moments),
         "uncached_moderated": len(uncached_photos),
-        "uncached_scored": len(uncached_unique)
+        "uncached_scored": len(uncached_unique),
+        "embedding_calls": len(uncached_approved),
     }
-    
-    with open(os.path.join(artefacts_dir, "vibe_trajectory.json"), "w") as f:
-        json.dump(trajectory, f, indent=2)
-        
+
+    _write_trajectory(artefacts_dir, session_id, "narrate" if stage == "narrate" else "all", trajectory,
+                      estimate_usage(len(uncached_photos), len(uncached_unique), len(moments)))
+
     # --- Write Final Artifacts ---
     with open(os.path.join(artefacts_dir, "highlights.json"), "w") as f:
         json.dump(highlights, f, indent=2)

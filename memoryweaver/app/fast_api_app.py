@@ -41,7 +41,7 @@ from google.adk.sessions import InMemorySessionService
 from google.cloud import logging as google_cloud_logging
 
 from agents.collector.tools.upload import process_and_save_upload
-from pipeline.orchestrator import execute_trip_pipeline
+from pipeline.orchestrator import estimate_usage, execute_trip_pipeline
 
 from app.agent import app as adk_app
 from app.app_utils.telemetry import setup_telemetry
@@ -575,7 +575,26 @@ def list_uploads(session_id: str = "default"):
                 f for f in os.listdir(upload_dir)
                 if os.path.isfile(os.path.join(upload_dir, f)) and not f.startswith('.')
             ])
-        return {"status": "success", "photos": photos, "session_id": session_id}
+
+        # Per-photo curation details (score, scene/location label, caption) for
+        # the review grid, from the curation manifest. Only photos that were
+        # actually scored have an entry; unscored ones simply show no strip.
+        import json
+        details = {}
+        manifest_path = os.path.join(session_storage.local_base, "artefacts", "manifest.json")
+        if os.path.exists(manifest_path):
+            try:
+                with open(manifest_path) as f:
+                    for p in json.load(f):
+                        if isinstance(p, dict) and "filename" in p:
+                            details[p["filename"]] = {
+                                "score": p.get("score"),
+                                "scene_label": p.get("scene_label"),
+                                "caption": p.get("caption"),
+                            }
+            except Exception:
+                details = {}  # a damaged manifest must not break the photo list
+        return {"status": "success", "photos": photos, "details": details, "session_id": session_id}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -694,9 +713,11 @@ def run_generation_background(session_id: str, limit: int, stage: str = "curate"
         uncached_score = stats.get("uncached_scored", 0)
 
         moments_count = stats.get("moments_count", 0)
-        est_input_tokens = (uncached_mod * 1000) + (uncached_score * 1500) + (moments_count * 800)
-        est_output_tokens = (uncached_mod * 100) + (uncached_score * 150) + (moments_count * 250)
-        est_cost = (est_input_tokens * 0.000075 / 1000) + (est_output_tokens * 0.0003 / 1000)
+        # Same estimator the pipeline records in vibe_trajectory.json
+        usage = estimate_usage(uncached_mod, uncached_score, moments_count)
+        est_input_tokens = usage["input_tokens"]
+        est_output_tokens = usage["output_tokens"]
+        est_cost = usage["cost_usd"]
 
         state["pipeline"]["summary"] = {
             "elapsed_seconds": round(elapsed, 1),

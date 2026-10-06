@@ -783,6 +783,38 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.4);
             z-index: 2;
         }
+        /* The review grid hard-codes 7 columns inline, which leaves unusably small
+           thumbnails on tablets/phones; fewer columns there so the score strip
+           and the move buttons stay legible. */
+        @media (max-width: 1000px) {
+            #curation-review-tray { grid-template-columns: repeat(5, 1fr) !important; }
+        }
+        @media (max-width: 700px) {
+            #curation-review-tray { grid-template-columns: repeat(3, 1fr) !important; }
+        }
+
+        /* Curation review: score + scene/location label strip along the bottom of
+           each card (the full caption is the card's hover text). */
+        .pool-photo-card .photo-info {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 16px 6px 4px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.85));
+            color: #fff;
+            font-size: 10px;
+            line-height: 1.25;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .pool-photo-card .photo-info .score {
+            font-weight: 700;
+            margin-right: 4px;
+        }
         .pool-photo-card .overlay-btn:hover {
             transform: scale(1.1);
         }
@@ -3037,6 +3069,7 @@
                 const listData = await res.json();
                 if (listData.status !== 'success') throw new Error(listData.message);
                 const allPhotos = listData.photos || [];
+                const details = listData.details || {};  // filename -> {score, scene_label, caption}
 
                 // 2. Fetch current session exclusions
                 const sRes = await fetch(`/api/sessions/${getSessionId()}`);
@@ -3096,6 +3129,21 @@
                     img.src = `/media?filename=${encodeURIComponent(filename)}&session_id=${encodeURIComponent(getSessionId())}`;
                     img.loading = 'lazy';
                     card.appendChild(img);
+
+                    // Score + scene/location label strip; caption on hover.
+                    // textContent only: these strings are AI-written, never markup.
+                    const d = details[filename];
+                    if (d && d.score != null) {
+                        const info = document.createElement('div');
+                        info.className = 'photo-info';
+                        const score = document.createElement('span');
+                        score.className = 'score';
+                        score.textContent = `★ ${Number(d.score).toFixed(1)}`;
+                        info.appendChild(score);
+                        info.appendChild(document.createTextNode(d.scene_label || ''));
+                        card.appendChild(info);
+                        card.title = [d.scene_label, d.caption].filter(Boolean).join(' — ');
+                    }
 
                     if (curationView === 'curated') {
                         const btn = document.createElement('button');
