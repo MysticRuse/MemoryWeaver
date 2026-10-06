@@ -2,7 +2,7 @@
 
 ![MemoryWeaver Project Card](memoryweaver_card_560x280.jpg)
 
-**Turn a family's chaotic post-event photo dump into a curated, narrated keepsake journal — with a team of AI agents.**
+**Turn a family's chaotic post-event photo dump into a curated, narrated keepsake journal - with a team of AI agents.**
 
 After every trip, birthday, or wedding, the photos scatter: hundreds on Mom's phone, more on Dad's, a few gems on Grandma's. Someone (usually a busy parent) is supposed to collect them all, delete the blurry ones, pick the best, and make something worth keeping. Nobody ever does.
 
@@ -85,12 +85,12 @@ Between the stages the Hub shows the **curated grid**: every photo with its scor
 
 | Concept | Where |
 |---|---|
-| **Agent / multi-agent system (ADK)** | [`memoryweaver/app/agent.py`](memoryweaver/app/agent.py) — root concierge with 6 tools and 5 sub-agents; the specialists live in [`memoryweaver/agents/`](memoryweaver/agents/). The A2A agent card exposes 23 skills. |
-| **MCP server** | [`memoryweaver/mcp_server.py`](memoryweaver/mcp_server.py) — 4 read-only tools over stdio (`list_event_sessions`, `get_contributor_profiles`, `get_event_journal`, `find_missed_moments`), deliberately unable to bypass the web auth layer. |
-| **Security** | Admin token, per-event share code, EXIF-stripping media endpoint, prompt sanitizer — see [Security model](#security-model) and [`CONTEXT.md`](CONTEXT.md). |
-| **Evaluation (Agents CLI)** | [`memoryweaver/tests/eval/`](memoryweaver/tests/eval/eval_config.yaml) — see [Tests and evaluation](#tests-and-evaluation). |
+| **Agent / multi-agent system (ADK)** | [`memoryweaver/app/agent.py`](memoryweaver/app/agent.py) - root concierge with 6 tools and 5 sub-agents; the specialists live in [`memoryweaver/agents/`](memoryweaver/agents/). The A2A agent card exposes 23 skills. |
+| **MCP server** | [`memoryweaver/mcp_server.py`](memoryweaver/mcp_server.py) - 4 read-only tools over stdio (`list_event_sessions`, `get_contributor_profiles`, `get_event_journal`, `find_missed_moments`), deliberately unable to bypass the web auth layer. |
+| **Security** | Admin token, per-event share code, EXIF-stripping media endpoint, prompt sanitizer - see [Security model](#security-model) and [`CONTEXT.md`](CONTEXT.md). |
+| **Evaluation (Agents CLI)** | [`memoryweaver/tests/eval/`](memoryweaver/tests/eval/eval_config.yaml) - see [Tests and evaluation](#tests-and-evaluation). |
 | **Agents CLI** | Project scaffolded and driven with `agents-cli` ([`memoryweaver/agents-cli-manifest.yaml`](memoryweaver/agents-cli-manifest.yaml)); `agents-cli playground` runs the concierge. |
-| **Deployability** | [`memoryweaver/Dockerfile`](memoryweaver/Dockerfile) + [`memoryweaver/deployment/terraform/`](memoryweaver/deployment/terraform/) + `agents-cli deploy` (Cloud Run) — see [Deployment](#deployment) for caveats. |
+| **Deployability** | [`memoryweaver/Dockerfile`](memoryweaver/Dockerfile) + [`memoryweaver/deployment/terraform/`](memoryweaver/deployment/terraform/) + `agents-cli deploy` (Cloud Run) - see [Deployment](#deployment) for caveats. |
 
 ---
 
@@ -107,7 +107,7 @@ cp ../.env.example .env          # then edit: set GEMINI_API_KEY=<your key>
 uv run uvicorn app.fast_api_app:app --port 8000
 ```
 
-Open **http://localhost:8000** — the Curator Hub, with a default event ready. (Optional: `uv sync --extra drive-import` enables `scripts/drive_downloader.py`, a standalone Google Drive importer.)
+Open **http://localhost:8000** - the Curator Hub, with a default event ready. (Optional: `uv sync --extra drive-import` enables `scripts/drive_downloader.py`, a standalone Google Drive importer.)
 
 ### The full loop (about 5 minutes)
 
@@ -119,7 +119,7 @@ Open **http://localhost:8000** — the Curator Hub, with a default event ready. 
 5. **Proceed.** Click **Love the Curated Highlights – Proceed to create Trip Highlights**. The Narrator writes the journal and story.
 6. **Open the viewer.** *Daily Highlights Reel* (the 12 top-scored approved photos, with a filter tab for each highlighted moment), *Day-by-Day Journal* (moments in capture-time order, each with a date and up to three photos), *Our Story*, and a contributor filter that dims moments someone missed and lists the ones they should catch up on. Contributors' share pages now show a "journal is ready" link.
 
-> **Re-generating a finished event:** click *Write & Build Storybook* again (mostly cached and cheap) and then *Proceed*. Do **not** press *Proceed* alone a second time — see [Known limitations](#known-limitations).
+> **Re-generating a finished event:** click *Write & Build Storybook* again (mostly cached and cheap) and then *Proceed*. Do **not** press *Proceed* alone a second time - see [Known limitations](#known-limitations).
 
 ### Talk to the agent
 
@@ -221,11 +221,11 @@ agents-cli deploy
 
 The Terraform under `memoryweaver/deployment/terraform/` provisions Cloud Run, GCS buckets, and telemetry (Cloud Trace / BigQuery logs). For any non-local deployment set:
 
-- `GEMINI_API_KEY` — model access
-- `MW_ADMIN_TOKEN` — **mandatory**; gates all destructive and billable endpoints
-- `APP_URL` — public base URL, so share links and QR codes are absolute
+- `GEMINI_API_KEY` - model access
+- `MW_ADMIN_TOKEN` - **mandatory**; gates all destructive and billable endpoints
+- `APP_URL` - public base URL, so share links and QR codes are absolute
 
-**Caveat — treat a deployment as a single-instance demo.** The curation pipeline, `/media`, and the viewer read photos and artifacts from the instance's local disk, and progress/log state lives in memory. Setting `GCS_BUCKET_NAME` makes uploads and the event index go to Cloud Storage, but the pipeline does not yet read from it, so a GCS-backed deployment is **not supported end to end**. Run one instance with a persistent disk, or run locally.
+**Caveat - treat a deployment as a single-instance demo.** The curation pipeline, `/media`, and the viewer read photos and artifacts from the instance's local disk, and progress/log state lives in memory. Setting `GCS_BUCKET_NAME` makes uploads and the event index go to Cloud Storage, but the pipeline does not yet read from it, so a GCS-backed deployment is **not supported end to end**. Run one instance with a persistent disk, or run locally.
 
 ## Known limitations
 
