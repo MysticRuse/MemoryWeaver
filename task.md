@@ -19,7 +19,7 @@
 
 ## Phase 3: Context & Narratives (July 1 - July 2)
 - [x] Build `Memory Agent` using Agent Runtime Memory Bank
-- [x] Implement cross-session contributor profiles & recommendation queries
+- [x] Implement per-event contributor profiles & recommendation queries
 - [x] Build `Narrator Agent` (Daily reels, best shots ZIP outputs)
 - [x] Generate "Day-by-Day Journal" and "Trip Story" flowing narratives
 - [x] Connect all agents using the A2A Protocol

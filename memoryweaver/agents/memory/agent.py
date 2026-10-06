@@ -19,8 +19,8 @@ memory_agent = Agent(
     ),
     description="Memory Agent that tracks contributor profiles, preferences, and recommends highlights of missed trip moments.",
     instruction=(
-        "You are the Memory Agent. Your responsibility is to maintain long-term cross-session knowledge "
-        "about trip participants. Use upsert_contributor_profile to keep stats and scenes visited updated, "
+        "You are the Memory Agent. Your responsibility is to maintain per-event knowledge "
+        "about an event's participants. Use upsert_contributor_profile to keep stats and scenes visited updated, "
         "and use recommend_missed_moments to find photos of events a specific contributor was absent from."
     ),
     tools=[

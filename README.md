@@ -237,7 +237,7 @@ The Terraform under `memoryweaver/deployment/terraform/` provisions Cloud Run, G
 - **Estimates, not metering.** Token and cost figures are estimates.
 - **Share codes travel in the URL** — the right trade-off for "grandma scans a QR" (versus accounts/OAuth), but links should be shared as privately as the photos themselves.
 - **The server-side file browser only works when the app runs on your own computer;** on a cloud deployment it reports an error — use the share link.
-- Agent evals are small (7 cases), and the sub-agents' own instructions still describe the Memory agent as "cross-session" although profiles are per event.
+- Agent evals are small (7 cases).
 
 ## Roadmap
 
