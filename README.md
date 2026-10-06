@@ -6,7 +6,7 @@
 
 After every trip, birthday, or wedding, the photos scatter: hundreds on Mom's phone, more on Dad's, a few gems on Grandma's. Someone (usually a busy parent) is supposed to collect them all, delete the blurry ones, pick the best, and make something worth keeping. Nobody ever does.
 
-MemoryWeaver does the heavy lifting. Family members upload photos through a shareable link — no accounts, no app installs. A five-agent pipeline moderates, de-duplicates, scores, and narrates them into a journal of chronological moments with landmark-aware captions and a flowing trip story. The organizer stays in control: the pipeline runs in **two stages with a review step in between**, so nothing is written until the curated photos are approved. Every event (a weekend trip, a soccer final, a wedding) lives in its own isolated session.
+MemoryWeaver does the heavy lifting. Family members upload photos through a shareable link - no accounts, no app installs. A five-agent pipeline moderates, de-duplicates, scores, and narrates them into a journal of chronological moments with landmark-aware captions and a flowing trip story. The organizer stays in control: the pipeline runs in **two stages with a review step in between**, so nothing is written until the curated photos are approved. Every event (a weekend trip, a soccer final, a wedding) lives in its own isolated session.
 
 ---
 
@@ -63,7 +63,7 @@ flowchart TD
 - The **web product** above.
 - The **agent layer**: the `memoryweaver_concierge` (served over A2A, or via `agents-cli playground`) lists and creates events, launches the pipeline, and reads results back conversationally, with the five specialists attached as sub-agents. From chat the pipeline runs end to end in one go (there is no review step in that path). An MCP server exposes the event data to any MCP client (e.g. Claude Desktop).
 
-**Design note — deterministic pipeline, agentic control plane.** The heavy per-photo work (vision moderation, scoring, journaling) runs as orchestrated Python that calls the agents' Gemini-powered tools in *batches*, rather than routing every photo through LLM tool-calling. For a 200-photo event that is about **20 generation calls** (4 moderation batches, 14 scoring batches, journal + story) **plus one lightweight embedding call per photo**, instead of hundreds of agent turns. The concierge agent works at the *task* level, where reasoning adds value.
+**Design note - deterministic pipeline, agentic control plane.** The heavy per-photo work (vision moderation, scoring, journaling) runs as orchestrated Python that calls the agents' Gemini-powered tools in *batches*, rather than routing every photo through LLM tool-calling. For a 200-photo event that is about **20 generation calls** (4 moderation batches, 14 scoring batches, journal + story) **plus one lightweight embedding call per photo**, instead of hundreds of agent turns. The concierge agent works at the *task* level, where reasoning adds value.
 
 ### The two stages
 
@@ -124,7 +124,7 @@ Open **http://localhost:8000** - the Curator Hub, with a default event ready. (O
 ### Talk to the agent
 
 ```bash
-uv run adk web          # choose "app" in the dropdown — or: agents-cli playground
+uv run adk web          # choose "app" in the dropdown - or: agents-cli playground
 ```
 
 Try: *"What events do I have?"* → *"Create an event called Summer Soccer Final, it's a sports match"* → *"Run the curation pipeline on it"* → *"Read me the story."* The concierge shares state with the web app: events created in either place appear in both.
@@ -171,9 +171,9 @@ On a 15–17-photo event we measured about 50 seconds to curate and 20 seconds t
 
 | Tier | Who | Credential |
 |---|---|---|
-| **Admin** — creating/editing/deleting events, `/generate`, `/generate-narrative`, photo-pool and curation edits, share-link lookup, the server-side file browser | Event organizer | `MW_ADMIN_TOKEN` → `X-MW-Token` header. Open when unset (local development); **required for any shared deployment**. |
-| **Upload** — `POST /upload` | Family with the link | Per-event `share_code` embedded in the `/join` link; no accounts. |
-| **Read-only** — viewer, `/media`, `/api/trip-book`, progress/log endpoints, event list | Anyone with a link | Open. Photos are re-encoded with **all EXIF stripped** (GPS, device IDs); only curated artifacts are reachable, never raw storage; share codes are never included in event listings. |
+| **Admin** - creating/editing/deleting events, `/generate`, `/generate-narrative`, photo-pool and curation edits, share-link lookup, the server-side file browser | Event organizer | `MW_ADMIN_TOKEN` → `X-MW-Token` header. Open when unset (local development); **required for any shared deployment**. |
+| **Upload** - `POST /upload` | Family with the link | Per-event `share_code` embedded in the `/join` link; no accounts. |
+| **Read-only** - viewer, `/media`, `/api/trip-book`, progress/log endpoints, event list | Anyone with a link | Open. Photos are re-encoded with **all EXIF stripped** (GPS, device IDs); only curated artifacts are reachable, never raw storage; share codes are never included in event listings. |
 
 Also:
 - **Uploads:** 20 MB cap, extension allow-list (`.jpg`, `.jpeg`, `.png`, `.heic`), filenames reduced with `os.path.basename`.
@@ -233,10 +233,10 @@ The Terraform under `memoryweaver/deployment/terraform/` provisions Cloud Run, G
 - **Moments follow the AI's scene labels.** Photos taken at the same time can be labelled differently and become separate (but adjacent) moments.
 - **Duplicate detection is conservative and unproven on real bursts.** The 0.92 threshold was calibrated on stock photos with synthetic burst copies (near-duplicates scored ≥ 0.943; different shots of one subject up to about 0.87). Very similar shots can still merge, and the first photo in filename order is kept, not the sharpest.
 - **Memory is per event.** There are no cross-event contributor profiles yet.
-- **Photos only** — videos are filtered out at upload; video moderation and curation are roadmap.
+- **Photos only** - videos are filtered out at upload; video moderation and curation are roadmap.
 - **Estimates, not metering.** Token and cost figures are estimates.
-- **Share codes travel in the URL** — the right trade-off for "grandma scans a QR" (versus accounts/OAuth), but links should be shared as privately as the photos themselves.
-- **The server-side file browser only works when the app runs on your own computer;** on a cloud deployment it reports an error — use the share link.
+- **Share codes travel in the URL** - the right trade-off for "grandma scans a QR" (versus accounts/OAuth), but links should be shared as privately as the photos themselves.
+- **The server-side file browser only works when the app runs on your own computer;** on a cloud deployment it reports an error - use the share link.
 - Agent evals are small (7 cases).
 
 ## Roadmap

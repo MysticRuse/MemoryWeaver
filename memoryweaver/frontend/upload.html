@@ -1280,7 +1280,7 @@
 
                 document.getElementById('pipeline-only-count').innerHTML = activeCount > 0
                     ? `📝 <strong>${activeCount} picture(s)</strong> are currently included and ready for curation.`
-                    : 'No photos in this event yet — share the link above with contributors, or use the folder import.';
+                    : 'No photos in this event yet - share the link above with contributors, or use the folder import.';
                 document.getElementById('btnRunPipelineOnly').disabled = activeCount === 0;
                 
                 updateGuidedTour(activeCount);
@@ -1932,7 +1932,7 @@
                 document.getElementById('badge-step-3').innerHTML = '<span class="event-category-badge" style="background: rgba(0, 255, 100, 0.1); border-color: var(--accent); color: var(--accent); margin-left: auto;">👉 Active Step</span>';
 
                 guideTitle.textContent = 'Step 3: Let Our System Curate & Write';
-                guideText.innerHTML = '🎉 <strong>Let us do the heavy lifting!</strong> Now that you\'ve sorted your photos on the table, our smart curation system takes over like a professional designer. It scans your photos and chooses the absolute best highlights to write your storybook. <strong>Don\'t worry—this won\'t finalize anything yet!</strong> You will have a final step to review the selected photos, swap any you\'d like to change, and approve the final book!';
+                guideText.innerHTML = '🎉 <strong>Let us do the heavy lifting!</strong> Now that you\'ve sorted your photos on the table, our smart curation system takes over like a professional designer. It scans your photos and chooses the absolute best highlights to write your storybook. <strong>Don\'t worry - this won\'t finalize anything yet!</strong> You will have a final step to review the selected photos, swap any you\'d like to change, and approve the final book!';
                 if (poolDetails) {
                     poolDetails.style.display = 'block';
                     loadUploadedPoolTray(); // Automatically load pool tray grid directly!
@@ -3142,7 +3142,7 @@
                         info.appendChild(score);
                         info.appendChild(document.createTextNode(d.scene_label || ''));
                         card.appendChild(info);
-                        card.title = [d.scene_label, d.caption].filter(Boolean).join(' — ');
+                        card.title = [d.scene_label, d.caption].filter(Boolean).join(' - ');
                     }
 
                     if (curationView === 'curated') {
